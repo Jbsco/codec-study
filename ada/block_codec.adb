@@ -33,15 +33,24 @@ package body Block_Codec with SPARK_Mode is
      with Pre => In_Range (V, 40);
 
    function Bit_Length (U : Unsigned_64) return Natural with SPARK_Mode => Off is
+      Steps : constant array (1 .. 6) of Natural := [32, 16, 8, 4, 2, 1];
+      V : Unsigned_64 := U;
       Bits : Natural := 0;
    begin
-      for K in 0 .. 63 loop
-         if Shift_Right (U, K) /= 0 then
-            Bits := K + 1;
+      for Step of Steps loop
+         if Shift_Right (V, Step) /= 0 then
+            V := Shift_Right (V, Step);
+            Bits := Bits + Step;
          end if;
       end loop;
-      return Bits;
+      return Bits + Natural (V);
    end Bit_Length;
+
+   --  V divided by 2**S, rounded down, by logical shifts.
+   function Shift_Down (V : Long_Long_Integer; S : Natural) return Long_Long_Integer is
+     (if V >= 0 then Long_Long_Integer (Shift_Right (Unsigned_64 (V), S))
+      else -1 - Long_Long_Integer (Shift_Right (Unsigned_64 (-(V + 1)), S)))
+     with SPARK_Mode => Off, Inline;
 
    function Sign_Extend (U : Unsigned_64; Bits : Sample_Bits) return Long_Long_Integer is
      (if U >= Unsigned_64 (Half (Bits)) then Long_Long_Integer (U) - 2 * Half (Bits) else Long_Long_Integer (U))
@@ -125,7 +134,7 @@ package body Block_Codec with SPARK_Mode is
    is
    begin
       for I in Y'Range loop
-         R (I) := Y (I) - (if I >= Back then Y (I - Back) else Floor_Shift (History (History'Last + 1 + I - Back), Shift));
+         R (I) := Y (I) - (if I >= Back then Y (I - Back) else Shift_Down (History (History'Last + 1 + I - Back), Shift));
       end loop;
    end Back_Residuals;
 
@@ -497,7 +506,7 @@ package body Block_Codec with SPARK_Mode is
             for J in 1 .. Order loop
                Sum := Sum + Q (J) * Y (I - J);
             end loop;
-            V := Y (I) - Floor_Shift (Sum, Shift);
+            V := Y (I) - Shift_Down (Sum, Shift);
             if V <= -Limit or else V >= Limit then
                Fits := False;
                V := 0;
