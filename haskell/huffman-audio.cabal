@@ -53,3 +53,17 @@ executable huffman-audio
     vector
   ghc-options: -threaded -rtsopts "-with-rtsopts=-N -A64m"
 
+executable huffman-audio-hybrid
+  import: common-options
+  main-is: Main.hs
+  hs-source-dirs: hybrid
+  other-modules: SparkFFI
+  build-depends:
+    base,
+    huffman-audio,
+    vector
+  ghc-options: -threaded -rtsopts "-with-rtsopts=-N -A64m"
+  -- The Ada library is linked by path, as in hadlink; run with LD_LIBRARY_PATH=../ada/lib.
+  ld-options:
+    -L../ada/lib
+    -lblockcodec
