@@ -210,19 +210,24 @@ package body Block_Codec with SPARK_Mode is
    --  The Rice parameter of least cost, the smallest of equals, walked from the bit length of the mean code value;
    --  the cost is convex in the parameter.
    procedure Rice_Cost (R : Sample_Buffer; K : out Natural; Bits : out Unsigned_64) with SPARK_Mode => Off is
+      pragma Suppress (All_Checks);
+      --  The zigzag values once, so each cost evaluation is a shift and an add per value that the compiler can
+      --  vectorize.
+      U : array (R'Range) of Unsigned_64;
       function Cost (P : Natural) return Unsigned_64 is
          C : Unsigned_64 := Unsigned_64 (R'Length) * Unsigned_64 (P + 1);
       begin
-         for V of R loop
-            C := C + Shift_Right (Zigzag (V), P);
+         for V of U loop
+            C := C + Shift_Right (V, P);
          end loop;
          return C;
       end Cost;
       Sum : Unsigned_64 := 0;
       Moved : Boolean := False;
    begin
-      for V of R loop
-         Sum := Sum + Zigzag (V);
+      for I in R'Range loop
+         U (I) := Zigzag (R (I));
+         Sum := Sum + U (I);
       end loop;
       K := Natural'Max (Bit_Length (Sum / Unsigned_64 (R'Length)), 1) - 1;
       Bits := Cost (K);
@@ -553,31 +558,44 @@ package body Block_Codec with SPARK_Mode is
 
    --  The ramp of the first Order samples into Warm, and the prediction residuals of the rest into R. Fits is
    --  false when a residual needs more than Width + 4 bits.
+   --  The inner product runs over a reversed copy of the coefficients, so both operands stride forward and the
+   --  compiler can vectorize it; the range test is a separate pass over the results.
    procedure Lpc_Residuals (Y : Sample_Buffer; Q : Coefficient_Array; Order, Shift : Natural; Width : Width_Bits;
                             Warm, R : out Sample_Buffer; Fits : out Boolean) with SPARK_Mode => Off
    is
+      pragma Suppress (All_Checks);
       Limit : constant Long_Long_Integer := Half (Width + 4);
+      Reversed : array (0 .. Order - 1) of Long_Long_Integer;
+      Out_Of_Range : Boolean := False;
    begin
-      Fits := True;
       for I in 0 .. Order - 1 loop
          Warm (Warm'First + I) := Y (I) - Fixed_Prediction (Y, I, Natural'Min (Ramp_Order, I));
+         Reversed (I) := Q (Order - I);
       end loop;
       for I in Order .. Y'Last loop
          declare
             Sum : Long_Long_Integer := 0;
-            V : Long_Long_Integer;
+            Base : constant Natural := I - Order;
          begin
-            for J in 1 .. Order loop
-               Sum := Sum + Q (J) * Y (I - J);
+            for J in 0 .. Order - 1 loop
+               Sum := Sum + Reversed (J) * Y (Base + J);
             end loop;
-            V := Y (I) - Shift_Down (Sum, Shift);
-            if V <= -Limit or else V >= Limit then
-               Fits := False;
-               V := 0;
-            end if;
-            R (R'First + I - Order) := V;
+            R (R'First + Base) := Y (I) - Shift_Down (Sum, Shift);
          end;
       end loop;
+      for V of R loop
+         if V <= -Limit or else V >= Limit then
+            Out_Of_Range := True;
+         end if;
+      end loop;
+      Fits := not Out_Of_Range;
+      if Out_Of_Range then
+         for V of R loop
+            if V <= -Limit or else V >= Limit then
+               V := 0;
+            end if;
+         end loop;
+      end if;
    end Lpc_Residuals;
 
    --  Residuals of Z (From .. Z'Last) under Q over 2**Shift, each predicted from the Order samples before it in Z.
