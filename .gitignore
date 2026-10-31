@@ -1,0 +1,16 @@
+# Full-length downloads; make_corpus.sh fetches them again
+corpus/source/
+# Decoded WAV files and logs
+build/
+# Ada and Haskell build output
+ada/obj/
+ada/obj-lib/
+ada/lib/
+haskell/.stack-work/
+# Alire workspace state is machine-specific
+ada/alire/
+ada/config/
+ada/alire.lock
+# Prover transcripts and redo state
+gnatprove-run.txt
+.redo/
