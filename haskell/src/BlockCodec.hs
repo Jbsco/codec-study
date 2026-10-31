@@ -1,13 +1,14 @@
 -- | The block codec of ada/block_codec.adb written again in Haskell, byte for byte the same format. A block
 -- holds a constant, or the residuals of one predictor after the low bits every sample shares are removed:
--- polynomial orders 0 to 4, the distance back to an exact repeat, or tiers of pairs. The residuals take Rice
--- codes or run-length Huffman codes, and the encoder writes whichever combination is shortest.
+-- polynomial orders 0 to 4, the distance back to an exact repeat, tiers of pairs, or linear prediction of order
+-- 1 to 32 with quantized coefficients. The residuals take Rice codes or run-length Huffman codes, and the
+-- encoder writes whichever combination is shortest.
 module BlockCodec (maxBlock, bound, encodeBlock, decodeBlock) where
 
-import Control.Monad (forM_, when)
+import Control.Monad (foldM, forM_, when)
 import Control.Monad.ST (ST, runST)
 import Data.Bits
-import Data.List (sortOn)
+import Data.List (foldl', sortOn)
 import qualified Data.Vector.Storable as S
 import qualified Data.Vector.Storable.Mutable as SM
 import qualified Data.Vector.Unboxed as U
@@ -23,9 +24,12 @@ maxBlock = 4096
 bound :: Int -> Int
 bound n = 5 * n + 16
 
-delayPredictor, tierPredictor, sixteenZeros, matchLength, symbolCount :: Int
+delayPredictor, tierPredictor, lpcPredictor, maxOrder, rampOrder, sixteenZeros, matchLength, symbolCount :: Int
 delayPredictor = 5
 tierPredictor = 6
+lpcPredictor = 7
+maxOrder = 32
+rampOrder = 2
 sixteenZeros = 15 * 64
 matchLength = 32
 symbolCount = 1024
@@ -227,6 +231,104 @@ putRun buf w0 r = do
     codes = canonical lens
     used = usedSymbols counts
 
+-- | Predictor coefficients for each order up to maxOrder, from the Levinson-Durbin recursion on the
+-- autocorrelation of the block under a window whose first and last quarters rise as a smoothstep.
+lpcAnalysis :: U.Vector Int -> [U.Vector Double]
+lpcAnalysis y
+  | not (U.head ac > 0) = []
+  | otherwise = go 1 (U.singleton 1) (U.head ac)
+  where
+    n = U.length y
+    m = max 1 (n `quot` 4)
+    top = min maxOrder (n - 1)
+    tapered = U.imap (\i v -> let t = min 1 (fromIntegral (min (i + 1) (n - i)) / fromIntegral (m + 1)) :: Double
+                              in fromIntegral v * (t * t * (3 - 2 * t))) y
+    ac = U.generate (top + 1) (\k -> U.foldl' (+) 0 (U.zipWith (*) (U.take (n - k) tapered) (U.drop k tapered)))
+    go p a err
+      | p > top = []
+      | otherwise = U.map negate (U.tail a') : if err' > 0 then go (p + 1) a' err' else []
+      where
+        acc = foldl' (\s j -> s + U.unsafeIndex a j * U.unsafeIndex ac (p - j)) (U.unsafeIndex ac p) [1 .. p - 1]
+        k = negate acc / err
+        a' = U.generate (p + 1) (\j -> if j == 0 then 1 else if j == p then k else U.unsafeIndex a j + k * U.unsafeIndex a (p - j))
+        err' = err * (1 - k * k)
+
+-- | The coefficients of one order as integers of the given precision over 2^shift, each rounded with the error
+-- of the ones before it carried forward.
+quantize :: U.Vector Double -> Int -> Maybe (U.Vector Int, Int)
+quantize c precision
+  | U.any (\v -> not (abs v < 1.0e300)) c || not (peak > 0) || precision - 1 - exponent peak < 0 = Nothing
+  | otherwise = Just (U.fromList (go 0 (U.toList c)), qshift)
+  where
+    peak = U.foldl' (\a v -> max a (abs v)) 0 c
+    qshift = min (precision - 1 - exponent peak) 31
+    limit = bit (precision - 1) :: Int
+    scale = 2 ^ qshift :: Double
+    go :: Double -> [Double] -> [Int]
+    go _ [] = []
+    go carry (v : vs) = q : go (carry' - fromIntegral q) vs
+      where
+        carry' = carry + v * scale
+        q = max (negate limit) (min (limit - 1) (floor (carry' + 0.5)))
+
+-- | The ramp of the first samples, and the prediction residuals of the rest; Nothing when a residual needs more
+-- than width + 4 bits.
+lpcResiduals :: U.Vector Int -> U.Vector Int -> Int -> Int -> Maybe (U.Vector Int, U.Vector Int)
+lpcResiduals y q qshift width
+  | U.any (\v -> v <= negate limit || v >= limit) r = Nothing
+  | otherwise = Just (warm, r)
+  where
+    order = U.length q
+    limit = bit (width + 3) :: Int
+    at = U.unsafeIndex y
+    warm = U.generate order (\i -> at i - fixedPrediction (\j -> at (i - j)) (min rampOrder i))
+    r = U.generate (U.length y - order) (\k -> let i = k + order
+                                               in at i - U.ifoldl' (\s j c -> s + c * at (i - 1 - j)) 0 q `shiftR` qshift)
+
+-- | An LPC coding: order, coefficient precision and shift, the residual code and its parameters, and the values.
+data Lpc = Lpc
+  { lOrder, lPrecision, lShift, lK, lWarmK :: !Int
+  , lRice :: !Bool
+  , lQ, lWarm, lR :: !(U.Vector Int)
+  }
+
+-- | The shortest LPC coding: the order with the least Rice cost at 15-bit precision, then the precision and the
+-- residual code with the least cost at that order.
+bestLpc :: Int -> U.Vector Int -> Maybe (Word64, Lpc)
+bestLpc width y
+  | null stage1 || null stage2 = Nothing
+  | otherwise = Just (foldl1 (\a b -> if fst b < fst a then b else a) stage2)
+  where
+    sets = lpcAnalysis y
+    stage1 =
+      [ (24 + 15 * fromIntegral order + 6 + snd (riceCost warm) + 6 + snd (riceCost r), order)
+      | (order, c) <- zip [1 ..] sets
+      , Just (q, s) <- [quantize c 15]
+      , Just (warm, r) <- [lpcResiduals y q s width]
+      ]
+    bestOrder = snd (foldl1 (\a b -> if fst b < fst a then b else a) stage1) :: Int
+    stage2 =
+      [ (bits, Lpc bestOrder precision s k kw rice q warm r)
+      | precision <- [5 .. 15]
+      , Just (q, s) <- [quantize (sets !! (bestOrder - 1)) precision]
+      , Just (warm, r) <- [lpcResiduals y q s width]
+      , let (kw, cw) = riceCost warm
+            (k, cr) = riceCost r
+            front = 24 + fromIntegral (precision * bestOrder) + 6 + cw
+      , (bits, rice) <- [(front + 6 + cr, True), (front + runCost r, False)]
+      ]
+
+putLpc :: Buffer s -> W -> Lpc -> ST s W
+putLpc buf w0 l = do
+  w1 <- put buf w0 (fromIntegral lpcPredictor) 3
+  w2 <- put buf w1 (fromIntegral (lOrder l - 1)) 5
+  w3 <- put buf w2 (fromIntegral (lPrecision l - 1)) 4
+  w4 <- put buf w3 (fromIntegral (lShift l)) 5
+  w5 <- U.foldM' (\w c -> put buf w (fromIntegral c) (lPrecision l)) w4 (lQ l)
+  w6 <- putRice buf w5 (lWarmK l) (lWarm l)
+  w7 <- put buf w6 (if lRice l then 0 else 1) 1
+  if lRice l then putRice buf w7 (lK l) (lR l) else putRun buf w7 (lR l)
+
 encodeBlock :: Int -> U.Vector Int -> S.Vector Word8
 encodeBlock depth x = runST $ do
   buf <- SM.new (bound (U.length x))
@@ -235,14 +337,18 @@ encodeBlock depth x = runST $ do
     else do
       w1 <- put buf start 1 1
       w2 <- put buf w1 (fromIntegral lowZeros) 5
-      w3 <- put buf w2 (fromIntegral bestPredictor) 3
-      w4 <- if bestPredictor == delayPredictor then put buf w3 (fromIntegral delay) 12 else pure w3
-      w5 <- put buf w4 (if bestRice then 0 else 1) 1
-      let r = residuals bestPredictor delay y
-      if bestRice then putRice buf w5 bestK r else putRun buf w5 r
+      case lpc of
+        Just (lpcBits, l) | lpcBits < bestBits -> putLpc buf w2 l
+        _ -> do
+          w3 <- put buf w2 (fromIntegral bestPredictor) 3
+          w4 <- if bestPredictor == delayPredictor then put buf w3 (fromIntegral delay) 12 else pure w3
+          w5 <- put buf w4 (if bestRice then 0 else 1) 1
+          let r = residuals bestPredictor delay y
+          if bestRice then putRice buf w5 bestK r else putRun buf w5 r
   bytes <- finish buf w
   S.force . S.take bytes <$> S.unsafeFreeze buf
   where
+    lpc = bestLpc (depth - lowZeros) y
     common = U.foldl' (\a v -> a .|. (fromIntegral v :: Word64)) 0 x
     lowZeros = countTrailingZeros common
     y = U.map (`unsafeShiftR` lowZeros) x
@@ -255,7 +361,7 @@ encodeBlock depth x = runST $ do
             (k, riceBits) = riceCost r
       , (bits, rice) <- [(header + 6 + riceBits, True), (header + runCost r, False)]
       ]
-    (_, bestPredictor, bestRice, bestK) = foldl1 (\a b -> if first4 b < first4 a then b else a) candidates
+    (bestBits, bestPredictor, bestRice, bestK) = foldl1 (\a b -> if first4 b < first4 a then b else a) candidates
     first4 (b, _, _, _) = b
 
 ---------------------------------------------------------------------------------------------------------------
@@ -366,11 +472,33 @@ untier r = go (U.take (last lens) r) (U.length r - sum gs) (reverse (init lens))
           | even i = anchor (i `quot` 2)
           | otherwise = let j = i `quot` 2 in U.unsafeIndex d j + (anchor j + following j) `quot` 2
 
+-- | An LPC block from its order field at bit P0: the coefficients, the ramp of the first samples, then the rest.
+decodeLpc :: S.Vector Word8 -> Int -> Int -> U.Vector Int
+decodeLpc v p0 n = U.create $ do
+  y <- UM.new n
+  forM_ [0 .. order - 1] $ \i -> do
+    s1 <- if i >= 1 then UM.unsafeRead y (i - 1) else pure 0
+    s2 <- if i >= 2 then UM.unsafeRead y (i - 2) else pure 0
+    UM.unsafeWrite y i (U.unsafeIndex warm i + fixedPrediction (\j -> if j == 1 then s1 else s2) (min rampOrder i))
+  forM_ [order .. n - 1] $ \i -> do
+    s <- foldM (\a j -> (\u -> a + U.unsafeIndex q (j - 1) * u) <$> UM.unsafeRead y (i - j)) 0 [1 .. order]
+    UM.unsafeWrite y i (U.unsafeIndex r (i - order) + s `shiftR` qshift)
+  pure y
+  where
+    order = fromIntegral (getBits v p0 5) + 1
+    precision = fromIntegral (getBits v (p0 + 5) 4) + 1
+    qshift = fromIntegral (getBits v (p0 + 9) 5)
+    q = U.generate order (\j -> signed (fromIntegral (getBits v (p0 + 14 + j * precision) precision)))
+    signed u = if u >= bit (precision - 1) then u - bit precision else u
+    (warm, pc) = getRiceR v (p0 + 14 + order * precision) order
+    r = fst ((if getBits v pc 1 == 0 then getRiceR else getRunR) v (pc + 1) (n - order))
+
 decodeBlock :: Int -> Int -> S.Vector Word8 -> U.Vector Int
 decodeBlock depth n v
   | getBits v 0 1 == 0 =
       let u = fromIntegral (getLong v 1 depth) :: Int
       in U.replicate n (if u >= bit (depth - 1) then u - bit depth else u)
+  | predictor == lpcPredictor = U.map (`unsafeShiftL` lowZeros) (decodeLpc v 9 n)
   | otherwise = U.map (`unsafeShiftL` lowZeros) (rebuild predictor delay r)
   where
     lowZeros = fromIntegral (getBits v 1 5)

@@ -35,10 +35,10 @@ awk -v order="$order" '
   }
   /blocks: constant/ && FILENAME ~ /codec_ada.txt$/ {
     split($0, cnt, /[^0-9]+/)
-    split("constant,order 0,order 1,order 2,order 3,order 4,delay,tiers", label, ",")
-    split("2,5,6,7,8,9,10,11", at, ",")
+    split("constant,order 0,order 1,order 2,order 3,order 4,delay,tiers,LPC", label, ",")
+    split("2,5,6,7,8,9,10,11,12", at, ",")
     picks = ""
-    for (i = 1; i <= 8; i++) if (cnt[at[i]] + 0 > 0) picks = picks (picks == "" ? "" : ", ") label[i] " " cnt[at[i]]
+    for (i = 1; i <= 9; i++) if (cnt[at[i]] + 0 > 0) picks = picks (picks == "" ? "" : ", ") label[i] " " cnt[at[i]]
     pick[file] = picks; next
   }
   /^  / && FILENAME ~ /\/ada.txt$/ { put("ada:" trim(substr($0, 3, 48)), $0, 48); next }

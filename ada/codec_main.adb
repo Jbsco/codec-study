@@ -131,7 +131,7 @@ begin
       Encoded : Ada.Real_Time.Time;
       Same : Boolean := True;
       Hash : Unsigned_64 := 14695981039346656037;
-      Kinds : array (0 .. 9) of Natural := [others => 0];
+      Kinds : array (0 .. 10) of Natural := [others => 0];
    begin
       if Input.Is_Float then
          for C in 1 .. Channels loop
@@ -175,9 +175,25 @@ begin
                      Kinds (1 + Natural (Field)) := Kinds (1 + Natural (Field)) + 1;
                      if Field = 5 then
                         Get (Stream.all, Kind_Pos, Field, 12);
+                     elsif Field = 7 then
+                        declare
+                           Order, Precision, K, Bit : Unsigned_64;
+                        begin
+                           Get (Stream.all, Kind_Pos, Order, 5);
+                           Get (Stream.all, Kind_Pos, Precision, 4);
+                           Kind_Pos := Kind_Pos + 5 + Natural (Order + 1) * Natural (Precision + 1);
+                           Get (Stream.all, Kind_Pos, K, 6);
+                           for Unused in 0 .. Order loop
+                              loop
+                                 Get (Stream.all, Kind_Pos, Bit, 1);
+                                 exit when Bit = 1;
+                              end loop;
+                              Kind_Pos := Kind_Pos + Natural (K);
+                           end loop;
+                        end;
                      end if;
                      Get (Stream.all, Kind_Pos, Field, 1);
-                     Kinds (8 + Natural (Field)) := Kinds (8 + Natural (Field)) + 1;
+                     Kinds (9 + Natural (Field)) := Kinds (9 + Natural (Field)) + 1;
                   end if;
                end;
                Length := Length + Bytes;
@@ -246,7 +262,8 @@ begin
       for K in 1 .. 5 loop
          Put (Kinds (K)'Image);
       end loop;
-      Put_Line (", delay" & Kinds (6)'Image & ", tiers" & Kinds (7)'Image & "; Rice" & Kinds (8)'Image & ", run-length" & Kinds (9)'Image
+      Put_Line (", delay" & Kinds (6)'Image & ", tiers" & Kinds (7)'Image & ", LPC" & Kinds (8)'Image & "; Rice" & Kinds (9)'Image
+                & ", run-length" & Kinds (10)'Image
                 & (if Input.Is_Float then "; float as " & (if Mode (1) = 1 then "integers / 2**" & Scale (1)'Image else "ordered bits") else ""));
    end;
 end Codec_Main;

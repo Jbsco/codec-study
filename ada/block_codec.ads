@@ -1,7 +1,8 @@
 --  One block of up to 4096 integer samples, coded on its own. A block holds a constant, or the residuals of one
 --  predictor after the low bits that every sample shares are removed: polynomial orders 0 to 4, the distance
---  back to an exact repeat, or tiers of pairs. The residuals take Rice codes or run-length Huffman codes, and
---  the encoder writes whichever combination is shortest.
+--  back to an exact repeat, tiers of pairs, or linear prediction of order 1 to 32 with quantized coefficients.
+--  The residuals take Rice codes or run-length Huffman codes, and the encoder writes whichever combination is
+--  shortest.
 with Bit_Streams; use Bit_Streams;
 
 package Block_Codec with SPARK_Mode is
