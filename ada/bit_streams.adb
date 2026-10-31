@@ -25,8 +25,8 @@ package body Bit_Streams with SPARK_Mode is
    begin
       Value := 0;
       for K in 1 .. Count loop
-         pragma Loop_Invariant (Pos = Pos'Loop_Entry + K - 1);
-         Value := Shift_Left (Value, 1) or Bit_At (Buffer, Pos);
+         pragma Loop_Invariant (Pos = Pos'Loop_Entry + K - 1 and then Value < 2**(K - 1));
+         Value := Value * 2 + Bit_At (Buffer, Pos);
          Pos := Pos + 1;
       end loop;
    end Get;

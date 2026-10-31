@@ -23,6 +23,6 @@ package Bit_Streams with SPARK_Mode is
    --  Read Count bits at Pos, most significant first.
    procedure Get (Buffer : Byte_Array; Pos : in out Natural; Value : out Unsigned_64; Count : Field_Width)
      with Pre => Valid_Buffer (Buffer) and then Pos <= Buffer'Length * 8 and then Count <= Buffer'Length * 8 - Pos,
-       Post => Pos = Pos'Old + Count;
+       Post => Pos = Pos'Old + Count and then (if Count < 64 then Value < 2**Count);
 
 end Bit_Streams;
