@@ -6,7 +6,7 @@ package body Block_Codec_FFI is
    function Encode (Samples : System.Address; Count : int; History : System.Address; History_Count, Depth : int;
                     Output : System.Address; Capacity : int) return int is
    begin
-      if Count not in 1 .. Max_Block or else History_Count not in 0 .. Max_History or else Depth not in 8 .. 32
+      if Count not in 1 .. Max_Block or else History_Count not in 0 .. Max_History or else Depth not in 8 .. 33
         or else Capacity < int (Bound (Positive (Count)))
       then
          return -1;
@@ -28,7 +28,7 @@ package body Block_Codec_FFI is
    function Decode (Input : System.Address; Length : int; History : System.Address; History_Count, Count, Depth : int;
                     Samples : System.Address) return int is
    begin
-      if Count not in 1 .. Max_Block or else History_Count not in 0 .. Max_History or else Depth not in 8 .. 32
+      if Count not in 1 .. Max_Block or else History_Count not in 0 .. Max_History or else Depth not in 8 .. 33
         or else Length not in 0 .. 2**24
       then
          return -1;

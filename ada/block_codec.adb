@@ -14,7 +14,7 @@ package body Block_Codec with SPARK_Mode is
    Match_Length : constant := 32;
    Longest_Code : constant := 31;
 
-   subtype Width_Bits is Positive range 1 .. 32;
+   subtype Width_Bits is Positive range 1 .. 33;
    subtype Sample is Long_Long_Integer range -(2**36) .. 2**36;
    type Sample_Buffer is array (Natural range <>) of Sample;
 
@@ -45,7 +45,7 @@ package body Block_Codec with SPARK_Mode is
 
    function Sign_Extend (U : Unsigned_64; Bits : Sample_Bits) return Long_Long_Integer is
      (if U >= Unsigned_64 (Half (Bits)) then Long_Long_Integer (U) - 2 * Half (Bits) else Long_Long_Integer (U))
-     with Pre => U < 2**32;
+     with Pre => U < 2**33;
 
    --  The order-K polynomial prediction of Y (I) from the K samples before it.
    function Fixed_Prediction (Y : Sample_Buffer; I, K : Natural) return Long_Long_Integer is

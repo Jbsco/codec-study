@@ -10,7 +10,7 @@ package Block_Codec with SPARK_Mode is
    Max_Block : constant := 4096;
    Max_History : constant := 16384;
    subtype Block_Length is Positive range 1 .. Max_Block;
-   subtype Sample_Bits is Positive range 8 .. 32;
+   subtype Sample_Bits is Positive range 8 .. 33;
    type Sample_Array is array (Natural range <>) of Long_Long_Integer;
    type Status_Type is (Success, Truncated_Input, Bad_Data);
 
