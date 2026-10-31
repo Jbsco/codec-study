@@ -1,0 +1,13 @@
+project Huffman_Audio is
+   for Source_Dirs use (".");
+   for Object_Dir use "obj";
+   for Main use ("audio_huffman.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-O2", "-gnat2022", "-gnata", "-gnatwa");
+   end Compiler;
+
+   package Prove is
+      for Proof_Switches ("Ada") use ("--level=2");
+   end Prove;
+end Huffman_Audio;
