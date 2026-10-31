@@ -1,120 +1,168 @@
 build/wav/depth_pink_24.wav
-  Block codec, Ada and SPARK                          21.00  round trip OK, hash dc60e5013aa10a67, encode  0.14 s, decode  0.02 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 108; Rice 108, run-length 0
+  Block codec, Ada and SPARK                          20.99  round trip OK, hash 36e97e12ea0218e7, encode  2.10 s, decode  0.03 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 57, LPC 51; Rice 73, run-length 35
+    frames per block: 4096 108, 2048 0, 1024 0, 512 0
 build/wav/depth_pink_32f.wav
-  Block codec, Ada and SPARK                          27.62  round trip OK, hash d689c0880614c4f3, encode  0.20 s, decode  0.03 s
-    blocks: constant 0, orders 0-4 0 108 0 0 0, delay 0, tiers 0; Rice 0, run-length 108; float as ordered bits
+  Block codec, Ada and SPARK                          27.62  round trip OK, hash 2374a49a866232a2, encode  2.20 s, decode  0.04 s
+    blocks: constant 0, orders 0-4 0 109 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 109; float as ordered bits
+    frames per block: 4096 107, 2048 2, 1024 0, 512 0
 build/wav/depth_pink_32.wav
-  Block codec, Ada and SPARK                          29.00  round trip OK, hash 89553fb9270803ec, encode  0.17 s, decode  0.03 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 108; Rice 108, run-length 0
+  Block codec, Ada and SPARK                          28.99  round trip OK, hash 62a46d955b6f8b70, encode  2.15 s, decode  0.04 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 57, LPC 51; Rice 74, run-length 34
+    frames per block: 4096 108, 2048 0, 1024 0, 512 0
 build/wav/depth_pink_8.wav
-  Block codec, Ada and SPARK                           5.00  round trip OK, hash 125d7f61d09b04a3, encode  0.09 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 108; Rice 108, run-length 0
+  Block codec, Ada and SPARK                           4.99  round trip OK, hash b4a3a4470d608b7c, encode  1.97 s, decode  0.02 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 58, LPC 50; Rice 62, run-length 46
+    frames per block: 4096 108, 2048 0, 1024 0, 512 0
 build/wav/depth_sine_12in16.wav
-  Block codec, Ada and SPARK                           1.08  round trip OK, hash 537bd834f4f815c7, encode  0.09 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 0 0 1 0, delay 107, tiers 0; Rice 0, run-length 108
+  Block codec, Ada and SPARK                           0.04  round trip OK, hash cf80d3742e3f2e9a, encode  1.84 s, decode  0.00 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 137, tiers 0, LPC 1; Rice 0, run-length 138
+    frames per block: 4096 81, 2048 52, 1024 3, 512 2
 build/wav/depth_sine_24.wav
-  Block codec, Ada and SPARK                           2.30  round trip OK, hash c37f61f1726f71e3, encode  0.11 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 108, tiers 0; Rice 0, run-length 108
+  Block codec, Ada and SPARK                           0.03  round trip OK, hash cb8d2f1664ef5371, encode  1.64 s, decode  0.00 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 109, tiers 0, LPC 1; Rice 0, run-length 110
+    frames per block: 4096 107, 2048 1, 1024 2, 512 0
 build/wav/depth_sine_32f.wav
-  Block codec, Ada and SPARK                           4.17  round trip OK, hash 846bcd9c4f1ab5e5, encode  0.14 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 0 0 0 7, delay 101, tiers 0; Rice 0, run-length 108; float as ordered bits
+  Block codec, Ada and SPARK                           0.33  round trip OK, hash 79029c9cebb6a821, encode  2.15 s, decode  0.00 s
+    blocks: constant 0, orders 0-4 0 0 0 0 1, delay 122, tiers 0, LPC 6; Rice 0, run-length 129; float as ordered bits
+    frames per block: 4096 101, 2048 7, 1024 7, 512 14
 build/wav/depth_sine_32.wav
-  Block codec, Ada and SPARK                           3.83  round trip OK, hash 517310626ccca3f0, encode  0.13 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 0 0 0 2, delay 106, tiers 0; Rice 0, run-length 108
+  Block codec, Ada and SPARK                           0.11  round trip OK, hash f6a267121bbc2ab1, encode  1.65 s, decode  0.00 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 114, tiers 0, LPC 1; Rice 1, run-length 114
+    frames per block: 4096 103, 2048 9, 1024 1, 512 2
 build/wav/depth_sine_8.wav
-  Block codec, Ada and SPARK                           0.56  round trip OK, hash 93ec66fff86fd748, encode  0.07 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 108, tiers 0; Rice 0, run-length 108
+  Block codec, Ada and SPARK                           0.02  round trip OK, hash 23e81ce3ce5c7e76, encode  1.64 s, decode  0.00 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 110, tiers 0, LPC 1; Rice 0, run-length 111
+    frames per block: 4096 107, 2048 1, 1024 1, 512 2
 build/wav/rate_pink_16000.wav
-  Block codec, Ada and SPARK                          13.00  round trip OK, hash 7bd6118815d06dc6, encode  0.04 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 40; Rice 40, run-length 0
+  Block codec, Ada and SPARK                          12.99  round trip OK, hash 0506d83bca25a073, encode  0.74 s, decode  0.01 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 16, LPC 24; Rice 21, run-length 19
+    frames per block: 4096 39, 2048 0, 1024 0, 512 1
 build/wav/rate_pink_192000.wav
-  Block codec, Ada and SPARK                          13.00  round trip OK, hash 85e5765199d781b8, encode  0.51 s, decode  0.08 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 469; Rice 469, run-length 0
+  Block codec, Ada and SPARK                          12.99  round trip OK, hash b92b89e6333a66b3, encode  8.90 s, decode  0.10 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 216, LPC 254; Rice 270, run-length 200
+    frames per block: 4096 468, 2048 2, 1024 0, 512 0
 build/wav/rate_pink_8000.wav
-  Block codec, Ada and SPARK                          13.00  round trip OK, hash 74f20430ff31ca1c, encode  0.02 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 20; Rice 20, run-length 0
+  Block codec, Ada and SPARK                          12.99  round trip OK, hash cf2f41da50c663e4, encode  0.37 s, decode  0.00 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 9, LPC 11; Rice 11, run-length 9
+    frames per block: 4096 20, 2048 0, 1024 0, 512 0
 build/wav/rate_pink_96000.wav
-  Block codec, Ada and SPARK                          13.00  round trip OK, hash 560917cbe09bde73, encode  0.25 s, decode  0.04 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 235; Rice 235, run-length 0
+  Block codec, Ada and SPARK                          12.99  round trip OK, hash e82683e3a2ffb067, encode  4.43 s, decode  0.05 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 118, LPC 118; Rice 146, run-length 90
+    frames per block: 4096 233, 2048 3, 1024 0, 512 0
 build/wav/rate_sine_16000.wav
-  Block codec, Ada and SPARK                           0.08  round trip OK, hash 4cac6835a822189d, encode  0.03 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 40, tiers 0; Rice 0, run-length 40
+  Block codec, Ada and SPARK                           0.02  round trip OK, hash b14d9c069d199f21, encode  0.60 s, decode  0.00 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 40, tiers 0, LPC 0; Rice 0, run-length 40
+    frames per block: 4096 39, 2048 0, 1024 0, 512 1
 build/wav/rate_sine_192000.wav
-  Block codec, Ada and SPARK                           0.54  round trip OK, hash f9e1e6ad5b5327fa, encode  0.35 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 469, tiers 0; Rice 0, run-length 469
+  Block codec, Ada and SPARK                           0.02  round trip OK, hash 6e7b1281691d249d, encode  7.70 s, decode  0.02 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 471, tiers 0, LPC 1; Rice 0, run-length 472
+    frames per block: 4096 468, 2048 1, 1024 1, 512 2
 build/wav/rate_sine_8000.wav
-  Block codec, Ada and SPARK                           0.05  round trip OK, hash 7f85360afee0057d, encode  0.02 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 20, tiers 0; Rice 0, run-length 20
+  Block codec, Ada and SPARK                           0.02  round trip OK, hash 306ea69a38c00da5, encode  0.29 s, decode  0.00 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 20, tiers 0, LPC 0; Rice 0, run-length 20
+    frames per block: 4096 20, 2048 0, 1024 0, 512 0
 build/wav/rate_sine_96000.wav
-  Block codec, Ada and SPARK                           0.31  round trip OK, hash 5bdb9dcf037c64d3, encode  0.19 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 235, tiers 0; Rice 0, run-length 235
+  Block codec, Ada and SPARK                           0.02  round trip OK, hash b79ff67b0faff9c3, encode  3.90 s, decode  0.01 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 235, tiers 0, LPC 0; Rice 0, run-length 235
+    frames per block: 4096 234, 2048 1, 1024 0, 512 0
 build/wav/rec_electronic.wav
-  Block codec, Ada and SPARK                          19.98  round trip OK, hash c3bc84c51c72cc2d, encode  0.62 s, decode  0.10 s
-    blocks: constant 0, orders 0-4 0 329 29 0 0, delay 0, tiers 74; Rice 128, run-length 304
+  Block codec, Ada and SPARK                          18.58  round trip OK, hash 014568368051263c, encode 16.88 s, decode  0.14 s
+    blocks: constant 0, orders 0-4 0 14 11 0 0, delay 0, tiers 2, LPC 671; Rice 496, run-length 202
+    frames per block: 4096 162, 2048 56, 1024 73, 512 58
+    stereo: left/right 0, left/side 57, side/right 20, mid/side 272
 build/wav/rec_orchestra_f32.wav
-  Block codec, Ada and SPARK                          14.35  round trip OK, hash 71591924628f580a, encode  0.59 s, decode  0.11 s
-    blocks: constant 0, orders 0-4 2 2 5 421 38, delay 0, tiers 2; Rice 354, run-length 116; float as integers / 2** 23
+  Block codec, Ada and SPARK                          13.85  round trip OK, hash f4d8f86333fefc4a, encode 17.86 s, decode  0.15 s
+    blocks: constant 0, orders 0-4 0 2 0 0 0, delay 0, tiers 0, LPC 524; Rice 502, run-length 24; float as integers / 2** 23
+    frames per block: 4096 212, 2048 41, 1024 6, 512 4
+    stereo: left/right 77, left/side 0, side/right 0, mid/side 186
 build/wav/rec_orchestra.wav
-  Block codec, Ada and SPARK                          14.35  round trip OK, hash e78b18e7739946b5, encode  0.55 s, decode  0.09 s
-    blocks: constant 0, orders 0-4 2 2 5 421 38, delay 0, tiers 2; Rice 354, run-length 116
+  Block codec, Ada and SPARK                          13.85  round trip OK, hash e9846bc9a2d1299d, encode 17.81 s, decode  0.12 s
+    blocks: constant 0, orders 0-4 0 2 0 0 0, delay 0, tiers 0, LPC 524; Rice 502, run-length 24
+    frames per block: 4096 212, 2048 41, 1024 6, 512 4
+    stereo: left/right 77, left/side 0, side/right 0, mid/side 186
 build/wav/rec_piano_96k.wav
-  Block codec, Ada and SPARK                           6.87  round trip OK, hash 5db9bf297336dbf1, encode  0.97 s, decode  0.13 s
-    blocks: constant 0, orders 0-4 0 0 811 127 0, delay 0, tiers 0; Rice 257, run-length 681
+  Block codec, Ada and SPARK                           6.33  round trip OK, hash 57db6af4857c645f, encode 35.25 s, decode  0.18 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 952; Rice 931, run-length 21
+    frames per block: 4096 464, 2048 8, 1024 4, 512 0
+    stereo: left/right 476, left/side 0, side/right 0, mid/side 0
 build/wav/rec_piano.wav
-  Block codec, Ada and SPARK                           4.26  round trip OK, hash 3b616dba439d3b9d, encode  0.37 s, decode  0.05 s
-    blocks: constant 0, orders 0-4 0 0 253 178 1, delay 0, tiers 0; Rice 261, run-length 171
+  Block codec, Ada and SPARK                           3.68  round trip OK, hash d1fd2f0da78445a9, encode 15.73 s, decode  0.07 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 454; Rice 195, run-length 259
+    frames per block: 4096 209, 2048 9, 1024 7, 512 2
+    stereo: left/right 227, left/side 0, side/right 0, mid/side 0
 build/wav/rec_room.wav
-  Block codec, Ada and SPARK                          13.96  round trip OK, hash 6730dda501ff3d5a, encode  0.53 s, decode  0.08 s
-    blocks: constant 0, orders 0-4 0 40 429 1 0, delay 0, tiers 0; Rice 418, run-length 52
+  Block codec, Ada and SPARK                          13.41  round trip OK, hash 1ee36a143595ae75, encode 17.97 s, decode  0.12 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 550; Rice 548, run-length 2
+    frames per block: 4096 208, 2048 42, 1024 19, 512 6
+    stereo: left/right 199, left/side 0, side/right 0, mid/side 76
 build/wav/rec_speech_16k.wav
-  Block codec, Ada and SPARK                          10.47  round trip OK, hash f74dbb9d1ae75633, encode  0.08 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 1 48 26 1, delay 0, tiers 3; Rice 52, run-length 27
+  Block codec, Ada and SPARK                           9.11  round trip OK, hash f9c8e794fbc6c430, encode  1.53 s, decode  0.02 s
+    blocks: constant 0, orders 0-4 0 1 0 0 0, delay 0, tiers 0, LPC 267; Rice 268, run-length 0
+    frames per block: 4096 13, 2048 56, 1024 98, 512 101
 build/wav/rec_speech_8k.wav
-  Block codec, Ada and SPARK                           3.88  round trip OK, hash ddc6a3fba9f6a835, encode  0.03 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 19 8 0 0, delay 0, tiers 13; Rice 7, run-length 33
+  Block codec, Ada and SPARK                           3.30  round trip OK, hash 53baef5be90ca7dc, encode  0.69 s, decode  0.01 s
+    blocks: constant 0, orders 0-4 2 43 4 0 0, delay 0, tiers 6, LPC 145; Rice 191, run-length 9
+    frames per block: 4096 3, 2048 13, 1024 53, 512 131
 build/wav/rec_speech.wav
-  Block codec, Ada and SPARK                          16.33  round trip OK, hash 5de6d1da12b8d4bd, encode  0.57 s, decode  0.09 s
-    blocks: constant 0, orders 0-4 0 61 290 113 2, delay 0, tiers 4; Rice 403, run-length 67
+  Block codec, Ada and SPARK                          15.57  round trip OK, hash 7248d42e5ed3b75a, encode 18.51 s, decode  0.14 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 638; Rice 611, run-length 27
+    frames per block: 4096 176, 2048 94, 1024 43, 512 6
+    stereo: left/right 5, left/side 0, side/right 0, mid/side 314
 build/wav/rec_vinyl_192k.wav
-  Block codec, Ada and SPARK                           9.10  round trip OK, hash 7f1a06dd696251fa, encode  2.26 s, decode  0.31 s
-    blocks: constant 0, orders 0-4 0 0 0 0 1876, delay 0, tiers 0; Rice 32, run-length 1844
+  Block codec, Ada and SPARK                           5.80  round trip OK, hash c2fed228894cb4a2, encode 74.68 s, decode  0.43 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 1876; Rice 1832, run-length 44
+    frames per block: 4096 937, 2048 1, 1024 0, 512 0
+    stereo: left/right 791, left/side 0, side/right 0, mid/side 147
 build/wav/signal_brown.wav
-  Block codec, Ada and SPARK                          11.51  round trip OK, hash bc7dfd7022a343b2, encode  0.27 s, decode  0.04 s
-    blocks: constant 0, orders 0-4 0 216 0 0 0, delay 0, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                          11.50  round trip OK, hash a4084b77a52d638f, encode  4.12 s, decode  0.05 s
+    blocks: constant 0, orders 0-4 0 54 0 0 0, delay 0, tiers 0, LPC 162; Rice 0, run-length 216
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
 build/wav/signal_chord.wav
-  Block codec, Ada and SPARK                           2.67  round trip OK, hash 5f956bae4d418532, encode  0.20 s, decode  0.02 s
-    blocks: constant 0, orders 0-4 0 0 0 216 0, delay 0, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                           1.77  round trip OK, hash a53a886381614713, encode  3.82 s, decode  0.03 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 216; Rice 0, run-length 216
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
 build/wav/signal_dither.wav
-  Block codec, Ada and SPARK                           1.75  round trip OK, hash d365c7fcd4e5f7f6, encode  0.16 s, decode  0.02 s
-    blocks: constant 0, orders 0-4 216 0 0 0 0, delay 0, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                           1.75  round trip OK, hash 02fa7d79aaba5d1a, encode  3.77 s, decode  0.02 s
+    blocks: constant 0, orders 0-4 216 0 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 216
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
 build/wav/signal_fm.wav
-  Block codec, Ada and SPARK                           3.54  round trip OK, hash fa915753446548c7, encode  0.21 s, decode  0.02 s
-    blocks: constant 0, orders 0-4 0 0 0 0 216, delay 0, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                           0.03  round trip OK, hash cd2c7600773f089a, encode  3.90 s, decode  0.01 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 217, tiers 0, LPC 2; Rice 1, run-length 218
+    frames per block: 4096 214, 2048 2, 1024 1, 512 2
 build/wav/signal_impulses.wav
-  Block codec, Ada and SPARK                           0.04  round trip OK, hash 5749ebf9a2624c47, encode  0.02 s, decode  0.00 s
-    blocks: constant 16, orders 0-4 42 0 0 0 0, delay 0, tiers 158; Rice 0, run-length 200
+  Block codec, Ada and SPARK                           0.03  round trip OK, hash e2f4421ac07a2c45, encode  0.20 s, decode  0.01 s
+    blocks: constant 75, orders 0-4 57 0 0 0 0, delay 6, tiers 137, LPC 0; Rice 0, run-length 200
+    frames per block: 4096 161, 2048 105, 1024 7, 512 2
 build/wav/signal_pink.wav
-  Block codec, Ada and SPARK                          13.00  round trip OK, hash 744d14c8027aa8c7, encode  0.23 s, decode  0.04 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 216; Rice 216, run-length 0
+  Block codec, Ada and SPARK                          12.99  round trip OK, hash bac66c5781dc8512, encode  4.09 s, decode  0.05 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 111, LPC 105; Rice 137, run-length 79
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
 build/wav/signal_sawtooth.wav
-  Block codec, Ada and SPARK                           1.23  round trip OK, hash 1ead4dc3d5a70fd1, encode  0.14 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 0 6 0 0, delay 210, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                           0.02  round trip OK, hash fb6ad6148c4dd036, encode  3.52 s, decode  0.01 s
+    blocks: constant 0, orders 0-4 0 0 1 0 0, delay 222, tiers 0, LPC 0; Rice 0, run-length 223
+    frames per block: 4096 210, 2048 10, 1024 1, 512 2
 build/wav/signal_silence.wav
-  Block codec, Ada and SPARK                           0.01  round trip OK, hash e1b4e8c6664a97fe, encode  0.00 s, decode  0.00 s
-    blocks: constant 216, orders 0-4 0 0 0 0 0, delay 0, tiers 0; Rice 0, run-length 0
+  Block codec, Ada and SPARK                           0.01  round trip OK, hash 114bc902191dc40a, encode  0.03 s, decode  0.01 s
+    blocks: constant 216, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 0
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
 build/wav/signal_sine.wav
-  Block codec, Ada and SPARK                           1.43  round trip OK, hash 372849604c869489, encode  0.19 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 216, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                           0.02  round trip OK, hash f53e0942ba4439b4, encode  3.79 s, decode  0.01 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 218, tiers 0, LPC 1; Rice 0, run-length 219
+    frames per block: 4096 214, 2048 2, 1024 1, 512 2
 build/wav/signal_square.wav
-  Block codec, Ada and SPARK                           0.14  round trip OK, hash 4f1820ad0844814d, encode  0.06 s, decode  0.00 s
-    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 216, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                           0.11  round trip OK, hash fcab3db734fa2195, encode  2.91 s, decode  0.01 s
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 221, tiers 0, LPC 0; Rice 0, run-length 221
+    frames per block: 4096 210, 2048 11, 1024 0, 512 0
 build/wav/signal_sweep.wav
-  Block codec, Ada and SPARK                           6.58  round trip OK, hash bb4f4afd0e38add8, encode  0.22 s, decode  0.03 s
-    blocks: constant 0, orders 0-4 31 2 39 57 86, delay 0, tiers 1; Rice 0, run-length 216
+  Block codec, Ada and SPARK                           1.87  round trip OK, hash 9e7ac3b3b0265398, encode  3.89 s, decode  0.03 s
+    blocks: constant 0, orders 0-4 0 0 11 0 0, delay 0, tiers 0, LPC 226; Rice 0, run-length 237
+    frames per block: 4096 195, 2048 40, 1024 2, 512 0
 build/wav/signal_triangle.wav
-  Block codec, Ada and SPARK                           1.32  round trip OK, hash 1df63c19bf656898, encode  0.14 s, decode  0.01 s
-    blocks: constant 0, orders 0-4 0 0 1 0 0, delay 215, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                           0.02  round trip OK, hash b644b05fba501304, encode  4.04 s, decode  0.01 s
+    blocks: constant 0, orders 0-4 0 0 1 0 0, delay 218, tiers 0, LPC 0; Rice 0, run-length 219
+    frames per block: 4096 214, 2048 2, 1024 1, 512 2
 build/wav/signal_white.wav
-  Block codec, Ada and SPARK                          15.03  round trip OK, hash 42589807ae6f270d, encode  0.29 s, decode  0.05 s
-    blocks: constant 0, orders 0-4 216 0 0 0 0, delay 0, tiers 0; Rice 0, run-length 216
+  Block codec, Ada and SPARK                          15.03  round trip OK, hash 9c7cc645bb00b191, encode  4.36 s, decode  0.05 s
+    blocks: constant 0, orders 0-4 216 0 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 216
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0

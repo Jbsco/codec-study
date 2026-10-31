@@ -3,43 +3,43 @@
 | signal_silence | 16 44.1k mono | 0.00 (`bzip2 -9`) | 0.02 (`wavpack -f`) | 1.00 | 1.00 | 1.00 | 0.01 | constant 216 |
 | signal_dither | 16 44.1k mono | 1.83 (`xz -9e`) | 2.11 (`flac -5`) | 2.35 | 2.12 | 2.01 | 1.75 | order 0 216 |
 | signal_white | 16 44.1k mono | 15.38 (`brotli -q 11`) | 15.21 (`wavpack -hh -x4`) | 15.97 | 16.16 | 15.50 | 15.03 | order 0 216 |
-| signal_pink | 16 44.1k mono | 13.28 (`brotli -q 11`) | 12.84 (`wavpack -hh -x4`) | 13.62 | 13.03 | 13.08 | 13.00 | tiers 216 |
-| signal_brown | 16 44.1k mono | 12.29 (`bzip2 -9`) | 11.35 (`wavpack -hh -x4`) | 12.99 | 11.52 | 11.64 | 11.51 | order 1 216 |
-| signal_sine | 16 44.1k mono | 0.01 (`xz -6`) | 3.54 (`flac -5`) | 11.79 | 8.33 | 4.70 | 1.43 | delay 216 |
-| signal_square | 16 44.1k mono | 0.00 (`bzip2 -9`) | 0.89 (`wavpack -f`) | 1.37 | 1.23 | 13.43 | 0.14 | delay 216 |
-| signal_triangle | 16 44.1k mono | 0.01 (`xz -6`) | 5.53 (`wavpack -hh -x4`) | 7.32 | 3.11 | 10.01 | 1.32 | order 2 1, delay 215 |
-| signal_sawtooth | 16 44.1k mono | 0.01 (`xz -6`) | 7.53 (`wavpack -f`) | 5.37 | 1.47 | 12.71 | 1.23 | order 2 6, delay 210 |
-| signal_impulses | 16 44.1k mono | 0.00 (`bzip2 -9`) | 0.03 (`wavpack -f`) | 1.00 | 1.00 | 4.72 | 0.04 | constant 16, order 0 42, tiers 158 |
-| signal_sweep | 16 44.1k mono | 12.11 (`xz -6`) | 3.50 (`flac -8`) | 15.37 | 11.76 | 6.78 | 6.58 | order 0 31, order 1 2, order 2 39, order 3 57, order 4 86, tiers 1 |
-| signal_fm | 16 44.1k mono | 0.07 (`brotli -q 11`) | 3.19 (`flac -8`) | 13.70 | 8.11 | 3.57 | 3.54 | order 4 216 |
-| signal_chord | 16 44.1k mono | 12.01 (`bzip2 -9`) | 2.82 (`flac -5`) | 13.45 | 6.56 | 2.71 | 2.67 | order 3 216 |
-| rate_sine_8000 | 16 8k mono | 0.01 (`zstd -3`) | 0.03 (`wavpack -hh -x4`) | 2.19 | 1.25 | 14.00 | 0.05 | delay 20 |
-| rate_sine_16000 | 16 16k mono | 0.00 (`brotli -q 11`) | 0.04 (`wavpack -hh -x4`) | 3.00 | 1.75 | 10.50 | 0.08 | delay 40 |
-| rate_sine_96000 | 16 96k mono | 0.00 (`zstd -3`) | 3.46 (`flac -5`) | 6.02 | 3.81 | 3.36 | 0.31 | delay 235 |
-| rate_sine_192000 | 16 192k mono | 0.00 (`xz -6`) | 2.32 (`flac -5`) | 7.34 | 3.98 | 2.25 | 0.54 | delay 469 |
-| rate_pink_8000 | 16 8k mono | 13.40 (`brotli -q 11`) | 12.83 (`wavpack -hh -x4`) | 14.01 | 13.59 | 13.08 | 13.00 | tiers 20 |
-| rate_pink_16000 | 16 16k mono | 13.35 (`brotli -q 11`) | 12.83 (`wavpack -hh -x4`) | 13.81 | 13.35 | 13.08 | 13.00 | tiers 40 |
-| rate_pink_96000 | 16 96k mono | 13.29 (`brotli -q 11`) | 12.82 (`wavpack -hh -x4`) | 13.61 | 13.02 | 13.08 | 13.00 | tiers 235 |
-| rate_pink_192000 | 16 192k mono | 13.28 (`brotli -q 11`) | 12.82 (`wavpack -hh -x4`) | 13.58 | 12.95 | 13.08 | 13.00 | tiers 469 |
-| depth_sine_8 | 8 44.1k mono | 0.01 (`xz -6`) | 1.94 (`ffmpeg tta`) | 7.67 | 3.09 | 2.42 | 0.56 | delay 108 |
-| depth_sine_12in16 | 16 44.1k mono | 0.02 (`xz -6`) | 2.47 (`flac -5`) | 11.08 | 6.65 | 7.61 | 1.08 | order 3 1, delay 107 |
-| depth_sine_24 | 24 44.1k mono | 0.03 (`xz -6`) | 7.60 (`wavpack -hh -x4`) | 12.21 | 9.12 | 12.60 | 2.30 | delay 108 |
-| depth_sine_32 | 32 44.1k mono | 0.05 (`xz -6`) | 14.53 (`wavpack -hh -x4`) | 12.54 | 9.31 | 20.60 | 3.83 | order 4 2, delay 106 |
-| depth_sine_32f | 32 f 44.1k mono | 0.11 (`xz -6`) | 9.44 (`wavpack -hh -x4`) | 12.50 | 9.48 | 29.36 | 4.17 | order 4 7, delay 101 |
-| depth_pink_8 | 8 44.1k mono | 4.98 (`bzip2 -9`) | 4.85 (`wavpack -hh -x4`) | 5.54 | 4.86 | 5.09 | 5.00 | tiers 108 |
-| depth_pink_24 | 24 44.1k mono | 22.29 (`brotli -q 11`) | 20.84 (`wavpack -hh -x4`) | 24.12 | 24.11 | 21.08 | 21.00 | tiers 108 |
-| depth_pink_32 | 32 44.1k mono | 31.06 (`brotli -q 11`) | 28.85 (`wavpack -hh -x4`) | 39.06 | 39.32 | 29.08 | 29.00 | tiers 108 |
-| depth_pink_32f | 32 f 44.1k mono | 28.88 (`brotli -q 11`) | 25.63 (`wavpack -hh -x4`) | 34.30 | 36.01 | 31.49 | 27.62 | order 1 108 |
-| rec_speech_8k | 8 8k mono | 3.96 (`bzip2 -9`) | 3.29 (`ffmpeg tta`) | 5.55 | 4.00 | 4.02 | 3.88 | order 1 19, order 2 8, tiers 13 |
-| rec_speech_16k | 16 16k mono | 11.87 (`brotli -q 11`) | 9.03 (`wavpack -hh -x4`) | 13.39 | 11.10 | 10.50 | 10.47 | order 1 1, order 2 48, order 3 26, order 4 1, tiers 3 |
-| rec_speech | 24 48k stereo | 19.92 (`brotli -q 11`) | 15.52 (`wavpack -hh -x4`) | 22.16 | 18.10 | 16.31 | 16.33 | order 1 61, order 2 290, order 3 113, order 4 2, tiers 4 |
-| rec_piano | 24 44.1k stereo | 9.11 (`xz -9e`) | 3.79 (`flac -8`) | 10.85 | 6.88 | 12.22 | 4.26 | order 2 253, order 3 178, order 4 1 |
-| rec_piano_96k | 24 96k stereo | 13.96 (`xz -6`) | 6.32 (`wavpack -hh -x4`) | 14.07 | 9.03 | 12.82 | 6.87 | order 2 811, order 3 127 |
-| rec_orchestra | 24 48k stereo | 19.95 (`brotli -q 11`) | 13.81 (`wavpack -hh -x4`) | 21.27 | 17.07 | 14.32 | 14.35 | order 0 2, order 1 2, order 2 5, order 3 421, order 4 38, tiers 2 |
-| rec_orchestra_f32 | 32 f 48k stereo | 21.11 (`xz -6`) | 13.81 (`wavpack -hh -x4`) | 31.98 | 28.13 | 29.04 | 14.35 | order 0 2, order 1 2, order 2 5, order 3 421, order 4 38, tiers 2 |
-| rec_electronic | 24 44.1k stereo | 23.18 (`brotli -q 11`) | 18.60 (`wavpack -hh -x4`) | 23.75 | 22.75 | 20.10 | 19.98 | order 1 329, order 2 29, tiers 74 |
-| rec_room | 24 48k stereo | 17.54 (`xz -6`) | 13.37 (`wavpack -hh -x4`) | 16.93 | 14.63 | 13.95 | 13.96 | order 1 40, order 2 429, order 3 1 |
-| rec_vinyl_192k | 24 192k stereo | 18.30 (`xz -6`) | 6.24 (`wavpack -hh -x4`) | 17.96 | 12.36 | 9.04 | 9.10 | order 4 1876 |
+| signal_pink | 16 44.1k mono | 13.28 (`brotli -q 11`) | 12.84 (`wavpack -hh -x4`) | 13.62 | 13.03 | 13.08 | 12.99 | tiers 111, LPC 105 |
+| signal_brown | 16 44.1k mono | 12.29 (`bzip2 -9`) | 11.35 (`wavpack -hh -x4`) | 12.99 | 11.52 | 11.64 | 11.50 | order 1 54, LPC 162 |
+| signal_sine | 16 44.1k mono | 0.01 (`xz -6`) | 3.54 (`flac -5`) | 11.79 | 8.33 | 4.70 | 0.02 | delay 218, LPC 1 |
+| signal_square | 16 44.1k mono | 0.00 (`bzip2 -9`) | 0.89 (`wavpack -f`) | 1.37 | 1.23 | 13.43 | 0.11 | delay 221 |
+| signal_triangle | 16 44.1k mono | 0.01 (`xz -6`) | 5.53 (`wavpack -hh -x4`) | 7.32 | 3.11 | 10.01 | 0.02 | order 2 1, delay 218 |
+| signal_sawtooth | 16 44.1k mono | 0.01 (`xz -6`) | 7.53 (`wavpack -f`) | 5.37 | 1.47 | 12.71 | 0.02 | order 2 1, delay 222 |
+| signal_impulses | 16 44.1k mono | 0.00 (`bzip2 -9`) | 0.03 (`wavpack -f`) | 1.00 | 1.00 | 4.72 | 0.03 | constant 75, order 0 57, delay 6, tiers 137 |
+| signal_sweep | 16 44.1k mono | 12.11 (`xz -6`) | 3.50 (`flac -8`) | 15.37 | 11.76 | 6.78 | 1.87 | order 2 11, LPC 226 |
+| signal_fm | 16 44.1k mono | 0.07 (`brotli -q 11`) | 3.19 (`flac -8`) | 13.70 | 8.11 | 3.57 | 0.03 | delay 217, LPC 2 |
+| signal_chord | 16 44.1k mono | 12.01 (`bzip2 -9`) | 2.82 (`flac -5`) | 13.45 | 6.56 | 2.71 | 1.77 | LPC 216 |
+| rate_sine_8000 | 16 8k mono | 0.01 (`zstd -3`) | 0.03 (`wavpack -hh -x4`) | 2.19 | 1.25 | 14.00 | 0.02 | delay 20 |
+| rate_sine_16000 | 16 16k mono | 0.00 (`brotli -q 11`) | 0.04 (`wavpack -hh -x4`) | 3.00 | 1.75 | 10.50 | 0.02 | delay 40 |
+| rate_sine_96000 | 16 96k mono | 0.00 (`zstd -3`) | 3.46 (`flac -5`) | 6.02 | 3.81 | 3.36 | 0.02 | delay 235 |
+| rate_sine_192000 | 16 192k mono | 0.00 (`xz -6`) | 2.32 (`flac -5`) | 7.34 | 3.98 | 2.25 | 0.02 | delay 471, LPC 1 |
+| rate_pink_8000 | 16 8k mono | 13.40 (`brotli -q 11`) | 12.83 (`wavpack -hh -x4`) | 14.01 | 13.59 | 13.08 | 12.99 | tiers 9, LPC 11 |
+| rate_pink_16000 | 16 16k mono | 13.35 (`brotli -q 11`) | 12.83 (`wavpack -hh -x4`) | 13.81 | 13.35 | 13.08 | 12.99 | tiers 16, LPC 24 |
+| rate_pink_96000 | 16 96k mono | 13.29 (`brotli -q 11`) | 12.82 (`wavpack -hh -x4`) | 13.61 | 13.02 | 13.08 | 12.99 | tiers 118, LPC 118 |
+| rate_pink_192000 | 16 192k mono | 13.28 (`brotli -q 11`) | 12.82 (`wavpack -hh -x4`) | 13.58 | 12.95 | 13.08 | 12.99 | tiers 216, LPC 254 |
+| depth_sine_8 | 8 44.1k mono | 0.01 (`xz -6`) | 1.94 (`ffmpeg tta`) | 7.67 | 3.09 | 2.42 | 0.02 | delay 110, LPC 1 |
+| depth_sine_12in16 | 16 44.1k mono | 0.02 (`xz -6`) | 2.47 (`flac -5`) | 11.08 | 6.65 | 7.61 | 0.04 | delay 137, LPC 1 |
+| depth_sine_24 | 24 44.1k mono | 0.03 (`xz -6`) | 7.60 (`wavpack -hh -x4`) | 12.21 | 9.12 | 12.60 | 0.03 | delay 109, LPC 1 |
+| depth_sine_32 | 32 44.1k mono | 0.05 (`xz -6`) | 14.53 (`wavpack -hh -x4`) | 12.54 | 9.31 | 20.60 | 0.11 | delay 114, LPC 1 |
+| depth_sine_32f | 32 f 44.1k mono | 0.11 (`xz -6`) | 9.44 (`wavpack -hh -x4`) | 12.50 | 9.48 | 29.36 | 0.33 | order 4 1, delay 122, LPC 6 |
+| depth_pink_8 | 8 44.1k mono | 4.98 (`bzip2 -9`) | 4.85 (`wavpack -hh -x4`) | 5.54 | 4.86 | 5.09 | 4.99 | tiers 58, LPC 50 |
+| depth_pink_24 | 24 44.1k mono | 22.29 (`brotli -q 11`) | 20.84 (`wavpack -hh -x4`) | 24.12 | 24.11 | 21.08 | 20.99 | tiers 57, LPC 51 |
+| depth_pink_32 | 32 44.1k mono | 31.06 (`brotli -q 11`) | 28.85 (`wavpack -hh -x4`) | 39.06 | 39.32 | 29.08 | 28.99 | tiers 57, LPC 51 |
+| depth_pink_32f | 32 f 44.1k mono | 28.88 (`brotli -q 11`) | 25.63 (`wavpack -hh -x4`) | 34.30 | 36.01 | 31.49 | 27.62 | order 1 109 |
+| rec_speech_8k | 8 8k mono | 3.96 (`bzip2 -9`) | 3.29 (`ffmpeg tta`) | 5.55 | 4.00 | 4.02 | 3.30 | order 0 2, order 1 43, order 2 4, tiers 6, LPC 145 |
+| rec_speech_16k | 16 16k mono | 11.87 (`brotli -q 11`) | 9.03 (`wavpack -hh -x4`) | 13.39 | 11.10 | 10.50 | 9.11 | order 1 1, LPC 267 |
+| rec_speech | 24 48k stereo | 19.92 (`brotli -q 11`) | 15.52 (`wavpack -hh -x4`) | 22.16 | 18.10 | 16.31 | 15.57 | LPC 638 |
+| rec_piano | 24 44.1k stereo | 9.11 (`xz -9e`) | 3.79 (`flac -8`) | 10.85 | 6.88 | 12.22 | 3.68 | LPC 454 |
+| rec_piano_96k | 24 96k stereo | 13.96 (`xz -6`) | 6.32 (`wavpack -hh -x4`) | 14.07 | 9.03 | 12.82 | 6.33 | LPC 952 |
+| rec_orchestra | 24 48k stereo | 19.95 (`brotli -q 11`) | 13.81 (`wavpack -hh -x4`) | 21.27 | 17.07 | 14.32 | 13.85 | order 1 2, LPC 524 |
+| rec_orchestra_f32 | 32 f 48k stereo | 21.11 (`xz -6`) | 13.81 (`wavpack -hh -x4`) | 31.98 | 28.13 | 29.04 | 13.85 | order 1 2, LPC 524 |
+| rec_electronic | 24 44.1k stereo | 23.18 (`brotli -q 11`) | 18.60 (`wavpack -hh -x4`) | 23.75 | 22.75 | 20.10 | 18.58 | order 1 14, order 2 11, tiers 2, LPC 671 |
+| rec_room | 24 48k stereo | 17.54 (`xz -6`) | 13.37 (`wavpack -hh -x4`) | 16.93 | 14.63 | 13.95 | 13.41 | LPC 550 |
+| rec_vinyl_192k | 24 192k stereo | 18.30 (`xz -6`) | 6.24 (`wavpack -hh -x4`) | 17.96 | 12.36 | 9.04 | 5.80 | LPC 1876 |
 
 | Method | signal_silence | signal_dither | signal_white | signal_pink | signal_brown | signal_sine | signal_square | signal_triangle | signal_sawtooth | signal_impulses | signal_sweep | signal_fm | signal_chord | rate_sine_8000 | rate_sine_16000 | rate_sine_96000 | rate_sine_192000 | rate_pink_8000 | rate_pink_16000 | rate_pink_96000 | rate_pink_192000 | depth_sine_8 | depth_sine_12in16 | depth_sine_24 | depth_sine_32 | depth_sine_32f | depth_pink_8 | depth_pink_24 | depth_pink_32 | depth_pink_32f | rec_speech_8k | rec_speech_16k | rec_speech | rec_piano | rec_piano_96k | rec_orchestra | rec_orchestra_f32 | rec_electronic | rec_room | rec_vinyl_192k |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -53,7 +53,7 @@
 | ada:Fixed predictor, Huffman, one table | 1.00 | 2.01 | 15.06 | 12.94 | 11.24 | 4.39 | 1.07 | 1.87 | 1.08 | 1.00 | 8.28 | 3.39 | 2.55 | 2.38 | 3.19 | 2.88 | 2.19 | 13.11 | 13.00 | 12.94 | 12.93 | 2.36 | 3.43 | 8.72 | 8.90 | 8.05 | 4.94 | 22.94 | 37.42 | 32.95 | 4.05 | 10.73 | 16.63 | 4.23 | 6.77 | 14.92 | 24.05 | 21.82 | 14.20 | 9.10 |
 | ada:Fixed predictor, bit-length Huffman per block | 1.00 | 2.02 | 15.02 | 13.05 | 11.49 | 4.58 | 1.75 | 2.57 | 11.14 | 1.02 | 6.63 | 3.50 | 2.86 | 10.78 | 9.02 | 3.38 | 2.26 | 13.04 | 13.05 | 13.05 | 13.05 | 2.42 | 7.04 | 12.01 | 20.00 | 24.65 | 5.06 | 21.06 | 29.07 | 27.62 | 3.98 | 10.49 | 16.35 | 11.52 | 12.75 | 14.35 | 24.37 | 19.99 | 13.98 | 9.06 |
 | ada:Fixed predictor, Rice per block | 1.00 | 2.01 | 15.50 | 13.08 | 11.64 | 4.70 | 13.43 | 10.01 | 12.71 | 4.72 | 6.78 | 3.57 | 2.71 | 14.00 | 10.50 | 3.36 | 2.25 | 13.08 | 13.08 | 13.08 | 13.08 | 2.42 | 7.61 | 12.60 | 20.60 | 29.36 | 5.09 | 21.08 | 29.08 | 31.49 | 4.02 | 10.50 | 16.31 | 12.22 | 12.82 | 14.32 | 29.04 | 20.10 | 13.95 | 9.04 |
-| block | 0.01 | 1.75 | 15.03 | 13.00 | 11.51 | 1.43 | 0.14 | 1.32 | 1.23 | 0.04 | 6.58 | 3.54 | 2.67 | 0.05 | 0.08 | 0.31 | 0.54 | 13.00 | 13.00 | 13.00 | 13.00 | 0.56 | 1.08 | 2.30 | 3.83 | 4.17 | 5.00 | 21.00 | 29.00 | 27.62 | 3.88 | 10.47 | 16.33 | 4.26 | 6.87 | 14.35 | 14.35 | 19.98 | 13.96 | 9.10 |
+| block | 0.01 | 1.75 | 15.03 | 12.99 | 11.50 | 0.02 | 0.11 | 0.02 | 0.02 | 0.03 | 1.87 | 0.03 | 1.77 | 0.02 | 0.02 | 0.02 | 0.02 | 12.99 | 12.99 | 12.99 | 12.99 | 0.02 | 0.04 | 0.03 | 0.11 | 0.33 | 4.99 | 20.99 | 28.99 | 27.62 | 3.30 | 9.11 | 15.57 | 3.68 | 6.33 | 13.85 | 13.85 | 18.58 | 13.41 | 5.80 |
 | hs:Fixed predictor, Rice per block | 1.01 | 2.02 | 15.51 | 13.09 | 11.65 | 4.71 | 13.44 | 10.02 | 12.71 | 4.73 | 6.80 | 3.59 | 2.73 | 14.01 | 10.52 | 3.38 | 2.27 | 13.09 | 13.09 | 13.09 | 13.09 | 2.43 | 7.62 | 12.62 | 20.62 | 29.37 | 5.10 | 21.09 | 29.09 | 31.50 | 4.03 | 10.51 | 16.33 | 12.24 | 12.83 | 14.34 | 29.05 | 20.11 | 13.96 | 9.06 |
 | hs:Fixed predictor, bit-length Huffman per block | 1.01 | 2.02 | 15.03 | 13.06 | 11.50 | 4.60 | 1.76 | 2.58 | 11.14 | 1.03 | 6.64 | 3.52 | 2.87 | 10.78 | 9.03 | 3.40 | 2.27 | 13.05 | 13.06 | 13.06 | 13.06 | 2.43 | 7.05 | 12.03 | 20.02 | 24.66 | 5.07 | 21.07 | 29.08 | 27.63 | 3.99 | 10.50 | 16.36 | 11.53 | 12.77 | 14.37 | 24.38 | 20.00 | 14.00 | 9.09 |
 | hs:Fixed predictor, shorter of the two per block | 1.01 | 2.02 | 15.03 | 13.06 | 11.50 | 4.60 | 1.76 | 2.58 | 11.14 | 1.03 | 6.59 | 3.52 | 2.73 | 10.78 | 9.03 | 3.38 | 2.27 | 13.05 | 13.06 | 13.06 | 13.06 | 2.43 | 7.05 | 12.03 | 20.02 | 24.66 | 5.07 | 21.07 | 29.08 | 27.63 | 3.95 | 10.47 | 16.33 | 11.53 | 12.77 | 14.34 | 24.38 | 19.99 | 13.96 | 9.06 |
