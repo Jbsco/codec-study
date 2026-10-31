@@ -1,11 +1,11 @@
-Ada and SPARK, 1 thread: encode 260.02 s, decode   2.34 s
-Haskell, 1 capabilities: encode 334.13 s, decode   2.10 s, all 40 streams equal to Ada's
-Haskell + SPARK, 1 capabilities: encode 248.67 s, decode   1.72 s, all 40 streams equal to Ada's
-Haskell, 2 capabilities: encode 169.24 s, decode   1.77 s, all 40 streams equal to Ada's
-Haskell + SPARK, 2 capabilities: encode 130.94 s, decode   1.15 s, all 40 streams equal to Ada's
-Haskell, 4 capabilities: encode  97.54 s, decode   0.91 s, all 40 streams equal to Ada's
-Haskell + SPARK, 4 capabilities: encode  74.43 s, decode   0.96 s, all 40 streams equal to Ada's
-Haskell, 8 capabilities: encode  63.98 s, decode   0.68 s, all 40 streams equal to Ada's
-Haskell + SPARK, 8 capabilities: encode  54.55 s, decode   0.73 s, all 40 streams equal to Ada's
-Haskell, 16 capabilities: encode  57.30 s, decode   0.68 s, all 40 streams equal to Ada's
-Haskell + SPARK, 16 capabilities: encode  49.95 s, decode   0.75 s, all 40 streams equal to Ada's
+Ada and SPARK, 1 thread: encode 167.90 s, decode   2.35 s
+Haskell, 1 capabilities: encode 237.92 s, decode   1.91 s, all 40 streams equal to Ada's
+Haskell + SPARK, 1 capabilities: encode 160.24 s, decode   1.69 s, all 40 streams equal to Ada's
+Haskell, 2 capabilities: encode 137.89 s, decode   1.79 s, all 40 streams equal to Ada's
+Haskell + SPARK, 2 capabilities: encode  84.60 s, decode   1.13 s, all 40 streams equal to Ada's
+Haskell, 4 capabilities: encode  64.79 s, decode   0.84 s, all 40 streams equal to Ada's
+Haskell + SPARK, 4 capabilities: encode  56.16 s, decode   0.97 s, all 40 streams equal to Ada's
+Haskell, 8 capabilities: encode  56.38 s, decode   0.72 s, all 40 streams equal to Ada's
+Haskell + SPARK, 8 capabilities: encode  32.01 s, decode   0.73 s, all 40 streams equal to Ada's
+Haskell, 16 capabilities: encode  40.57 s, decode   0.62 s, all 40 streams equal to Ada's
+Haskell + SPARK, 16 capabilities: encode  27.65 s, decode   0.59 s, all 40 streams equal to Ada's
