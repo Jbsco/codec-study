@@ -14,7 +14,7 @@ import System.IO.Unsafe (unsafePerformIO)
 import BlockCodec (Effort (..))
 
 foreign import ccall unsafe "block_encode"
-  c_encode :: Ptr Int64 -> CInt -> Ptr Int64 -> CInt -> CInt -> CInt -> CInt -> Ptr Word8 -> CInt -> IO CInt
+  c_encode :: Ptr Int64 -> CInt -> Ptr Int64 -> CInt -> CInt -> CInt -> CInt -> CInt -> Ptr Word8 -> CInt -> IO CInt
 
 foreign import ccall unsafe "block_decode"
   c_decode :: Ptr Word8 -> CInt -> Ptr Int64 -> CInt -> CInt -> CInt -> Ptr Int64 -> IO CInt
@@ -29,7 +29,8 @@ sparkEncode effort depth history x = unsafePerformIO $ do
   out <- SM.new capacity
   bytes <- S.unsafeWith (int64s x) $ \px -> S.unsafeWith (int64s history) $ \ph -> SM.unsafeWith out $ \po ->
     c_encode px (fromIntegral n) ph (fromIntegral (U.length history)) (fromIntegral depth)
-             (fromIntegral (effortOrders effort)) (fromIntegral (effortPrecisionFrom effort)) po (fromIntegral capacity)
+             (fromIntegral (effortOrders effort)) (fromIntegral (effortPrecisionFrom effort)) (if effortAdaptive effort then 1 else 0)
+             po (fromIntegral capacity)
   if bytes < 0
     then error "block_encode: arguments out of range"
     else S.force . S.take (fromIntegral bytes) <$> S.unsafeFreeze out

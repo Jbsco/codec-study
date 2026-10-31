@@ -19,4 +19,4 @@ main = do
       caps <- getNumCapabilities
       printf "%s\n %d capabilities; bits per sample, side information included:\n" path caps
       blockLine "Block codec, Haskell + SPARK" sparkEncode sparkDecode (maybe 4 read (listToMaybe rest)) audio
-    _ -> putStrLn "usage: huffman-audio-hybrid <file.wav> [level 0 to 4]"
+    _ -> putStrLn "usage: huffman-audio-hybrid <file.wav> [level 0 to 5]"

@@ -95,7 +95,8 @@ top = 3
 data Level = Level { deepest :: !Int, stereoSearch :: !Int, levelEffort :: !Effort }
 
 levels :: [Level]
-levels = [Level 0 0 (Effort 0 15), Level 0 1 (Effort 1 15), Level 1 1 (Effort 2 12), Level 2 2 (Effort 4 9), Level 3 2 (Effort 32 5)]
+levels = [Level 0 0 (Effort 0 15 False), Level 0 1 (Effort 1 15 False), Level 1 1 (Effort 2 12 False), Level 2 2 (Effort 4 9 False),
+          Level 3 2 (Effort 32 5 False), Level 3 2 (Effort 32 5 True)]
 
 -- | A group's split tree: a leaf with its stereo mode and blocks, two halves, or a node that is its first half.
 data Node = Leaf !Int [S.Vector Word8] | Split Node Node | Same Node

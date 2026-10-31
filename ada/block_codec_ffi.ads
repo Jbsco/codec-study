@@ -6,10 +6,11 @@ with System;
 package Block_Codec_FFI is
 
    --  Encode Count 64-bit samples of Depth bits into Output, given the History_Count samples before them at
-   --  History, coding Lpc_Orders orders of linear prediction in full and trying precisions from Precision_From.
+   --  History, coding Lpc_Orders orders of linear prediction in full, trying precisions from Precision_From, and
+   --  trying the adaptive stage when Adaptive is not zero.
    --  Returns the bytes written, or -1 for arguments out of range.
    function Encode (Samples : System.Address; Count : int; History : System.Address; History_Count, Depth : int;
-                    Lpc_Orders, Precision_From : int; Output : System.Address; Capacity : int) return int
+                    Lpc_Orders, Precision_From, Adaptive : int; Output : System.Address; Capacity : int) return int
      with Export, Convention => C, External_Name => "block_encode";
 
    --  Decode Count samples from Length bytes, given the History_Count decoded samples before them at History.

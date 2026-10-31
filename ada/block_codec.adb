@@ -7,6 +7,12 @@ package body Block_Codec with SPARK_Mode is
    Tier_Predictor : constant := 6;
    Lpc_Predictor : constant := 7;
    Max_Order : constant := 32;
+   Lms_Shift : constant := 14;
+   Lms_Step : constant := 2;
+   Lms_Weight_Limit : constant := 2**15;
+   Max_Taps : constant := 256;
+   Max_Warm_Up : constant := 4096;
+   Stage_Saving : constant := 64;
    Ramp_Order : constant := 2;
    Symbol_Count : constant := 1024;
    End_Of_Block : constant := 0;
@@ -23,6 +29,50 @@ package body Block_Codec with SPARK_Mode is
 
    subtype Coefficient is Long_Long_Integer range -(2**15) .. 2**15;
    type Coefficient_Array is array (1 .. Max_Order) of Coefficient;
+
+   --  The adaptive stage after linear prediction: Taps (16, 32, 64 or 256) sign-sign LMS weights over the earlier
+   --  residuals, trained on the Warm_Up (0, 256, 1024 or 4096) residuals of the samples before the block.
+   Tap_Choices : constant array (0 .. 3) of Positive := [16, 32, 64, 256];
+   Warm_Up_Choices : constant array (0 .. 3) of Natural := [0, 256, 1024, 4096];
+   subtype Weight is Long_Long_Integer range -Lms_Weight_Limit .. Lms_Weight_Limit;
+   type Weight_Array is array (1 .. Max_Taps) of Weight;
+   subtype Lms_Residual is Long_Long_Integer range -(2**37) .. 2**37;
+   type Lms_History is array (1 .. Max_Taps) of Lms_Residual;
+
+   function Sign (V : Long_Long_Integer) return Long_Long_Integer is (if V > 0 then 1 elsif V < 0 then -1 else 0);
+
+   --  The LMS prediction of the next residual from the last Taps residuals, and the weight update that follows
+   --  the actual residual E: each weight moves by the step toward the sign of E times the sign of its history
+   --  entry, and the history shifts by one.
+   function Lms_Prediction (W : Weight_Array; H : Lms_History; Taps : Positive) return Long_Long_Integer
+     with Pre => Taps <= Max_Taps,
+       Post => Lms_Prediction'Result in -(2**60) .. 2**60;
+
+   function Lms_Prediction (W : Weight_Array; H : Lms_History; Taps : Positive) return Long_Long_Integer is
+      Sum : Long_Long_Integer := 0;
+   begin
+      for J in 1 .. Taps loop
+         pragma Loop_Invariant (Sum in -(Long_Long_Integer (J - 1) * 2**52) .. Long_Long_Integer (J - 1) * 2**52);
+         Sum := Sum + W (J) * H (J);
+      end loop;
+      return Sum;
+   end Lms_Prediction;
+
+   procedure Lms_Update (W : in out Weight_Array; H : in out Lms_History; Taps : Positive; E, Input : Lms_Residual)
+     with Pre => Taps <= Max_Taps
+   is
+      S : constant Long_Long_Integer := Sign (E);
+   begin
+      if S /= 0 then
+         for J in 1 .. Taps loop
+            W (J) := Long_Long_Integer'Max (-Lms_Weight_Limit, Long_Long_Integer'Min (Lms_Weight_Limit, W (J) + Lms_Step * S * Sign (H (J))));
+         end loop;
+      end if;
+      for J in reverse 2 .. Taps loop
+         H (J) := H (J - 1);
+      end loop;
+      H (1) := Input;
+   end Lms_Update;
 
    function Zigzag (V : Long_Long_Integer) return Unsigned_64 is
      (if V >= 0 then 2 * Unsigned_64 (V) else 2 * Unsigned_64 (-(V + 1)) + 1)
@@ -530,15 +580,61 @@ package body Block_Codec with SPARK_Mode is
       end loop;
    end Lpc_Residuals;
 
+   --  Residuals of Z (From .. Z'Last) under Q over 2**Shift, each predicted from the Order samples before it in Z.
+   procedure Seeded_Residuals (Z : Sample_Buffer; Q : Coefficient_Array; Order, Shift, From : Natural; R : out Sample_Buffer)
+     with SPARK_Mode => Off
+   is
+   begin
+      for I in From .. Z'Last loop
+         declare
+            Sum : Long_Long_Integer := 0;
+         begin
+            for J in 1 .. Order loop
+               Sum := Sum + Q (J) * Z (I - J);
+            end loop;
+            R (R'First + I - From) := Z (I) - Shift_Down (Sum, Shift);
+         end;
+      end loop;
+   end Seeded_Residuals;
+
+   --  The LMS stage over R: trained on R (R'First .. Split - 1), the stage's errors on the rest into E. Fits is
+   --  false when an error needs more than Width + 4 bits.
+   procedure Lms_Pass (R : Sample_Buffer; Split : Natural; Taps : Positive; Width : Width_Bits; E : out Sample_Buffer; Fits : out Boolean)
+     with SPARK_Mode => Off
+   is
+      W : Weight_Array := [others => 0];
+      H : Lms_History := [others => 0];
+      Limit : constant Long_Long_Integer := Half (Width + 4);
+   begin
+      Fits := True;
+      for I in R'Range loop
+         declare
+            Err : constant Long_Long_Integer := R (I) - Shift_Down (Lms_Prediction (W, H, Taps), Lms_Shift);
+         begin
+            if I >= Split then
+               if Err <= -Limit or else Err >= Limit then
+                  Fits := False;
+               end if;
+               E (E'First + I - Split) := (if Fits then Err else 0);
+            end if;
+            Lms_Update (W, H, Taps, Long_Long_Integer'Max (-(2**37), Long_Long_Integer'Min (2**37, Err)),
+                        Long_Long_Integer'Max (-(2**37), Long_Long_Integer'Min (2**37, R (I))));
+         end;
+      end loop;
+   end Lms_Pass;
+
    type Lpc_Choice is record
       Order, Precision, Shift, K, Warm_K : Natural := 0;
       Rice : Boolean := True;
       Q : Coefficient_Array := [others => 0];
+      Lms : Boolean := False;
+      Tap_Code, Warm_Code : Natural := 0;
    end record;
 
    --  The shortest LPC coding: the order with the least Rice cost at 15-bit precision, then the precision and the
    --  residual code with the least cost at that order.
-   procedure Best_Lpc (Y : Sample_Buffer; Width : Width_Bits; Effort : Effort_Type; Bits : out Unsigned_64; Choice : out Lpc_Choice)
+   procedure Best_Lpc (Y : Sample_Buffer; History : Sample_Array; Low_Bits : Natural; Width : Width_Bits; Effort : Effort_Type;
+                       Bits : out Unsigned_64; Choice : out Lpc_Choice)
      with SPARK_Mode => Off
    is
       N : constant Natural := Y'Length;
@@ -587,8 +683,8 @@ package body Block_Codec with SPARK_Mode is
                if Fits then
                   Rice_Cost (Warm (0 .. Order - 1), Kw, Cw);
                   Rice_Cost (R (0 .. N - Order - 1), Kr, Cr);
-                  if 24 + Unsigned_64 (15 * Order) + 6 + Cw + 6 + Cr < Least then
-                     Least := 24 + Unsigned_64 (15 * Order) + 6 + Cw + 6 + Cr;
+                  if 24 + Unsigned_64 (15 * Order) + 1 + 6 + Cw + 6 + Cr < Least then
+                     Least := 24 + Unsigned_64 (15 * Order) + 1 + 6 + Cw + 6 + Cr;
                      Best_Order := Order;
                   end if;
                end if;
@@ -606,21 +702,65 @@ package body Block_Codec with SPARK_Mode is
                Rice_Cost (Warm (0 .. Best_Order - 1), Kw, Cw);
                Rice_Cost (R (0 .. N - Best_Order - 1), Kr, Cr);
                declare
-                  Head : constant Unsigned_64 := 24 + Unsigned_64 (Precision * Best_Order) + 6 + Cw;
+                  Head : constant Unsigned_64 := 24 + Unsigned_64 (Precision * Best_Order) + 1 + 6 + Cw;
                   Run : constant Unsigned_64 := Run_Cost (R (0 .. N - Best_Order - 1));
                begin
                   if Head + 6 + Cr < Bits then
                      Bits := Head + 6 + Cr;
-                     Choice := (Best_Order, Precision, Shift, Kr, Kw, True, Q);
+                     Choice := (Best_Order, Precision, Shift, Kr, Kw, True, Q, False, 0, 0);
                   end if;
                   if Head + Run < Bits then
                      Bits := Head + Run;
-                     Choice := (Best_Order, Precision, Shift, Kr, Kw, False, Q);
+                     Choice := (Best_Order, Precision, Shift, Kr, Kw, False, Q, False, 0, 0);
                   end if;
                end;
             end if;
          end if;
       end loop;
+      --  The stage is kept only where it saves at least one bit per Stage_Saving samples, since the decoder pays
+      --  its taps on every sample of a block that carries it.
+      if Effort.Adaptive and then Bits < Unsigned_64'Last and then History'Length >= Best_Order then
+         declare
+            Margin : constant Unsigned_64 := Unsigned_64 (N / Stage_Saving);
+            Available : constant Natural := Natural'Min (History'Length, Max_Warm_Up + Best_Order);
+            Z : Sample_Buffer (0 .. Available + N - 1);
+            Seeded : Sample_Buffer (0 .. Available - Best_Order + N - 1);
+            E : Sample_Buffer (0 .. N - 1);
+            Fits : Boolean;
+            Ke : Natural;
+            Ce : Unsigned_64;
+         begin
+            for I in 0 .. Available - 1 loop
+               Z (I) := Shift_Down (History (History'Last - Available + 1 + I), Low_Bits);
+            end loop;
+            Z (Available .. Z'Last) := Y;
+            Seeded_Residuals (Z, Choice.Q, Best_Order, Choice.Shift, Best_Order, Seeded);
+            for Warm_Code in 0 .. 3 loop
+               if Warm_Up_Choices (Warm_Code) <= Available - Best_Order then
+                  for Tap_Code in 0 .. 3 loop
+                     Lms_Pass (Seeded (Seeded'Last - N + 1 - Warm_Up_Choices (Warm_Code) .. Seeded'Last),
+                               Seeded'Last - N + 1, Tap_Choices (Tap_Code), Width, E, Fits);
+                     if Fits then
+                        Rice_Cost (E, Ke, Ce);
+                        declare
+                           Head : constant Unsigned_64 := 24 + Unsigned_64 (Choice.Precision * Best_Order) + 1 + 4;
+                           Run : constant Unsigned_64 := Run_Cost (E);
+                        begin
+                           if Head + 6 + Ce + Margin < Bits + (if Choice.Lms then Margin else 0) then
+                              Bits := Head + 6 + Ce;
+                              Choice := (Best_Order, Choice.Precision, Choice.Shift, Ke, 0, True, Choice.Q, True, Tap_Code, Warm_Code);
+                           end if;
+                           if Head + Run + Margin < Bits + (if Choice.Lms then Margin else 0) then
+                              Bits := Head + Run;
+                              Choice := (Best_Order, Choice.Precision, Choice.Shift, Ke, 0, False, Choice.Q, True, Tap_Code, Warm_Code);
+                           end if;
+                        end;
+                     end if;
+                  end loop;
+               end if;
+            end loop;
+         end;
+      end if;
    end Best_Lpc;
 
    procedure Encode (X, History : Sample_Array; Depth : Sample_Bits; Effort : Effort_Type; Output : in out Byte_Array;
@@ -703,7 +843,7 @@ package body Block_Codec with SPARK_Mode is
                end;
             end if;
             if Effort.Lpc_Orders > 0 then
-               Best_Lpc (Y, Depth - Shift, Effort, Lpc_Bits, Lpc);
+               Best_Lpc (Y, History, Shift, Depth - Shift, Effort, Lpc_Bits, Lpc);
             end if;
             Put (Output, Pos, 1, 1);
             Put (Output, Pos, Unsigned_64 (Shift), 5);
@@ -715,18 +855,45 @@ package body Block_Codec with SPARK_Mode is
                for J in 1 .. Lpc.Order loop
                   Put (Output, Pos, Unsigned_64'Mod (Lpc.Q (J)), Lpc.Precision);
                end loop;
-               declare
-                  Warm : Sample_Buffer (0 .. Lpc.Order - 1);
-                  Fits : Boolean;
-               begin
-                  Lpc_Residuals (Y, Lpc.Q, Lpc.Order, Lpc.Shift, Depth - Shift, Warm, R (0 .. N - Lpc.Order - 1), Fits);
-                  Put_Rice (Warm, Lpc.Warm_K, Output, Pos);
-               end;
-               Put (Output, Pos, (if Lpc.Rice then 0 else 1), 1);
-               if Lpc.Rice then
-                  Put_Rice (R (0 .. N - Lpc.Order - 1), Lpc.K, Output, Pos);
+               Put (Output, Pos, Boolean'Pos (Lpc.Lms), 1);
+               if Lpc.Lms then
+                  declare
+                     Available : constant Natural := Natural'Min (History'Length, Max_Warm_Up + Lpc.Order);
+                     Warm_Up : constant Natural := Warm_Up_Choices (Lpc.Warm_Code);
+                     Z : Sample_Buffer (0 .. Available + N - 1);
+                     Seeded : Sample_Buffer (0 .. Available - Lpc.Order + N - 1);
+                     Fits : Boolean;
+                  begin
+                     Put (Output, Pos, Unsigned_64 (Lpc.Tap_Code), 2);
+                     Put (Output, Pos, Unsigned_64 (Lpc.Warm_Code), 2);
+                     for I in 0 .. Available - 1 loop
+                        Z (I) := Shift_Down (History (History'Last - Available + 1 + I), Shift);
+                     end loop;
+                     Z (Available .. Z'Last) := Y;
+                     Seeded_Residuals (Z, Lpc.Q, Lpc.Order, Lpc.Shift, Lpc.Order, Seeded);
+                     Lms_Pass (Seeded (Seeded'Last - N + 1 - Warm_Up .. Seeded'Last), Seeded'Last - N + 1, Tap_Choices (Lpc.Tap_Code),
+                               Depth - Shift, R (0 .. N - 1), Fits);
+                  end;
+                  Put (Output, Pos, (if Lpc.Rice then 0 else 1), 1);
+                  if Lpc.Rice then
+                     Put_Rice (R (0 .. N - 1), Lpc.K, Output, Pos);
+                  else
+                     Put_Run (R (0 .. N - 1), Output, Pos);
+                  end if;
                else
-                  Put_Run (R (0 .. N - Lpc.Order - 1), Output, Pos);
+                  declare
+                     Warm : Sample_Buffer (0 .. Lpc.Order - 1);
+                     Fits : Boolean;
+                  begin
+                     Lpc_Residuals (Y, Lpc.Q, Lpc.Order, Lpc.Shift, Depth - Shift, Warm, R (0 .. N - Lpc.Order - 1), Fits);
+                     Put_Rice (Warm, Lpc.Warm_K, Output, Pos);
+                  end;
+                  Put (Output, Pos, (if Lpc.Rice then 0 else 1), 1);
+                  if Lpc.Rice then
+                     Put_Rice (R (0 .. N - Lpc.Order - 1), Lpc.K, Output, Pos);
+                  else
+                     Put_Run (R (0 .. N - Lpc.Order - 1), Output, Pos);
+                  end if;
                end if;
             else
                Put (Output, Pos, Unsigned_64 (Best_Predictor), 3);
@@ -948,9 +1115,12 @@ package body Block_Codec with SPARK_Mode is
 
    --  An LPC block after its predictor field: the order, precision and shift of the coefficients, the
    --  coefficients, the ramp of the first samples in Rice codes, then the residuals of the rest.
-   procedure Decode_Lpc (Input : Byte_Array; Pos : in out Natural; Width : Width_Bits; Y : in out Sample_Buffer;
+   --  Before holds the decoded samples just before the block, scaled down by the block's shift, the latest last.
+   procedure Decode_Lpc (Input : Byte_Array; Pos : in out Natural; Width : Width_Bits; Before : Sample_Buffer; Y : in out Sample_Buffer;
                          Status : out Status_Type)
-     with Pre => Valid_Buffer (Input) and then Pos <= Input'Length * 8 and then Y'First = 0 and then Y'Length in Block_Length,
+     with Pre => Valid_Buffer (Input) and then Pos <= Input'Length * 8 and then Y'First = 0 and then Y'Length in Block_Length
+       and then Before'First = 0 and then Before'Length <= Max_History
+       and then (for all V of Before => In_Range (V, Width)),
        Post => Pos <= Input'Length * 8
    is
       Total : constant Natural := Input'Length * 8;
@@ -958,6 +1128,9 @@ package body Block_Codec with SPARK_Mode is
       Field : Unsigned_64;
       Order, Precision, Shift : Natural;
       Q : Coefficient_Array := [others => 0];
+      Lms : Boolean;
+      Taps : Positive := 16;
+      Warm_Up : Natural := 0;
    begin
       Status := Truncated_Input;
       if Total - Pos < 14 then
@@ -990,34 +1163,57 @@ package body Block_Codec with SPARK_Mode is
             Q (J) := V;
          end;
       end loop;
-      declare
-         Ramp_Last : constant Natural := Order - 1;
-         Warm : Residual_Buffer (0 .. Ramp_Last) := [others => 0];
-      begin
-         Get_Rice (Input, Pos, Width, Warm, Status);
-         if Status /= Success then
+      Status := Truncated_Input;
+      if Total - Pos < 1 then
+         return;
+      end if;
+      Get (Input, Pos, Field, 1);
+      Lms := Field = 1;
+      if Lms then
+         if Total - Pos < 4 then
             return;
          end if;
-         for I in 0 .. Ramp_Last loop
-            declare
-               V : constant Long_Long_Integer := Warm (I) + Fixed_Prediction (Y, I, Natural'Min (Ramp_Order, I));
-            begin
-               if not In_Range (V, Width) then
-                  Status := Bad_Data;
-                  return;
-               end if;
-               Y (I) := V;
-            end;
-         end loop;
-      end;
+         Get (Input, Pos, Field, 2);
+         Taps := Tap_Choices (Natural (Field));
+         Get (Input, Pos, Field, 2);
+         Warm_Up := Warm_Up_Choices (Natural (Field));
+         if Before'Length < Warm_Up + Order then
+            Status := Bad_Data;
+            return;
+         end if;
+      else
+         declare
+            Ramp_Last : constant Natural := Order - 1;
+            Warm : Residual_Buffer (0 .. Ramp_Last) := [others => 0];
+         begin
+            Get_Rice (Input, Pos, Width, Warm, Status);
+            if Status /= Success then
+               return;
+            end if;
+            for I in 0 .. Ramp_Last loop
+               declare
+                  V : constant Long_Long_Integer := Warm (I) + Fixed_Prediction (Y, I, Natural'Min (Ramp_Order, I));
+               begin
+                  if not In_Range (V, Width) then
+                     Status := Bad_Data;
+                     return;
+                  end if;
+                  Y (I) := V;
+               end;
+            end loop;
+         end;
+      end if;
       Status := Truncated_Input;
       if Total - Pos < 1 then
          return;
       end if;
       Get (Input, Pos, Field, 1);
       declare
-         Count : constant Natural := N - Order;
+         First_Coded : constant Natural := (if Lms then 0 else Order);
+         Count : constant Natural := N - First_Coded;
          R : Residual_Buffer (0 .. Count - 1) := [others => 0];
+         W : Weight_Array := [others => 0];
+         H : Lms_History := [others => 0];
       begin
          if Field = 0 then
             Get_Rice (Input, Pos, Width, R, Status);
@@ -1027,22 +1223,49 @@ package body Block_Codec with SPARK_Mode is
          if Status /= Success then
             return;
          end if;
-         for I in Order .. N - 1 loop
+         if Lms then
+            --  Train the stage on the LPC residuals of the Warm_Up samples before the block.
+            for I in Before'Length - Warm_Up .. Before'Last loop
+               pragma Loop_Invariant (I >= Order);
+               declare
+                  Sum : Long_Long_Integer := 0;
+               begin
+                  for J in 1 .. Order loop
+                     pragma Loop_Invariant (Sum in -(Long_Long_Integer (J - 1) * 2**51) .. Long_Long_Integer (J - 1) * 2**51);
+                     Sum := Sum + Q (J) * Before (I - J);
+                  end loop;
+                  declare
+                     Res : constant Long_Long_Integer := Before (I) - Floor_Shift (Sum, Shift);
+                     Err : constant Long_Long_Integer := Res - Floor_Shift (Lms_Prediction (W, H, Taps), Lms_Shift);
+                  begin
+                     Lms_Update (W, H, Taps, Long_Long_Integer'Max (-(2**37), Long_Long_Integer'Min (2**37, Err)),
+                                 Long_Long_Integer'Max (-(2**37), Long_Long_Integer'Min (2**37, Res)));
+                  end;
+               end;
+            end loop;
+         end if;
+         for I in First_Coded .. N - 1 loop
             declare
                Sum : Long_Long_Integer := 0;
             begin
                for J in 1 .. Order loop
                   pragma Loop_Invariant (Sum in -(Long_Long_Integer (J - 1) * 2**51) .. Long_Long_Integer (J - 1) * 2**51);
-                  Sum := Sum + Q (J) * Y (I - J);
+                  Sum := Sum + Q (J) * (if I - J >= 0 then Y (I - J) else Before (Before'Length + I - J));
                end loop;
                declare
-                  V : constant Long_Long_Integer := R (I - Order) + Floor_Shift (Sum, Shift);
+                  Res : constant Long_Long_Integer :=
+                    R (I - First_Coded) + (if Lms then Floor_Shift (Lms_Prediction (W, H, Taps), Lms_Shift) else 0);
+                  V : constant Long_Long_Integer := Res + Floor_Shift (Sum, Shift);
                begin
                   if not In_Range (V, Width) then
                      Status := Bad_Data;
                      return;
                   end if;
                   Y (I) := V;
+                  if Lms then
+                     Lms_Update (W, H, Taps, Long_Long_Integer'Max (-(2**37), Long_Long_Integer'Min (2**37, R (I - First_Coded))),
+                                 Long_Long_Integer'Max (-(2**37), Long_Long_Integer'Min (2**37, Res)));
+                  end if;
                end;
             end;
          end loop;
@@ -1108,7 +1331,37 @@ package body Block_Codec with SPARK_Mode is
          end if;
       end if;
       if Predictor = Lpc_Predictor then
-         Decode_Lpc (Input, Pos, Width, Y, Status);
+         declare
+            --  The stage flag follows 14 header bits and Order * Precision coefficient bits; only a block with the
+            --  stage needs the scaled history, and the copy is the cost of every LPC block otherwise.
+            function Stage_Flagged return Boolean is
+               Peek : Natural := Pos;
+               Order, Precision, Flag : Unsigned_64;
+            begin
+               if Total - Pos < 14 then
+                  return False;
+               end if;
+               Get (Input, Peek, Order, 5);
+               Get (Input, Peek, Precision, 4);
+               Peek := Peek + 5 + (Natural (Order) + 1) * (Natural (Precision) + 1);
+               if Peek >= Total then
+                  return False;
+               end if;
+               Get (Input, Peek, Flag, 1);
+               return Flag = 1;
+            end Stage_Flagged;
+            Needed : constant Natural := (if Stage_Flagged then History'Length else 0);
+         begin
+            declare
+               Before : Sample_Buffer (0 .. Needed - 1) := [others => 0];
+            begin
+               for I in Before'Range loop
+                  pragma Loop_Invariant (for all K in 0 .. I - 1 => In_Range (Before (K), Width));
+                  Before (I) := Floor_Shift (History (History'Last - Needed + 1 + I), Shift);
+               end loop;
+               Decode_Lpc (Input, Pos, Width, Before, Y, Status);
+            end;
+         end;
       else
          if Total - Pos < 1 then
             return;

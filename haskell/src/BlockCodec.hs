@@ -36,6 +36,47 @@ rampOrder = 2
 -- predictor with its history flag set.
 backDelay :: Int
 backDelay = 8
+
+lmsShift, lmsStep, lmsWeightLimit, lmsResidualLimit, maxWarmUp, stageSaving :: Int
+stageSaving = 64
+lmsShift = 14
+lmsStep = 2
+lmsWeightLimit = 32768
+lmsResidualLimit = 137438953472
+maxWarmUp = 4096
+
+tapChoices, warmUpChoices :: [Int]
+tapChoices = [16, 32, 64, 256]
+warmUpChoices = [0, 256, 1024, 4096]
+
+clampResidual :: Int -> Int
+clampResidual = max (negate lmsResidualLimit) . min lmsResidualLimit
+
+-- | The sign-sign LMS stage of ada/block_codec.adb over a residual sequence: each output is the input less the
+-- weighted sum of the last taps inputs shifted down, after which every weight moves by the step toward the sign
+-- of the output times the sign of its input. The first split outputs train the stage and are dropped.
+lmsPass :: Int -> Int -> U.Vector Int -> U.Vector Int
+lmsPass taps split r = U.create $ do
+  out <- UM.new (U.length r - split)
+  w <- UM.replicate taps 0
+  h <- UM.replicate taps 0
+  let signOf v = if v > 0 then 1 else if v < 0 then -1 else 0 :: Int
+      predictOf = foldM (\a j -> (\x y -> a + x * y) <$> UM.unsafeRead w j <*> UM.unsafeRead h j) 0 [0 .. taps - 1]
+  forM_ [0 .. U.length r - 1] $ \i -> do
+    p <- predictOf
+    let e = U.unsafeIndex r i - p `shiftR` lmsShift
+        se = signOf (clampResidual e)
+    when (i >= split) (UM.unsafeWrite out (i - split) e)
+    when (se /= 0) $ forM_ [0 .. taps - 1] $ \j -> do
+      hj <- UM.unsafeRead h j
+      UM.unsafeModify w (\v -> max (negate lmsWeightLimit) (min lmsWeightLimit (v + lmsStep * se * signOf hj))) j
+    forM_ [taps - 1, taps - 2 .. 1] $ \j -> UM.unsafeRead h (j - 1) >>= UM.unsafeWrite h j
+    UM.unsafeWrite h 0 (clampResidual (U.unsafeIndex r i))
+  pure out
+
+-- | LPC residuals of z from position from on, each predicted from the samples before it in z.
+seededResiduals :: U.Vector Int -> U.Vector Int -> Int -> Int -> U.Vector Int
+seededResiduals z q qshift from = U.generate (U.length z - from) (\k -> let i = k + from in U.unsafeIndex z i - U.ifoldl' (\a j c -> a + c * U.unsafeIndex z (i - 1 - j)) 0 q `shiftR` qshift)
 sixteenZeros = 15 * 64
 matchLength = 32
 symbolCount = 1024
@@ -260,7 +301,7 @@ putRun buf w0 r = do
 -- | How far the encoder searches: how many orders of linear prediction it codes in full, ranked by the bits their
 -- prediction error implies (0 for none, 32 for all), and the lowest coefficient precision it tries. Every setting
 -- writes the same format.
-data Effort = Effort { effortOrders :: !Int, effortPrecisionFrom :: !Int }
+data Effort = Effort { effortOrders :: !Int, effortPrecisionFrom :: !Int, effortAdaptive :: !Bool }
 
 -- | The base-2 logarithm of a positive X within 3e-6: its exponent, and a polynomial in its fraction.
 log2' :: Double -> Double
@@ -330,15 +371,37 @@ data Lpc = Lpc
   { lOrder, lPrecision, lShift, lK, lWarmK :: !Int
   , lRice :: !Bool
   , lQ, lWarm, lR :: !(U.Vector Int)
+  , lTapCode, lWarmCode :: !Int
+  , lLms :: !Bool
   }
 
 -- | The shortest LPC coding: the order with the least Rice cost at 15-bit precision, then the precision and the
 -- residual code with the least cost at that order.
-bestLpc :: Effort -> Int -> U.Vector Int -> Maybe (Word64, Lpc)
-bestLpc effort width y
+bestLpc :: Effort -> Int -> Int -> U.Vector Int -> U.Vector Int -> Maybe (Word64, Lpc)
+bestLpc effort lowBits width history y
   | null stage1 || null stage2 = Nothing
-  | otherwise = Just (foldl1 (\a b -> if fst b < fst a then b else a) stage2)
+  | otherwise = Just (foldl pickStage (foldl1 (\a b -> if fst b < fst a then b else a) stage2) stage3)
   where
+    -- The stage is kept only where it saves at least one bit per stageSaving samples, since the decoder pays its
+    -- taps on every sample of a block that carries it; among stage candidates the comparison is plain.
+    margin = fromIntegral (U.length y `quot` stageSaving) :: Word64
+    pickStage (bestBits, best) (bits, cand) = if bits + margin < bestBits + (if lLms best then margin else 0) then (bits, cand) else (bestBits, best)
+    chosen0 = snd (foldl1 (\a b -> if fst b < fst a then b else a) stage2)
+    available = min (U.length history) (maxWarmUp + lOrder chosen0)
+    z = U.map (`shiftR` lowBits) (U.drop (U.length history - available) history) U.++ y
+    seeded = seededResiduals z (lQ chosen0) (lShift chosen0) (lOrder chosen0)
+    limit = bit (width + 3) :: Int
+    stage3 =
+      [ (bits, chosen0 { lK = ke, lWarmK = 0, lRice = rice, lR = e, lTapCode = tapCode, lWarmCode = warmCode, lLms = True })
+      | effortAdaptive effort, U.length history >= lOrder chosen0
+      , (warmCode, warmUp) <- zip [0 ..] warmUpChoices, warmUp <= available - lOrder chosen0
+      , (tapCode, taps) <- zip [0 ..] tapChoices
+      , let e = lmsPass taps warmUp (U.drop (U.length seeded - n - warmUp) seeded)
+      , U.all (\v -> v > negate limit && v < limit) e
+      , let (ke, ce) = riceCost e
+            front = 24 + fromIntegral (lPrecision chosen0 * lOrder chosen0) + 1 + 4
+      , (bits, rice) <- [(front + 6 + ce, True), (front + runCost e, False)]
+      ]
     analysis = lpcAnalysis y
     sets = map fst analysis
     n = U.length y
@@ -350,20 +413,20 @@ bestLpc effort width y
       | effortOrders effort >= length sets = [1 .. length sets]
       | otherwise = sortOn id (iterate (\c -> pick c : c) [] !! effortOrders effort)
     stage1 =
-      [ (24 + 15 * fromIntegral order + 6 + snd (riceCost warm) + 6 + snd (riceCost r), order)
+      [ (24 + 15 * fromIntegral order + 1 + 6 + snd (riceCost warm) + 6 + snd (riceCost r), order)
       | (order, c) <- zip [1 ..] sets, order `elem` chosenOrders
       , Just (q, s) <- [quantize c 15]
       , Just (warm, r) <- [lpcResiduals y q s width]
       ]
     bestOrder = snd (foldl1 (\a b -> if fst b < fst a then b else a) stage1) :: Int
     stage2 =
-      [ (bits, Lpc bestOrder precision s k kw rice q warm r)
+      [ (bits, Lpc bestOrder precision s k kw rice q warm r 0 0 False)
       | precision <- [effortPrecisionFrom effort .. 15]
       , Just (q, s) <- [quantize (sets !! (bestOrder - 1)) precision]
       , Just (warm, r) <- [lpcResiduals y q s width]
       , let (kw, cw) = riceCost warm
             (k, cr) = riceCost r
-            front = 24 + fromIntegral (precision * bestOrder) + 6 + cw
+            front = 24 + fromIntegral (precision * bestOrder) + 1 + 6 + cw
       , (bits, rice) <- [(front + 6 + cr, True), (front + runCost r, False)]
       ]
 
@@ -374,7 +437,9 @@ putLpc buf w0 l = do
   w3 <- put buf w2 (fromIntegral (lPrecision l - 1)) 4
   w4 <- put buf w3 (fromIntegral (lShift l)) 5
   w5 <- U.foldM' (\w c -> put buf w (fromIntegral c) (lPrecision l)) w4 (lQ l)
-  w6 <- putRice buf w5 (lWarmK l) (lWarm l)
+  w6 <- if lLms l
+    then put buf w5 1 1 >>= \a -> put buf a (fromIntegral (lTapCode l)) 2 >>= \b -> put buf b (fromIntegral (lWarmCode l)) 2
+    else put buf w5 0 1 >>= \a -> putRice buf a (lWarmK l) (lWarm l)
   w7 <- put buf w6 (if lRice l then 0 else 1) 1
   if lRice l then putRice buf w7 (lK l) (lR l) else putRun buf w7 (lR l)
 
@@ -400,7 +465,7 @@ encodeBlock effort depth history x = runST $ do
   bytes <- finish buf w
   S.force . S.take bytes <$> S.unsafeFreeze buf
   where
-    lpc = if effortOrders effort > 0 then bestLpc effort (depth - lowZeros) y else Nothing
+    lpc = if effortOrders effort > 0 then bestLpc effort lowZeros (depth - lowZeros) history y else Nothing
     common = U.foldl' (\a v -> a .|. (fromIntegral v :: Word64)) 0 x
     lowZeros = countTrailingZeros common
     y = U.map (`unsafeShiftR` lowZeros) x
@@ -532,29 +597,76 @@ untier r = go (U.take (last lens) r) (U.length r - sum gs) (reverse (init lens))
           | otherwise = let j = i `quot` 2 in U.unsafeIndex d j + (anchor j + following j) `quot` 2
 
 -- | An LPC block from its order field at bit P0: the coefficients, the ramp of the first samples, then the rest.
-decodeLpc :: S.Vector Word8 -> Int -> Int -> U.Vector Int
-decodeLpc v p0 n = U.create $ do
-  y <- UM.new n
-  forM_ [0 .. order - 1] $ \i -> do
-    s1 <- if i >= 1 then UM.unsafeRead y (i - 1) else pure 0
-    s2 <- if i >= 2 then UM.unsafeRead y (i - 2) else pure 0
-    UM.unsafeWrite y i (U.unsafeIndex warm i + fixedPrediction (\j -> if j == 1 then s1 else s2) (min rampOrder i))
-  forM_ [order .. n - 1] $ \i -> do
-    s <- foldM (\a j -> (\u -> a + U.unsafeIndex q (j - 1) * u) <$> UM.unsafeRead y (i - j)) 0 [1 .. order]
-    UM.unsafeWrite y i (U.unsafeIndex r (i - order) + s `shiftR` qshift)
-  pure y
+-- | An LPC block from its order field at bit p0, given the scaled samples before the block for its adaptive stage.
+decodeLpc :: U.Vector Int -> S.Vector Word8 -> Int -> Int -> U.Vector Int
+decodeLpc before v p0 n
+  | lms = U.drop (U.length seededAll - n) rebuilt
+  | otherwise = U.create $ do
+      y <- UM.new n
+      forM_ [0 .. order - 1] $ \i -> do
+        s1 <- if i >= 1 then UM.unsafeRead y (i - 1) else pure 0
+        s2 <- if i >= 2 then UM.unsafeRead y (i - 2) else pure 0
+        UM.unsafeWrite y i (U.unsafeIndex warm i + fixedPrediction (\j -> if j == 1 then s1 else s2) (min rampOrder i))
+      forM_ [order .. n - 1] $ \i -> do
+        s <- foldM (\a j -> (\u -> a + U.unsafeIndex q (j - 1) * u) <$> UM.unsafeRead y (i - j)) 0 [1 .. order]
+        UM.unsafeWrite y i (U.unsafeIndex r (i - order) + s `shiftR` qshift)
+      pure y
   where
     order = fromIntegral (getBits v p0 5) + 1
     precision = fromIntegral (getBits v (p0 + 5) 4) + 1
     qshift = fromIntegral (getBits v (p0 + 9) 5)
     q = U.generate order (\j -> signed (fromIntegral (getBits v (p0 + 14 + j * precision) precision)))
     signed u = if u >= bit (precision - 1) then u - bit precision else u
-    (warm, pc) = getRiceR v (p0 + 14 + order * precision) order
-    r = fst ((if getBits v pc 1 == 0 then getRiceR else getRunR) v (pc + 1) (n - order))
+    flagAt = p0 + 14 + order * precision
+    lms = getBits v flagAt 1 == 1
+    taps = tapChoices !! fromIntegral (getBits v (flagAt + 1) 2)
+    warmUp = warmUpChoices !! fromIntegral (getBits v (flagAt + 3) 2)
+    (warm, pc) = if lms then (U.empty, flagAt + 5) else getRiceR v (flagAt + 1) order
+    first = if lms then 0 else order
+    r = fst ((if getBits v pc 1 == 0 then getRiceR else getRunR) v (pc + 1) (n - first))
+    -- With the stage: the LPC residuals of the warm-up samples train it, then each block residual is the coded
+    -- error plus the stage's prediction, and the sample is that residual plus the LPC prediction.
+    used = U.drop (U.length before - warmUp - order) before
+    seededAll = U.create $ do
+      z <- UM.new (U.length used + n)
+      forM_ [0 .. U.length used - 1] $ \i -> UM.unsafeWrite z i (U.unsafeIndex used i)
+      w <- UM.replicate taps 0
+      h <- UM.replicate taps 0
+      let signOf x = if x > 0 then 1 else if x < 0 then -1 else 0 :: Int
+          predictOf = foldM (\a j -> (\x yv -> a + x * yv) <$> UM.unsafeRead w j <*> UM.unsafeRead h j) 0 [0 .. taps - 1]
+          lpcOf i = foldM (\a j -> (\u -> a + U.unsafeIndex q (j - 1) * u) <$> UM.unsafeRead z (i - j)) 0 [1 .. order]
+          update e res = do
+            let se = signOf (clampResidual e)
+            when (se /= 0) $ forM_ [0 .. taps - 1] $ \j -> do
+              hj <- UM.unsafeRead h j
+              UM.unsafeModify w (\x -> max (negate lmsWeightLimit) (min lmsWeightLimit (x + lmsStep * se * signOf hj))) j
+            forM_ [taps - 1, taps - 2 .. 1] $ \j -> UM.unsafeRead h (j - 1) >>= UM.unsafeWrite h j
+            UM.unsafeWrite h 0 (clampResidual res)
+      forM_ [order .. U.length used - 1] $ \i -> do
+        s <- lpcOf i
+        zi <- UM.unsafeRead z i
+        let res = zi - s `shiftR` qshift
+        p <- predictOf
+        update (res - p `shiftR` lmsShift) res
+      forM_ [U.length used .. U.length used + n - 1] $ \i -> do
+        s <- lpcOf i
+        p <- predictOf
+        let e = U.unsafeIndex r (i - U.length used)
+            res = e + p `shiftR` lmsShift
+        UM.unsafeWrite z i (res + s `shiftR` qshift)
+        update e res
+      pure z
+    rebuilt = seededAll
 
 -- | Whether a coded block repeats samples from before it, and so needs them to decode.
 usesHistory :: S.Vector Word8 -> Bool
-usesHistory v = getBits v 0 1 == 1 && getBits v 6 3 == fromIntegral delayPredictor && getBits v 9 1 == 1
+usesHistory v = getBits v 0 1 == 1 && (delayed || adaptive)
+  where
+    predictor = getBits v 6 3
+    delayed = predictor == fromIntegral delayPredictor && getBits v 9 1 == 1
+    order = fromIntegral (getBits v 9 5) + 1 :: Int
+    precision = fromIntegral (getBits v 14 4) + 1 :: Int
+    adaptive = predictor == fromIntegral lpcPredictor && getBits v (23 + order * precision) 1 == 1
 
 -- | Decode N samples of one block, given the decoded samples just before it, the latest last.
 decodeBlock :: Int -> U.Vector Int -> Int -> S.Vector Word8 -> U.Vector Int
@@ -562,7 +674,7 @@ decodeBlock depth history n v
   | getBits v 0 1 == 0 =
       let u = fromIntegral (getLong v 1 depth) :: Int
       in U.replicate n (if u >= bit (depth - 1) then u - bit depth else u)
-  | predictor == lpcPredictor = U.map (`unsafeShiftL` lowZeros) (decodeLpc v 9 n)
+  | predictor == lpcPredictor = U.map (`unsafeShiftL` lowZeros) (decodeLpc (U.map (`shiftR` lowZeros) history) v 9 n)
   | otherwise = U.map (`unsafeShiftL` lowZeros) (rebuild predictor delay before r)
   where
     lowZeros = fromIntegral (getBits v 1 5)

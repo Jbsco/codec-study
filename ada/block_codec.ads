@@ -1,8 +1,9 @@
 --  One block of up to 4096 integer samples. A block holds a constant, or the residuals of one predictor after the
 --  low bits that every sample shares are removed: polynomial orders 0 to 4, the distance back to an exact repeat
 --  within the block or in the samples before it, tiers of pairs, or linear prediction of order 1 to 32 with
---  quantized coefficients. The residuals take Rice codes or run-length Huffman codes, and the encoder writes
---  whichever combination is shortest. Only a block that repeats the samples before it needs them to decode.
+--  quantized coefficients, with an optional adaptive stage after it that is trained on the samples before the
+--  block. The residuals take Rice codes or run-length Huffman codes, and the encoder writes whichever
+--  combination is shortest. A block that repeats or trains on the samples before it needs them to decode.
 with Bit_Streams; use Bit_Streams;
 
 package Block_Codec with SPARK_Mode is
@@ -30,6 +31,7 @@ package Block_Codec with SPARK_Mode is
    type Effort_Type is record
       Lpc_Orders : Natural range 0 .. 32 := 32;
       Precision_From : Positive range 5 .. 15 := 5;
+      Adaptive : Boolean := False;
    end record;
 
    --  History holds the samples just before X, the latest last.

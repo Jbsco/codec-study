@@ -28,7 +28,7 @@ main = do
     [path] -> run path
     [path, "--block"] -> readWav path >>= blockLine "Block codec, Haskell" encodeBlock decodeBlock 4
     [path, "--block", level] -> readWav path >>= blockLine "Block codec, Haskell" encodeBlock decodeBlock (read level)
-    _ -> putStrLn "usage: huffman-audio <file.wav> [--block [level 0 to 4]]"
+    _ -> putStrLn "usage: huffman-audio <file.wav> [--block [level 0 to 5]]"
 
 run :: FilePath -> IO ()
 run path = do
