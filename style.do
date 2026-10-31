@@ -32,7 +32,7 @@ else
 fi
 
 echo "== 3/3  Tracked text"
-HITS=$(git grep -n -E '/home/[a-z]|/var/tmp/claude' -- ':!corpus/*.flac' ':!corpus/*.wav' | head)
+HITS=$(git grep -n -E '/home/[a-z]|/var/tmp/claude' -- ':!corpus/*.flac' ':!corpus/*.wav' ':!style.do' | head)
 if [ -n "$HITS" ]; then
     echo "  local paths in tracked files:"
     printf '%s\n' "$HITS" | sed 's/^/    /'
