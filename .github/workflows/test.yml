@@ -45,7 +45,7 @@ jobs:
 
       - name: Install flac and Stack
         if: runner.environment == 'github-hosted'
-        run: sudo apt-get update && sudo apt-get install -y flac haskell-stack
+        run: sudo apt-get update && sudo apt-get install -y flac ffmpeg haskell-stack
 
       - name: Select GNAT toolchain
         if: runner.environment == 'github-hosted'
