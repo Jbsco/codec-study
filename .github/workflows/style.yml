@@ -1,0 +1,55 @@
+name: Style
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  style:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Alire
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.config/alire
+            ~/.cache/alire
+            ~/.local/share/alire
+          key: alire-style-${{ runner.os }}-${{ hashFiles('ada/alire.toml') }}
+          restore-keys: alire-style-${{ runner.os }}-
+
+      - name: Cache Stack
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.stack
+            haskell/.stack-work
+          key: stack-${{ runner.os }}-${{ hashFiles('haskell/stack.yaml', 'haskell/huffman-audio.cabal') }}
+          restore-keys: stack-${{ runner.os }}-
+
+      - name: Install Alire
+        uses: alire-project/setup-alire@v3
+        with:
+          version: 2.1.1
+
+      - name: Install Stack
+        run: sudo apt-get update && sudo apt-get install -y haskell-stack
+
+      - name: Select GNAT toolchain
+        run: |
+          cd ada
+          alr -n toolchain --select gnat_native gprbuild
+
+      - name: Run the style gate
+        run: |
+          set -o pipefail
+          eval "$(cd ada && alr -n printenv)"
+          bash style.do 2>&1 | tee style-output.log
+          grep -q "style: all checks clean" style-output.log
