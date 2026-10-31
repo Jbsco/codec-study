@@ -1,5 +1,5 @@
 name = "codec_study"
-description = "Block codec study: a SPARK decoder, an Ada encoder and the experiment coders"
+description = "Block codec study: SPARK decoder, Ada encoder, experiment coders"
 version = "0.1.0-dev"
 
 authors = ["Jacob Seman"]
