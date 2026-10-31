@@ -1,0 +1,480 @@
+build/wav/depth_pink_24.wav
+ 24-bit, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                           24.13  round trip OK, side  5.47, encode  0.2 s, decode  0.0 s
+  Huffman on first differences                     22.94  round trip OK, side  4.36, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     24.12  round trip OK, side  5.80, finest tier 22.37, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      23.99  round trip OK, side  6.36, finest tier 17.45, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, successive differences      23.19  round trip OK, side  4.94, finest tier 21.48, encode  0.2 s, decode  0.0 s
+  Tiers, pairs                                     24.57  round trip OK, side  7.84, finest tier 11.70, encode  0.1 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors   24.11  round trip OK, side  7.40, finest tier 11.48, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table              22.94  round trip OK, side  4.36, encode  0.2 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    21.06  round trip OK, side  0.03, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  21.08  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+build/wav/depth_pink_32f.wav
+ 32-bit float, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                           32.65  round trip OK, side 13.84, encode  0.2 s, decode  0.1 s
+  Huffman on first differences                     32.95  round trip OK, side 14.15, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start     34.30  round trip OK, side 15.84, finest tier 31.87, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 4, offset from group start      34.57  round trip OK, side 16.83, finest tier 25.30, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, successive differences      33.39  round trip OK, side 14.93, finest tier 30.98, encode  0.2 s, decode  0.1 s
+  Tiers, pairs                                     35.25  round trip OK, side 18.45, finest tier 16.95, encode  0.2 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors   36.01  round trip OK, side 19.20, finest tier 17.27, encode  0.2 s, decode  0.1 s
+  Fixed predictor, Huffman, one table              32.95  round trip OK, side 14.15, encode  0.2 s, decode  0.1 s
+  Fixed predictor, bit-length Huffman per block    27.62  round trip OK, side  0.04, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Rice per block                  31.49  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+build/wav/depth_pink_32.wav
+ 32-bit, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                           38.99  round trip OK, side 20.18, encode  0.2 s, decode  0.1 s
+  Huffman on first differences                     37.42  round trip OK, side 18.61, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start     39.06  round trip OK, side 20.60, finest tier 36.32, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 4, offset from group start      39.29  round trip OK, side 21.54, finest tier 28.81, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, successive differences      37.89  round trip OK, side 19.42, finest tier 35.18, encode  0.2 s, decode  0.1 s
+  Tiers, pairs                                     39.88  round trip OK, side 23.07, finest tier 19.20, encode  0.2 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors   39.32  round trip OK, side 22.51, finest tier 18.90, encode  0.2 s, decode  0.1 s
+  Fixed predictor, Huffman, one table              37.42  round trip OK, side 18.61, encode  0.2 s, decode  0.1 s
+  Fixed predictor, bit-length Huffman per block    29.07  round trip OK, side  0.04, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Rice per block                  29.08  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+build/wav/depth_pink_8.wav
+ 8-bit, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            5.69  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      4.94  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      5.54  round trip OK, side  0.00, finest tier  5.16, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       5.31  round trip OK, side  0.01, finest tier  3.90, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       4.99  round trip OK, side  0.00, finest tier  4.63, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      5.17  round trip OK, side  0.01, finest tier  2.47, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    4.86  round trip OK, side  0.01, finest tier  2.30, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               4.94  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     5.06  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   5.09  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/depth_sine_12in16.wav
+ 16-bit, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            8.73  round trip OK, side  0.01, encode  0.1 s, decode  0.0 s
+  Huffman on first differences                      7.43  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     11.08  round trip OK, side  0.16, finest tier 10.30, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       9.08  round trip OK, side  0.11, finest tier  6.67, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       7.48  round trip OK, side  0.03, finest tier  6.97, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      7.64  round trip OK, side  0.08, finest tier  3.72, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    6.65  round trip OK, side  0.11, finest tier  2.67, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               3.43  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     7.04  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   7.61  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/depth_sine_24.wav
+ 24-bit, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            8.87  round trip OK, side  0.03, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      7.86  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     12.21  round trip OK, side  0.45, finest tier 11.21, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       9.69  round trip OK, side  0.24, finest tier  7.13, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       7.90  round trip OK, side  0.05, finest tier  7.37, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      8.02  round trip OK, side  0.17, finest tier  3.94, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    9.12  round trip OK, side  0.28, finest tier  4.44, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               8.72  round trip OK, side  0.01, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    12.01  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  12.60  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/depth_sine_32f.wav
+ 32-bit float, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            8.97  round trip OK, side  0.10, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      8.05  round trip OK, side  0.16, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     12.50  round trip OK, side  0.71, finest tier 11.42, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       9.93  round trip OK, side  0.44, finest tier  7.27, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       8.10  round trip OK, side  0.21, finest tier  7.55, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      8.26  round trip OK, side  0.38, finest tier  4.03, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    9.48  round trip OK, side  0.59, finest tier  4.58, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               8.05  round trip OK, side  0.16, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    24.65  round trip OK, side  0.04, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  29.36  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/depth_sine_32.wav
+ 32-bit, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            8.89  round trip OK, side  0.04, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      7.88  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     12.54  round trip OK, side  0.77, finest tier 11.36, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       9.85  round trip OK, side  0.38, finest tier  7.17, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       7.95  round trip OK, side  0.08, finest tier  7.39, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      8.13  round trip OK, side  0.27, finest tier  3.95, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    9.31  round trip OK, side  0.46, finest tier  4.46, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               8.90  round trip OK, side  0.02, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    20.00  round trip OK, side  0.03, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  20.60  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/depth_sine_8.wav
+ 8-bit, 44100 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            6.78  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      4.19  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      7.67  round trip OK, side  0.01, finest tier  7.17, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       6.07  round trip OK, side  0.01, finest tier  4.20, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       4.38  round trip OK, side  0.00, finest tier  3.93, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      4.98  round trip OK, side  0.01, finest tier  2.09, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    3.09  round trip OK, side  0.01, finest tier  0.99, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               2.36  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     2.42  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   2.42  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/rate_pink_16000.wav
+ 16-bit, 16000 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                           13.89  round trip OK, side  0.29, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                     13.00  round trip OK, side  0.14, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     13.81  round trip OK, side  0.44, finest tier 12.85, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      13.74  round trip OK, side  0.71, finest tier 10.03, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences      13.14  round trip OK, side  0.31, finest tier 12.20, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                     13.70  round trip OK, side  0.95, finest tier  6.55, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors   13.35  round trip OK, side  0.84, finest tier  6.38, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table              13.00  round trip OK, side  0.14, encode  0.0 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    13.05  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  13.08  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/rate_pink_192000.wav
+ 16-bit, 192000 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                           13.72  round trip OK, side  0.02, encode  0.4 s, decode  0.1 s
+  Huffman on first differences                     12.93  round trip OK, side  0.01, encode  0.4 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start     13.58  round trip OK, side  0.07, finest tier 12.68, encode  0.4 s, decode  0.1 s
+  Tiers, groups of 4, offset from group start      13.36  round trip OK, side  0.10, finest tier  9.91, encode  0.4 s, decode  0.1 s
+  Tiers, groups of 16, successive differences      13.01  round trip OK, side  0.05, finest tier 12.12, encode  0.4 s, decode  0.1 s
+  Tiers, pairs                                     13.26  round trip OK, side  0.17, finest tier  6.47, encode  0.4 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors   12.95  round trip OK, side  0.15, finest tier  6.30, encode  0.4 s, decode  0.1 s
+  Fixed predictor, Huffman, one table              12.93  round trip OK, side  0.01, encode  0.4 s, decode  0.1 s
+  Fixed predictor, bit-length Huffman per block    13.05  round trip OK, side  0.02, encode  0.1 s, decode  0.1 s
+  Fixed predictor, Rice per block                  13.08  round trip OK, side  0.00, encode  0.2 s, decode  0.1 s
+build/wav/rate_pink_8000.wav
+ 16-bit, 8000 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                           14.14  round trip OK, side  0.60, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                     13.11  round trip OK, side  0.29, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     14.01  round trip OK, side  0.77, finest tier 13.03, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      14.00  round trip OK, side  1.15, finest tier 10.18, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences      13.27  round trip OK, side  0.53, finest tier 12.31, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                     13.96  round trip OK, side  1.46, finest tier  6.67, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors   13.59  round trip OK, side  1.30, finest tier  6.47, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table              13.11  round trip OK, side  0.29, encode  0.0 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    13.04  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  13.08  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/rate_pink_96000.wav
+ 16-bit, 96000 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                           13.72  round trip OK, side  0.05, encode  0.2 s, decode  0.1 s
+  Huffman on first differences                     12.94  round trip OK, side  0.02, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     13.61  round trip OK, side  0.12, finest tier 12.69, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      13.40  round trip OK, side  0.17, finest tier  9.92, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, successive differences      13.03  round trip OK, side  0.09, finest tier 12.13, encode  0.2 s, decode  0.0 s
+  Tiers, pairs                                     13.34  round trip OK, side  0.29, finest tier  6.47, encode  0.2 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors   13.02  round trip OK, side  0.26, finest tier  6.30, encode  0.2 s, decode  0.1 s
+  Fixed predictor, Huffman, one table              12.94  round trip OK, side  0.02, encode  0.2 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    13.05  round trip OK, side  0.02, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Rice per block                  13.08  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+build/wav/rate_sine_16000.wav
+ 16-bit, 16000 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            3.13  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      3.13  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      3.00  round trip OK, side  0.00, finest tier  2.94, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       3.13  round trip OK, side  0.00, finest tier  2.75, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       2.88  round trip OK, side  0.00, finest tier  2.81, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      2.25  round trip OK, side  0.00, finest tier  1.50, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    1.75  round trip OK, side  0.00, finest tier  1.13, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               3.19  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     9.02  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  10.50  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/rate_sine_192000.wav
+ 16-bit, 192000 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            6.68  round trip OK, side  0.00, encode  0.2 s, decode  0.1 s
+  Huffman on first differences                      6.64  round trip OK, side  0.00, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start      7.34  round trip OK, side  0.00, finest tier  7.11, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 4, offset from group start       6.54  round trip OK, side  0.00, finest tier  5.38, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       6.36  round trip OK, side  0.00, finest tier  6.20, encode  0.2 s, decode  0.0 s
+  Tiers, pairs                                      5.67  round trip OK, side  0.00, finest tier  3.31, encode  0.2 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    3.98  round trip OK, side  0.00, finest tier  2.07, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               2.19  round trip OK, side  0.00, encode  0.2 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     2.26  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   2.25  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+build/wav/rate_sine_8000.wav
+ 16-bit, 8000 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            2.25  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      2.25  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      2.19  round trip OK, side  0.00, finest tier  2.13, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       1.75  round trip OK, side  0.00, finest tier  1.50, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       1.94  round trip OK, side  0.00, finest tier  1.88, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      1.50  round trip OK, side  0.00, finest tier  1.00, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    1.25  round trip OK, side  0.00, finest tier  0.75, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               2.38  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    10.78  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  14.00  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/rate_sine_96000.wav
+ 16-bit, 96000 Hz, 1 channels, 10 s; bits per sample, side information included:
+  Huffman on raw samples                            5.69  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Huffman on first differences                      5.69  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      6.02  round trip OK, side  0.00, finest tier  5.88, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       5.56  round trip OK, side  0.00, finest tier  4.67, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       5.39  round trip OK, side  0.00, finest tier  5.29, encode  0.1 s, decode  0.0 s
+  Tiers, pairs                                      4.71  round trip OK, side  0.00, finest tier  2.83, encode  0.1 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    3.81  round trip OK, side  0.00, finest tier  2.27, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               2.88  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     3.38  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   3.36  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/rec_electronic.wav
+ 24-bit, 44100 Hz, 2 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           26.64  round trip OK, side  6.91, encode  0.7 s, decode  0.2 s
+  Huffman on first differences                     21.83  round trip OK, side  3.01, encode  0.7 s, decode  0.2 s
+  Tiers, groups of 16, offset from group start     23.75  round trip OK, side  4.65, finest tier 21.88, encode  0.7 s, decode  0.2 s
+  Tiers, groups of 4, offset from group start      22.81  round trip OK, side  4.56, finest tier 16.41, encode  0.6 s, decode  0.2 s
+  Tiers, groups of 16, successive differences      22.09  round trip OK, side  3.52, finest tier 20.39, encode  0.6 s, decode  0.2 s
+  Tiers, pairs                                     23.31  round trip OK, side  5.86, finest tier 11.10, encode  0.6 s, decode  0.2 s
+  Tiers, pairs, offset from mean of both anchors   22.75  round trip OK, side  5.42, finest tier 10.92, encode  0.6 s, decode  0.2 s
+  Fixed predictor, Huffman, one table              21.82  round trip OK, side  3.01, encode  0.6 s, decode  0.2 s
+  Fixed predictor, bit-length Huffman per block    19.99  round trip OK, side  0.03, encode  0.2 s, decode  0.1 s
+  Fixed predictor, Rice per block                  20.10  round trip OK, side  0.00, encode  0.2 s, decode  0.1 s
+build/wav/rec_orchestra_f32.wav
+ 32-bit float, 48000 Hz, 2 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           29.46  round trip OK, side 10.53, encode  0.8 s, decode  0.2 s
+  Huffman on first differences                     24.05  round trip OK, side  6.23, encode  0.6 s, decode  0.2 s
+  Tiers, groups of 16, offset from group start     31.98  round trip OK, side 13.02, finest tier 29.56, encode  0.8 s, decode  0.2 s
+  Tiers, groups of 4, offset from group start      29.25  round trip OK, side 11.36, finest tier 20.30, encode  0.7 s, decode  0.2 s
+  Tiers, groups of 16, successive differences      25.08  round trip OK, side  7.43, finest tier 22.71, encode  0.6 s, decode  0.2 s
+  Tiers, pairs                                     29.50  round trip OK, side 12.49, finest tier 12.87, encode  0.7 s, decode  0.2 s
+  Tiers, pairs, offset from mean of both anchors   28.13  round trip OK, side 11.35, finest tier 11.69, encode  0.6 s, decode  0.2 s
+  Fixed predictor, Huffman, one table              24.05  round trip OK, side  6.24, encode  0.6 s, decode  0.2 s
+  Fixed predictor, bit-length Huffman per block    24.37  round trip OK, side  0.04, encode  0.2 s, decode  0.1 s
+  Fixed predictor, Rice per block                  29.04  round trip OK, side  0.00, encode  0.3 s, decode  0.1 s
+build/wav/rec_orchestra.wav
+ 24-bit, 48000 Hz, 2 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           21.84  round trip OK, side  2.91, encode  0.7 s, decode  0.2 s
+  Huffman on first differences                     17.58  round trip OK, side  0.77, encode  0.5 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start     21.27  round trip OK, side  2.92, finest tier 19.72, encode  0.7 s, decode  0.2 s
+  Tiers, groups of 4, offset from group start      19.73  round trip OK, side  2.49, finest tier 14.10, encode  0.6 s, decode  0.2 s
+  Tiers, groups of 16, successive differences      18.01  round trip OK, side  1.29, finest tier 16.50, encode  0.5 s, decode  0.1 s
+  Tiers, pairs                                     19.56  round trip OK, side  3.11, finest tier  8.94, encode  0.5 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors   17.07  round trip OK, side  2.07, finest tier  7.33, encode  0.5 s, decode  0.1 s
+  Fixed predictor, Huffman, one table              14.92  round trip OK, side  0.22, encode  0.5 s, decode  0.1 s
+  Fixed predictor, bit-length Huffman per block    14.35  round trip OK, side  0.02, encode  0.1 s, decode  0.1 s
+  Fixed predictor, Rice per block                  14.32  round trip OK, side  0.00, encode  0.2 s, decode  0.1 s
+build/wav/rec_piano_96k.wav
+ 24-bit, 96000 Hz, 2 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           15.55  round trip OK, side  0.53, encode  0.9 s, decode  0.2 s
+  Huffman on first differences                     10.41  round trip OK, side  0.03, encode  0.6 s, decode  0.2 s
+  Tiers, groups of 16, offset from group start     14.07  round trip OK, side  0.67, finest tier 12.73, encode  0.8 s, decode  0.2 s
+  Tiers, groups of 4, offset from group start      12.62  round trip OK, side  0.72, finest tier  8.59, encode  0.7 s, decode  0.2 s
+  Tiers, groups of 16, successive differences      10.90  round trip OK, side  0.29, finest tier  9.76, encode  0.6 s, decode  0.2 s
+  Tiers, pairs                                     12.12  round trip OK, side  0.87, finest tier  5.22, encode  0.6 s, decode  0.2 s
+  Tiers, pairs, offset from mean of both anchors    9.03  round trip OK, side  0.62, finest tier  3.43, encode  0.5 s, decode  0.2 s
+  Fixed predictor, Huffman, one table               6.77  round trip OK, side  0.00, encode  0.5 s, decode  0.1 s
+  Fixed predictor, bit-length Huffman per block    12.75  round trip OK, side  0.02, encode  0.2 s, decode  0.2 s
+  Fixed predictor, Rice per block                  12.82  round trip OK, side  0.00, encode  0.3 s, decode  0.1 s
+build/wav/rec_piano.wav
+ 24-bit, 44100 Hz, 2 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           11.56  round trip OK, side  0.16, encode  0.3 s, decode  0.1 s
+  Huffman on first differences                      7.63  round trip OK, side  0.02, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start     10.85  round trip OK, side  0.35, finest tier  9.93, encode  0.3 s, decode  0.1 s
+  Tiers, groups of 4, offset from group start       9.53  round trip OK, side  0.43, finest tier  6.46, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, successive differences       8.03  round trip OK, side  0.19, finest tier  7.15, encode  0.2 s, decode  0.1 s
+  Tiers, pairs                                      9.08  round trip OK, side  0.57, finest tier  3.82, encode  0.2 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors    6.88  round trip OK, side  0.54, finest tier  2.37, encode  0.2 s, decode  0.1 s
+  Fixed predictor, Huffman, one table               4.23  round trip OK, side  0.00, encode  0.2 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    11.52  round trip OK, side  0.02, encode  0.1 s, decode  0.1 s
+  Fixed predictor, Rice per block                  12.22  round trip OK, side  0.00, encode  0.1 s, decode  0.1 s
+build/wav/rec_room.wav
+ 24-bit, 48000 Hz, 2 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           17.98  round trip OK, side  0.72, encode  0.5 s, decode  0.1 s
+  Huffman on first differences                     14.48  round trip OK, side  0.16, encode  0.4 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start     16.93  round trip OK, side  0.75, finest tier 15.66, encode  0.5 s, decode  0.1 s
+  Tiers, groups of 4, offset from group start      16.00  round trip OK, side  0.81, finest tier 11.51, encode  0.4 s, decode  0.1 s
+  Tiers, groups of 16, successive differences      14.78  round trip OK, side  0.41, finest tier 13.58, encode  0.4 s, decode  0.1 s
+  Tiers, pairs                                     15.71  round trip OK, side  1.11, finest tier  7.27, encode  0.4 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors   14.63  round trip OK, side  0.89, finest tier  6.61, encode  0.4 s, decode  0.1 s
+  Fixed predictor, Huffman, one table              14.20  round trip OK, side  0.15, encode  0.4 s, decode  0.1 s
+  Fixed predictor, bit-length Huffman per block    13.98  round trip OK, side  0.02, encode  0.1 s, decode  0.1 s
+  Fixed predictor, Rice per block                  13.95  round trip OK, side  0.00, encode  0.2 s, decode  0.1 s
+build/wav/rec_speech_16k.wav
+ 16-bit, 16000 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           13.52  round trip OK, side  0.26, encode  0.1 s, decode  0.0 s
+  Huffman on first differences                     11.27  round trip OK, side  0.08, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     13.39  round trip OK, side  0.45, finest tier 12.45, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      12.63  round trip OK, side  0.54, finest tier  9.07, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, successive differences      11.51  round trip OK, side  0.24, finest tier 10.57, encode  0.1 s, decode  0.0 s
+  Tiers, pairs                                     12.26  round trip OK, side  0.65, finest tier  5.66, encode  0.1 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors   11.10  round trip OK, side  0.52, finest tier  4.89, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table              10.73  round trip OK, side  0.07, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    10.49  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  10.50  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/rec_speech_8k.wav
+ 8-bit, 8000 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                            5.36  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      4.08  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      5.55  round trip OK, side  0.01, finest tier  5.18, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       4.88  round trip OK, side  0.02, finest tier  3.45, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       4.20  round trip OK, side  0.01, finest tier  3.82, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      4.62  round trip OK, side  0.04, finest tier  2.04, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    4.00  round trip OK, side  0.03, finest tier  1.68, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               4.05  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     3.98  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   4.02  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/rec_speech.wav
+ 24-bit, 48000 Hz, 2 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           23.44  round trip OK, side  4.13, encode  0.7 s, decode  0.2 s
+  Huffman on first differences                     18.50  round trip OK, side  1.14, encode  0.6 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start     22.16  round trip OK, side  3.59, finest tier 20.48, encode  0.7 s, decode  0.2 s
+  Tiers, groups of 4, offset from group start      20.64  round trip OK, side  3.09, finest tier 14.71, encode  0.6 s, decode  0.2 s
+  Tiers, groups of 16, successive differences      18.95  round trip OK, side  1.73, finest tier 17.37, encode  0.5 s, decode  0.1 s
+  Tiers, pairs                                     20.55  round trip OK, side  3.79, finest tier  9.41, encode  0.6 s, decode  0.2 s
+  Tiers, pairs, offset from mean of both anchors   18.10  round trip OK, side  2.47, finest tier  7.93, encode  0.5 s, decode  0.1 s
+  Fixed predictor, Huffman, one table              16.63  round trip OK, side  0.40, encode  0.5 s, decode  0.1 s
+  Fixed predictor, bit-length Huffman per block    16.35  round trip OK, side  0.02, encode  0.2 s, decode  0.1 s
+  Fixed predictor, Rice per block                  16.31  round trip OK, side  0.00, encode  0.2 s, decode  0.1 s
+build/wav/rec_vinyl_192k.wav
+ 24-bit, 192000 Hz, 2 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           22.26  round trip OK, side  1.83, encode  3.2 s, decode  0.7 s
+  Huffman on first differences                     14.51  round trip OK, side  0.06, encode  1.8 s, decode  0.4 s
+  Tiers, groups of 16, offset from group start     17.96  round trip OK, side  0.73, finest tier 16.47, encode  2.2 s, decode  0.5 s
+  Tiers, groups of 4, offset from group start      16.41  round trip OK, side  0.64, finest tier 11.65, encode  1.9 s, decode  0.5 s
+  Tiers, groups of 16, successive differences      14.89  round trip OK, side  0.29, finest tier 13.61, encode  1.9 s, decode  0.4 s
+  Tiers, pairs                                     15.87  round trip OK, side  0.78, finest tier  7.27, encode  1.8 s, decode  0.5 s
+  Tiers, pairs, offset from mean of both anchors   12.36  round trip OK, side  0.41, finest tier  5.22, encode  1.4 s, decode  0.4 s
+  Fixed predictor, Huffman, one table               9.10  round trip OK, side  0.00, encode  1.3 s, decode  0.3 s
+  Fixed predictor, bit-length Huffman per block     9.06  round trip OK, side  0.01, encode  0.4 s, decode  0.3 s
+  Fixed predictor, Rice per block                   9.04  round trip OK, side  0.00, encode  0.5 s, decode  0.2 s
+build/wav/signal_brown.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           13.79  round trip OK, side  0.06, encode  0.2 s, decode  0.0 s
+  Huffman on first differences                     11.24  round trip OK, side  0.01, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     12.99  round trip OK, side  0.12, finest tier 12.05, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      12.30  round trip OK, side  0.15, finest tier  8.95, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, successive differences      11.42  round trip OK, side  0.07, finest tier 10.54, encode  0.2 s, decode  0.0 s
+  Tiers, pairs                                     11.93  round trip OK, side  0.22, finest tier  5.62, encode  0.2 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors   11.52  round trip OK, side  0.19, finest tier  5.46, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table              11.24  round trip OK, side  0.01, encode  0.2 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    11.49  round trip OK, side  0.02, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Rice per block                  11.64  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+build/wav/signal_chord.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           14.81  round trip OK, side  0.08, encode  0.2 s, decode  0.0 s
+  Huffman on first differences                     10.12  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     13.45  round trip OK, side  0.18, finest tier 12.42, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      11.95  round trip OK, side  0.21, finest tier  8.42, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, successive differences      10.43  round trip OK, side  0.09, finest tier  9.49, encode  0.1 s, decode  0.0 s
+  Tiers, pairs                                     11.23  round trip OK, side  0.27, finest tier  5.06, encode  0.1 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    6.56  round trip OK, side  0.17, finest tier  2.28, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               2.55  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     2.86  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   2.71  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_dither.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                            2.01  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Huffman on first differences                      2.35  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      2.35  round trip OK, side  0.00, finest tier  2.20, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       2.35  round trip OK, side  0.00, finest tier  1.76, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       2.35  round trip OK, side  0.00, finest tier  2.20, encode  0.1 s, decode  0.0 s
+  Tiers, pairs                                      2.35  round trip OK, side  0.00, finest tier  1.17, encode  0.1 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    2.12  round trip OK, side  0.00, finest tier  1.06, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               2.01  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     2.02  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   2.01  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_fm.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           11.97  round trip OK, side  0.02, encode  0.2 s, decode  0.0 s
+  Huffman on first differences                      9.82  round trip OK, side  0.01, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     13.70  round trip OK, side  0.19, finest tier 12.74, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      11.44  round trip OK, side  0.13, finest tier  8.46, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       9.86  round trip OK, side  0.03, finest tier  9.20, encode  0.1 s, decode  0.0 s
+  Tiers, pairs                                      9.88  round trip OK, side  0.11, finest tier  4.91, encode  0.1 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    8.11  round trip OK, side  0.14, finest tier  3.32, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               3.39  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     3.50  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   3.57  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_impulses.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                            1.00  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      1.00  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      1.00  round trip OK, side  0.00, finest tier  0.94, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       1.00  round trip OK, side  0.00, finest tier  0.75, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       1.00  round trip OK, side  0.00, finest tier  0.94, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      1.00  round trip OK, side  0.00, finest tier  0.50, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    1.00  round trip OK, side  0.00, finest tier  0.50, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               1.00  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     1.02  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   4.72  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_pink.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           13.72  round trip OK, side  0.05, encode  0.2 s, decode  0.0 s
+  Huffman on first differences                     12.94  round trip OK, side  0.02, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     13.62  round trip OK, side  0.13, finest tier 12.69, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start      13.41  round trip OK, side  0.18, finest tier  9.92, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, successive differences      13.03  round trip OK, side  0.10, finest tier 12.13, encode  0.2 s, decode  0.0 s
+  Tiers, pairs                                     13.35  round trip OK, side  0.31, finest tier  6.47, encode  0.2 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors   13.03  round trip OK, side  0.27, finest tier  6.31, encode  0.2 s, decode  0.0 s
+  Fixed predictor, Huffman, one table              12.94  round trip OK, side  0.02, encode  0.2 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    13.05  round trip OK, side  0.02, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Rice per block                  13.08  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+build/wav/signal_sawtooth.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                            8.85  round trip OK, side  0.01, encode  0.1 s, decode  0.0 s
+  Huffman on first differences                      1.08  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      5.37  round trip OK, side  0.01, finest tier  5.02, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       2.52  round trip OK, side  0.00, finest tier  1.73, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       1.14  round trip OK, side  0.00, finest tier  1.01, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      1.21  round trip OK, side  0.00, finest tier  0.54, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    1.47  round trip OK, side  0.00, finest tier  0.60, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               1.08  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    11.14  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  12.71  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_silence.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                            1.00  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      1.00  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      1.00  round trip OK, side  0.00, finest tier  0.94, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       1.00  round trip OK, side  0.00, finest tier  0.75, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       1.00  round trip OK, side  0.00, finest tier  0.94, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      1.00  round trip OK, side  0.00, finest tier  0.50, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    1.00  round trip OK, side  0.00, finest tier  0.50, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               1.00  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     1.00  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   1.00  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_sine.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                            8.84  round trip OK, side  0.01, encode  0.1 s, decode  0.0 s
+  Huffman on first differences                      7.84  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     11.79  round trip OK, side  0.09, finest tier 11.00, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       9.49  round trip OK, side  0.06, finest tier  7.08, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       7.85  round trip OK, side  0.01, finest tier  7.35, encode  0.1 s, decode  0.0 s
+  Tiers, pairs                                      7.88  round trip OK, side  0.05, finest tier  3.92, encode  0.1 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    8.33  round trip OK, side  0.06, finest tier  3.90, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               4.39  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     4.58  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   4.70  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_square.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                            1.00  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Huffman on first differences                      1.07  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      1.37  round trip OK, side  0.00, finest tier  1.28, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       1.17  round trip OK, side  0.00, finest tier  0.82, encode  0.0 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       1.08  round trip OK, side  0.00, finest tier  0.98, encode  0.0 s, decode  0.0 s
+  Tiers, pairs                                      1.13  round trip OK, side  0.00, finest tier  0.52, encode  0.0 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    1.23  round trip OK, side  0.00, finest tier  0.55, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               1.07  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     1.75  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  13.43  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_sweep.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           14.74  round trip OK, side  0.08, encode  0.2 s, decode  0.0 s
+  Huffman on first differences                     13.71  round trip OK, side  0.21, encode  0.2 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start     15.37  round trip OK, side  0.38, finest tier 14.28, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 4, offset from group start      14.80  round trip OK, side  0.57, finest tier 10.77, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, successive differences      13.92  round trip OK, side  0.37, finest tier 12.87, encode  0.2 s, decode  0.0 s
+  Tiers, pairs                                     14.70  round trip OK, side  0.95, finest tier  6.91, encode  0.2 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors   11.76  round trip OK, side  0.83, finest tier  5.16, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               8.28  round trip OK, side  0.11, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     6.63  round trip OK, side  0.01, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                   6.78  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_triangle.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                            8.85  round trip OK, side  0.01, encode  0.1 s, decode  0.0 s
+  Huffman on first differences                      1.92  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, offset from group start      7.32  round trip OK, side  0.03, finest tier  6.78, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 4, offset from group start       4.37  round trip OK, side  0.03, finest tier  2.85, encode  0.1 s, decode  0.0 s
+  Tiers, groups of 16, successive differences       2.21  round trip OK, side  0.01, finest tier  1.79, encode  0.1 s, decode  0.0 s
+  Tiers, pairs                                      2.66  round trip OK, side  0.03, finest tier  0.96, encode  0.1 s, decode  0.0 s
+  Tiers, pairs, offset from mean of both anchors    3.11  round trip OK, side  0.06, finest tier  0.86, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Huffman, one table               1.87  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block     2.57  round trip OK, side  0.02, encode  0.0 s, decode  0.0 s
+  Fixed predictor, Rice per block                  10.01  round trip OK, side  0.00, encode  0.0 s, decode  0.0 s
+build/wav/signal_white.wav
+ 16-bit, 44100 Hz, 1 channels, 20 s; bits per sample, side information included:
+  Huffman on raw samples                           15.05  round trip OK, side  0.06, encode  0.2 s, decode  0.0 s
+  Huffman on first differences                     15.88  round trip OK, side  0.18, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, offset from group start     15.97  round trip OK, side  0.34, finest tier 14.90, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 4, offset from group start      16.09  round trip OK, side  0.55, finest tier 11.94, encode  0.2 s, decode  0.1 s
+  Tiers, groups of 16, successive differences      15.97  round trip OK, side  0.34, finest tier 14.90, encode  0.2 s, decode  0.1 s
+  Tiers, pairs                                     16.41  round trip OK, side  1.03, finest tier  8.02, encode  0.2 s, decode  0.1 s
+  Tiers, pairs, offset from mean of both anchors   16.16  round trip OK, side  0.94, finest tier  7.90, encode  0.2 s, decode  0.1 s
+  Fixed predictor, Huffman, one table              15.06  round trip OK, side  0.06, encode  0.2 s, decode  0.0 s
+  Fixed predictor, bit-length Huffman per block    15.02  round trip OK, side  0.02, encode  0.1 s, decode  0.0 s
+  Fixed predictor, Rice per block                  15.50  round trip OK, side  0.00, encode  0.1 s, decode  0.0 s

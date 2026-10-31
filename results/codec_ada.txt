@@ -1,0 +1,248 @@
+build/wav/depth_pink_24.wav
+  Block codec, Ada and SPARK                           20.87  round trip OK, hash 346ed492767419fb, encode   1.46 s, decode   0.12 s, level 4, 1150540 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 57, LPC 54; Rice 0, run-length 0, adaptive 111; adaptive stage 0
+    bits: headers 2031, LPC coefficients 1534, LPC warm-up 6092, code tables 666, residuals 9178061, framing 15936; coefficients in Rice or Exp-Golomb codes 1516, warm-up at the residual rate 5550
+    frames per block: 4096 105, 2048 6, 1024 0, 512 0
+    framing: header 36 bytes, 108 groups, 111 blocks, 1956 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/depth_pink_32f.wav
+  Block codec, Ada and SPARK                           27.65  round trip OK, hash 2633611714e0adc1, encode   1.54 s, decode   0.04 s, level 4, 1524196 bytes
+    blocks: constant 0, orders 0-4 0 109 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 109, adaptive 0; adaptive stage 0; float as ordered bits
+    bits: headers 1199, LPC coefficients 0, LPC warm-up 0, code tables 13773, residuals 12162708, framing 15888; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 107, 2048 2, 1024 0, 512 0
+    framing: header 38 bytes, 108 groups, 109 blocks, 1948 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/depth_pink_32.wav
+  Block codec, Ada and SPARK                           28.90  round trip OK, hash ddb44952ab7bffb4, encode   1.60 s, decode   0.15 s, level 4, 1593239 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 58, LPC 53; Rice 0, run-length 0, adaptive 111; adaptive stage 0
+    bits: headers 2016, LPC coefficients 1534, LPC warm-up 8154, code tables 666, residuals 12717606, framing 15936; coefficients in Rice or Exp-Golomb codes 1510, warm-up at the residual rate 7617
+    frames per block: 4096 105, 2048 6, 1024 0, 512 0
+    framing: header 36 bytes, 108 groups, 111 blocks, 1956 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/depth_pink_8.wav
+  Block codec, Ada and SPARK                            4.90  round trip OK, hash 24427e0e28dad755, encode   1.08 s, decode   0.03 s, level 4, 269913 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 58, LPC 51; Rice 0, run-length 0, adaptive 109; adaptive stage 0
+    bits: headers 1964, LPC coefficients 1185, LPC warm-up 1475, code tables 654, residuals 2138154, framing 15872; coefficients in Rice or Exp-Golomb codes 1272, warm-up at the residual rate 983
+    frames per block: 4096 107, 2048 2, 1024 0, 512 0
+    framing: header 36 bytes, 108 groups, 109 blocks, 1948 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/depth_sine_12in16.wav
+  Block codec, Ada and SPARK                            0.06  round trip OK, hash 34e7616ebacffa97, encode   0.85 s, decode   0.01 s, level 4, 3560 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 110, tiers 0, LPC 1; Rice 0, run-length 63, adaptive 48; adaptive stage 0
+    bits: headers 2996, LPC coefficients 28, LPC warm-up 24, code tables 1715, residuals 7781, framing 15936; coefficients in Rice or Exp-Golomb codes 34, warm-up at the residual rate 3
+    frames per block: 4096 107, 2048 1, 1024 1, 512 2
+    framing: header 36 bytes, 108 groups, 111 blocks, 1956 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/depth_sine_24.wav
+  Block codec, Ada and SPARK                            0.06  round trip OK, hash 23bfba69df8c0e9b, encode   0.70 s, decode   0.00 s, level 4, 3158 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 110, tiers 0, LPC 1; Rice 0, run-length 110, adaptive 1; adaptive stage 0
+    bits: headers 2996, LPC coefficients 30, LPC warm-up 48, code tables 1876, residuals 4378, framing 15936; coefficients in Rice or Exp-Golomb codes 36, warm-up at the residual rate 15
+    frames per block: 4096 107, 2048 1, 1024 1, 512 2
+    framing: header 36 bytes, 108 groups, 111 blocks, 1956 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/depth_sine_32f.wav
+  Block codec, Ada and SPARK                            0.36  round trip OK, hash e4fd5f32cc76b109, encode   1.00 s, decode   0.01 s, level 4, 19809 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 1, delay 122, tiers 0, LPC 6; Rice 0, run-length 129, adaptive 0; adaptive stage 0; float as ordered bits
+    bits: headers 3461, LPC coefficients 1027, LPC warm-up 4651, code tables 12873, residuals 119932, framing 16528; coefficients in Rice or Exp-Golomb codes 472, warm-up at the residual rate 2924
+    frames per block: 4096 101, 2048 7, 1024 7, 512 14
+    framing: header 38 bytes, 108 groups, 129 blocks, 2028 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/depth_sine_32.wav
+  Block codec, Ada and SPARK                            0.11  round trip OK, hash 686bff2e239b7b20, encode   0.71 s, decode   0.01 s, level 4, 5951 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 110, tiers 0, LPC 1; Rice 0, run-length 19, adaptive 92; adaptive stage 0
+    bits: headers 2996, LPC coefficients 30, LPC warm-up 64, code tables 875, residuals 27707, framing 15936; coefficients in Rice or Exp-Golomb codes 36, warm-up at the residual rate 31
+    frames per block: 4096 107, 2048 1, 1024 1, 512 2
+    framing: header 36 bytes, 108 groups, 111 blocks, 1956 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/depth_sine_8.wav
+  Block codec, Ada and SPARK                            0.05  round trip OK, hash e2eb5f676e94e88f, encode   0.79 s, decode   0.00 s, level 4, 2755 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 110, tiers 0, LPC 1; Rice 0, run-length 110, adaptive 1; adaptive stage 0
+    bits: headers 2996, LPC coefficients 27, LPC warm-up 19, code tables 1876, residuals 1186, framing 15936; coefficients in Rice or Exp-Golomb codes 32, warm-up at the residual rate 4
+    frames per block: 4096 107, 2048 1, 1024 1, 512 2
+    framing: header 36 bytes, 108 groups, 111 blocks, 1956 bytes of group headers and tables, a segment every 108 groups, 1 seek points
+build/wav/rate_pink_16000.wav
+  Block codec, Ada and SPARK                           12.86  round trip OK, hash cc54cec5a65d1934, encode   0.46 s, decode   0.03 s, level 4, 257149 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 17, LPC 23; Rice 1, run-length 0, adaptive 39; adaptive stage 0
+    bits: headers 784, LPC coefficients 665, LPC warm-up 1656, code tables 240, residuals 2047807, framing 6040; coefficients in Rice or Exp-Golomb codes 664, warm-up at the residual rate 1428
+    frames per block: 4096 39, 2048 0, 1024 0, 512 1
+    framing: header 36 bytes, 40 groups, 40 blocks, 719 bytes of group headers and tables, a segment every 40 groups, 1 seek points
+build/wav/rate_pink_192000.wav
+  Block codec, Ada and SPARK                           12.87  round trip OK, hash 7c8b417f46dcf4ad, encode   5.60 s, decode   0.34 s, level 4, 3087709 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 224, LPC 275; Rice 0, run-length 0, adaptive 499; adaptive stage 0
+    bits: headers 9614, LPC coefficients 7675, LPC warm-up 19124, code tables 2994, residuals 24593481, framing 68784; coefficients in Rice or Exp-Golomb codes 7709, warm-up at the residual rate 16313
+    frames per block: 4096 439, 2048 60, 1024 0, 512 0
+    framing: header 36 bytes, 469 groups, 499 blocks, 8562 bytes of group headers and tables, a segment every 469 groups, 1 seek points
+build/wav/rate_pink_8000.wav
+  Block codec, Ada and SPARK                           12.87  round trip OK, hash 4afcf49f00cece99, encode   0.23 s, decode   0.01 s, level 4, 128672 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 10, LPC 10; Rice 0, run-length 0, adaptive 20; adaptive stage 0
+    bits: headers 370, LPC coefficients 308, LPC warm-up 728, code tables 120, residuals 1024682, framing 3168; coefficients in Rice or Exp-Golomb codes 302, warm-up at the residual rate 632
+    frames per block: 4096 20, 2048 0, 1024 0, 512 0
+    framing: header 36 bytes, 20 groups, 20 blocks, 360 bytes of group headers and tables, a segment every 20 groups, 1 seek points
+build/wav/rate_pink_96000.wav
+  Block codec, Ada and SPARK                           12.87  round trip OK, hash 579792391e4e8797, encode   2.81 s, decode   0.17 s, level 4, 1544533 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 121, LPC 130; Rice 0, run-length 0, adaptive 251; adaptive stage 0
+    bits: headers 4711, LPC coefficients 3443, LPC warm-up 8622, code tables 1506, residuals 12303342, framing 34640; coefficients in Rice or Exp-Golomb codes 3529, warm-up at the residual rate 7338
+    frames per block: 4096 218, 2048 33, 1024 0, 512 0
+    framing: header 36 bytes, 235 groups, 251 blocks, 4294 bytes of group headers and tables, a segment every 235 groups, 1 seek points
+build/wav/rate_sine_16000.wav
+  Block codec, Ada and SPARK                            0.05  round trip OK, hash 8f15c6c20f52bb5e, encode   0.27 s, decode   0.00 s, level 4, 1027 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 40, tiers 0, LPC 0; Rice 0, run-length 40, adaptive 0; adaptive stage 0
+    bits: headers 1077, LPC coefficients 0, LPC warm-up 0, code tables 722, residuals 377, framing 6040; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 39, 2048 0, 1024 0, 512 1
+    framing: header 36 bytes, 40 groups, 40 blocks, 719 bytes of group headers and tables, a segment every 40 groups, 1 seek points
+build/wav/rate_sine_192000.wav
+  Block codec, Ada and SPARK                            0.05  round trip OK, hash 4207cc521515c324, encode   3.47 s, decode   0.02 s, level 4, 11431 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 471, tiers 0, LPC 1; Rice 0, run-length 471, adaptive 1; adaptive stage 0
+    bits: headers 12743, LPC coefficients 30, LPC warm-up 28, code tables 8013, residuals 2714, framing 67920; coefficients in Rice or Exp-Golomb codes 36, warm-up at the residual rate 3
+    frames per block: 4096 468, 2048 1, 1024 1, 512 2
+    framing: header 36 bytes, 469 groups, 472 blocks, 8454 bytes of group headers and tables, a segment every 469 groups, 1 seek points
+build/wav/rate_sine_8000.wav
+  Block codec, Ada and SPARK                            0.05  round trip OK, hash f1fdb7ac699480d4, encode   0.13 s, decode   0.00 s, level 4, 534 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 20, tiers 0, LPC 0; Rice 0, run-length 20, adaptive 0; adaptive stage 0
+    bits: headers 537, LPC coefficients 0, LPC warm-up 0, code tables 376, residuals 191, framing 3168; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 20, 2048 0, 1024 0, 512 0
+    framing: header 36 bytes, 20 groups, 20 blocks, 360 bytes of group headers and tables, a segment every 20 groups, 1 seek points
+build/wav/rate_sine_96000.wav
+  Block codec, Ada and SPARK                            0.05  round trip OK, hash 49f8dadc5b8d6d0b, encode   1.73 s, decode   0.01 s, level 4, 5824 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 235, tiers 0, LPC 0; Rice 0, run-length 235, adaptive 0; adaptive stage 0
+    bits: headers 6342, LPC coefficients 0, LPC warm-up 0, code tables 4053, residuals 2069, framing 34128; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 234, 2048 1, 1024 0, 512 0
+    framing: header 36 bytes, 235 groups, 235 blocks, 4230 bytes of group headers and tables, a segment every 235 groups, 1 seek points
+build/wav/rec_electronic.wav
+  Block codec, Ada and SPARK                           18.54  round trip OK, hash 3e70613735404bac, encode  11.38 s, decode   0.44 s, level 4, 4087320 bytes
+    blocks: constant 0, orders 0-4 0 6 9 0 0, delay 0, tiers 2, LPC 541; Rice 36, run-length 1, adaptive 521; adaptive stage 0
+    bits: headers 14217, LPC coefficients 43833, LPC warm-up 121024, code tables 3437, residuals 32473465, framing 42584; coefficients in Rice or Exp-Golomb codes 42013, warm-up at the residual rate 109548
+    frames per block: 4096 182, 2048 44, 1024 39, 512 14
+    stereo: left/right 0, left/side 35, side/right 9, mid/side 235
+    framing: header 48 bytes, 216 groups, 558 blocks, 5275 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/rec_orchestra_f32.wav
+  Block codec, Ada and SPARK                           13.82  round trip OK, hash 59a0f48be1780339, encode  11.81 s, decode   0.41 s, level 4, 3316428 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 478; Rice 2, run-length 0, adaptive 476; adaptive stage 0; float as integers / 2** 23
+    bits: headers 12426, LPC coefficients 46283, LPC warm-up 70228, code tables 2868, residuals 26357579, framing 42040; coefficients in Rice or Exp-Golomb codes 47370, warm-up at the residual rate 55387
+    frames per block: 4096 231, 2048 6, 1024 2, 512 0
+    stereo: left/right 40, left/side 0, side/right 0, mid/side 199
+    framing: header 52 bytes, 235 groups, 478 blocks, 5203 bytes of group headers and tables, a segment every 118 groups, 2 seek points
+build/wav/rec_orchestra.wav
+  Block codec, Ada and SPARK                           13.82  round trip OK, hash 346487f99a3f8cdc, encode  11.69 s, decode   0.38 s, level 4, 3316424 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 478; Rice 2, run-length 0, adaptive 476; adaptive stage 0
+    bits: headers 12426, LPC coefficients 46283, LPC warm-up 70228, code tables 2868, residuals 26357579, framing 42008; coefficients in Rice or Exp-Golomb codes 47370, warm-up at the residual rate 55387
+    frames per block: 4096 231, 2048 6, 1024 2, 512 0
+    stereo: left/right 40, left/side 0, side/right 0, mid/side 199
+    framing: header 48 bytes, 235 groups, 478 blocks, 5203 bytes of group headers and tables, a segment every 118 groups, 2 seek points
+build/wav/rec_piano_96k.wav
+  Block codec, Ada and SPARK                            6.31  round trip OK, hash a6cf29f681f59012, encode  21.00 s, decode   0.42 s, level 4, 3027482 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 940; Rice 0, run-length 0, adaptive 940; adaptive stage 0
+    bits: headers 24440, LPC coefficients 190187, LPC warm-up 172962, code tables 5640, residuals 23743635, framing 82992; coefficients in Rice or Exp-Golomb codes 165005, warm-up at the residual rate 95257
+    frames per block: 4096 468, 2048 2, 1024 0, 512 0
+    stereo: left/right 470, left/side 0, side/right 0, mid/side 0
+    framing: header 48 bytes, 469 groups, 940 blocks, 10326 bytes of group headers and tables, a segment every 235 groups, 2 seek points
+build/wav/rec_piano.wav
+  Block codec, Ada and SPARK                            3.67  round trip OK, hash 1b99fe41a46f0393, encode   8.78 s, decode   0.13 s, level 4, 808768 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 446; Rice 6, run-length 7, adaptive 433; adaptive stage 0
+    bits: headers 11590, LPC coefficients 65922, LPC warm-up 45951, code tables 3671, residuals 6304146, framing 38864; coefficients in Rice or Exp-Golomb codes 58972, warm-up at the residual rate 20760
+    frames per block: 4096 210, 2048 9, 1024 4, 512 0
+    stereo: left/right 223, left/side 0, side/right 0, mid/side 0
+    framing: header 48 bytes, 216 groups, 446 blocks, 4810 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/rec_room.wav
+  Block codec, Ada and SPARK                           13.39  round trip OK, hash 993542fbf1d5b3c5, encode  11.59 s, decode   0.37 s, level 4, 3212628 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 482; Rice 3, run-length 0, adaptive 479; adaptive stage 0
+    bits: headers 12529, LPC coefficients 64176, LPC warm-up 103645, code tables 2892, residuals 25475654, framing 42128; coefficients in Rice or Exp-Golomb codes 62613, warm-up at the residual rate 91140
+    frames per block: 4096 228, 2048 13, 1024 0, 512 0
+    stereo: left/right 191, left/side 0, side/right 0, mid/side 50
+    framing: header 48 bytes, 235 groups, 482 blocks, 5218 bytes of group headers and tables, a segment every 118 groups, 2 seek points
+build/wav/rec_speech_16k.wav
+  Block codec, Ada and SPARK                            9.10  round trip OK, hash ed59a5b0e9dfeb5c, encode   0.94 s, decode   0.04 s, level 4, 363999 bytes
+    blocks: constant 0, orders 0-4 0 1 0 0 0, delay 0, tiers 0, LPC 186; Rice 32, run-length 0, adaptive 155; adaptive stage 0
+    bits: headers 4815, LPC coefficients 20531, LPC warm-up 24432, code tables 1122, residuals 2845884, framing 15208; coefficients in Rice or Exp-Golomb codes 21091, warm-up at the residual rate 19326
+    frames per block: 4096 22, 2048 70, 1024 74, 512 21
+    framing: header 48 bytes, 79 groups, 187 blocks, 1853 bytes of group headers and tables, a segment every 40 groups, 2 seek points
+build/wav/rec_speech_8k.wav
+  Block codec, Ada and SPARK                            3.25  round trip OK, hash 1962cbb33dc2d862, encode   0.39 s, decode   0.01 s, level 4, 64958 bytes
+    blocks: constant 0, orders 0-4 0 24 1 0 0, delay 0, tiers 5, LPC 114; Rice 33, run-length 0, adaptive 111; adaptive stage 0
+    bits: headers 3261, LPC coefficients 5722, LPC warm-up 4858, code tables 864, residuals 495495, framing 9464; coefficients in Rice or Exp-Golomb codes 6127, warm-up at the residual rate 3328
+    frames per block: 4096 7, 2048 20, 1024 60, 512 57
+    framing: header 48 bytes, 40 groups, 144 blocks, 1135 bytes of group headers and tables, a segment every 20 groups, 2 seek points
+build/wav/rec_speech.wav
+  Block codec, Ada and SPARK                           15.55  round trip OK, hash bf2f0211b844c8de, encode  12.26 s, decode   0.45 s, level 4, 3731137 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 540; Rice 22, run-length 0, adaptive 518; adaptive stage 0
+    bits: headers 14018, LPC coefficients 87027, LPC warm-up 170235, code tables 3240, residuals 29530552, framing 44024; coefficients in Rice or Exp-Golomb codes 73506, warm-up at the residual rate 149877
+    frames per block: 4096 206, 2048 51, 1024 11, 512 2
+    stereo: left/right 3, left/side 0, side/right 0, mid/side 267
+    framing: header 48 bytes, 235 groups, 540 blocks, 5455 bytes of group headers and tables, a segment every 118 groups, 2 seek points
+build/wav/rec_vinyl_192k.wav
+  Block codec, Ada and SPARK                            5.75  round trip OK, hash 9f1964358097e836, encode  42.71 s, decode   0.88 s, level 4, 5520433 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 1876; Rice 0, run-length 0, adaptive 1876; adaptive stage 0
+    bits: headers 48776, LPC coefficients 838142, LPC warm-up 908703, code tables 11256, residuals 42191115, framing 165472; coefficients in Rice or Exp-Golomb codes 826170, warm-up at the residual rate 308734
+    frames per block: 4096 937, 2048 1, 1024 0, 512 0
+    stereo: left/right 930, left/side 0, side/right 0, mid/side 8
+    framing: header 48 bytes, 938 groups, 1876 blocks, 20636 bytes of group headers and tables, a segment every 469 groups, 2 seek points
+build/wav/signal_brown.wav
+  Block codec, Ada and SPARK                           11.42  round trip OK, hash 519d0a05d9592f99, encode   2.46 s, decode   0.14 s, level 4, 1259349 bytes
+    blocks: constant 0, orders 0-4 0 54 0 0 0, delay 0, tiers 0, LPC 162; Rice 0, run-length 0, adaptive 216; adaptive stage 0
+    bits: headers 4806, LPC coefficients 1431, LPC warm-up 3345, code tables 1296, residuals 10032426, framing 31488; coefficients in Rice or Exp-Golomb codes 2392, warm-up at the residual rate 1971
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
+    framing: header 48 bytes, 216 groups, 216 blocks, 3888 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_chord.wav
+  Block codec, Ada and SPARK                            1.40  round trip OK, hash 7c01a57c997eddf8, encode   1.93 s, decode   0.05 s, level 4, 153961 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 216; Rice 0, run-length 0, adaptive 216; adaptive stage 0
+    bits: headers 5616, LPC coefficients 53301, LPC warm-up 40193, code tables 1296, residuals 1099794, framing 31488; coefficients in Rice or Exp-Golomb codes 50328, warm-up at the residual rate 4424
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
+    framing: header 48 bytes, 216 groups, 216 blocks, 3888 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_dither.wav
+  Block codec, Ada and SPARK                            1.78  round trip OK, hash 4c197f5126ef2264, encode   2.13 s, decode   0.02 s, level 4, 196320 bytes
+    blocks: constant 0, orders 0-4 216 0 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 216, adaptive 0; adaptive stage 0
+    bits: headers 2376, LPC coefficients 0, LPC warm-up 0, code tables 34090, residuals 1502606, framing 31488; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
+    framing: header 48 bytes, 216 groups, 216 blocks, 3888 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_fm.wav
+  Block codec, Ada and SPARK                            0.07  round trip OK, hash 9c0e891e2dac381f, encode   1.93 s, decode   0.01 s, level 4, 7592 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 218, tiers 0, LPC 4; Rice 0, run-length 218, adaptive 4; adaptive stage 0
+    bits: headers 5990, LPC coefficients 1216, LPC warm-up 970, code tables 3730, residuals 17150, framing 31680; coefficients in Rice or Exp-Golomb codes 1087, warm-up at the residual rate 157
+    frames per block: 4096 213, 2048 3, 1024 2, 512 4
+    framing: header 48 bytes, 216 groups, 222 blocks, 3912 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_impulses.wav
+  Block codec, Ada and SPARK                            0.06  round trip OK, hash 34389f2643e5f2ef, encode   0.20 s, decode   0.01 s, level 4, 7048 bytes
+    blocks: constant 18, orders 0-4 43 0 0 0 0, delay 1, tiers 156, LPC 0; Rice 0, run-length 121, adaptive 79; adaptive stage 0
+    bits: headers 2648, LPC coefficients 0, LPC warm-up 0, code tables 7577, residuals 14607, framing 31552; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 213, 2048 5, 1024 0, 512 0
+    framing: header 48 bytes, 216 groups, 218 blocks, 3896 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_pink.wav
+  Block codec, Ada and SPARK                           12.87  round trip OK, hash 46f9bceb53915b36, encode   2.56 s, decode   0.16 s, level 4, 1419063 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 112, LPC 117; Rice 0, run-length 0, adaptive 229; adaptive stage 0
+    bits: headers 4274, LPC coefficients 3163, LPC warm-up 7886, code tables 1374, residuals 11303903, framing 31904; coefficients in Rice or Exp-Golomb codes 3218, warm-up at the residual rate 6732
+    frames per block: 4096 202, 2048 27, 1024 0, 512 0
+    framing: header 48 bytes, 216 groups, 229 blocks, 3940 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_sawtooth.wav
+  Block codec, Ada and SPARK                            0.05  round trip OK, hash 9b2f289177b3beb0, encode   1.61 s, decode   0.01 s, level 4, 5890 bytes
+    blocks: constant 0, orders 0-4 0 0 2 0 0, delay 224, tiers 0, LPC 0; Rice 0, run-length 226, adaptive 0; adaptive stage 0
+    bits: headers 6070, LPC coefficients 0, LPC warm-up 0, code tables 4984, residuals 4258, framing 31808; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 209, 2048 11, 1024 2, 512 4
+    framing: header 48 bytes, 216 groups, 226 blocks, 3928 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_silence.wav
+  Block codec, Ada and SPARK                            0.04  round trip OK, hash 073cd376d9a7c7f8, encode   0.03 s, decode   0.01 s, level 4, 4584 bytes
+    blocks: constant 216, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 0, adaptive 0; adaptive stage 0
+    bits: headers 5184, LPC coefficients 0, LPC warm-up 0, code tables 0, residuals 0, framing 31488; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
+    framing: header 48 bytes, 216 groups, 216 blocks, 3888 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_sine.wav
+  Block codec, Ada and SPARK                            0.05  round trip OK, hash ea633b61229a1b8c, encode   1.74 s, decode   0.01 s, level 4, 5565 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 220, tiers 0, LPC 2; Rice 0, run-length 220, adaptive 2; adaptive stage 0
+    bits: headers 5992, LPC coefficients 60, LPC warm-up 66, code tables 3752, residuals 2970, framing 31680; coefficients in Rice or Exp-Golomb codes 72, warm-up at the residual rate 8
+    frames per block: 4096 213, 2048 3, 1024 2, 512 4
+    framing: header 48 bytes, 216 groups, 222 blocks, 3912 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_square.wav
+  Block codec, Ada and SPARK                            0.13  round trip OK, hash 8397672ff8b82b62, encode   1.52 s, decode   0.02 s, level 4, 13961 bytes
+    blocks: constant 0, orders 0-4 0 0 0 0 0, delay 221, tiers 0, LPC 0; Rice 0, run-length 10, adaptive 211; adaptive stage 0
+    bits: headers 5889, LPC coefficients 0, LPC warm-up 0, code tables 1506, residuals 72645, framing 31648; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 210, 2048 11, 1024 0, 512 0
+    framing: header 48 bytes, 216 groups, 221 blocks, 3908 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_sweep.wav
+  Block codec, Ada and SPARK                            1.52  round trip OK, hash 3a5cee257286b598, encode   1.93 s, decode   0.05 s, level 4, 167551 bytes
+    blocks: constant 0, orders 0-4 0 0 10 0 0, delay 0, tiers 0, LPC 233; Rice 0, run-length 10, adaptive 233; adaptive stage 0
+    bits: headers 6168, LPC coefficients 56943, LPC warm-up 56710, code tables 4128, residuals 1184107, framing 32352; coefficients in Rice or Exp-Golomb codes 53437, warm-up at the residual rate 5506
+    frames per block: 4096 190, 2048 49, 1024 4, 512 0
+    framing: header 48 bytes, 216 groups, 243 blocks, 3996 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_triangle.wav
+  Block codec, Ada and SPARK                            0.05  round trip OK, hash eb5a4e8a79f3add8, encode   1.93 s, decode   0.01 s, level 4, 5640 bytes
+    blocks: constant 0, orders 0-4 0 0 2 0 0, delay 220, tiers 0, LPC 0; Rice 0, run-length 222, adaptive 0; adaptive stage 0
+    bits: headers 5962, LPC coefficients 0, LPC warm-up 0, code tables 4466, residuals 3012, framing 31680; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 213, 2048 3, 1024 2, 512 4
+    framing: header 48 bytes, 216 groups, 222 blocks, 3912 bytes of group headers and tables, a segment every 108 groups, 2 seek points
+build/wav/signal_white.wav
+  Block codec, Ada and SPARK                           15.06  round trip OK, hash 0c4357caa9920466, encode   2.74 s, decode   0.05 s, level 4, 1660477 bytes
+    blocks: constant 0, orders 0-4 216 0 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 216, adaptive 0; adaptive stage 0
+    bits: headers 2376, LPC coefficients 0, LPC warm-up 0, code tables 19576, residuals 13230376, framing 31488; coefficients in Rice or Exp-Golomb codes 0, warm-up at the residual rate 0
+    frames per block: 4096 215, 2048 1, 1024 0, 512 0
+    framing: header 48 bytes, 216 groups, 216 blocks, 3888 bytes of group headers and tables, a segment every 108 groups, 2 seek points

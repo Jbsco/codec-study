@@ -1,0 +1,5 @@
+four_48k = rec_orchestra (channels 1 and 2) + rec_room (channels 3 and 4), 48 kHz, 24-bit, 20 s, level 4
+pairs:     Block codec, Ada and SPARK                           13.60  round trip OK, hash 63a36de516b463c0, encode  26.38 s, decode   0.83 s, level 4, 6525980 bytes
+no pairs:  Block codec, Ada and SPARK                           13.61  round trip OK, hash ceffdd24d802315a, encode  12.65 s, decode   0.81 s, level 4, 6534159 bytes
+orchestra: Block codec, Ada and SPARK                           13.82  round trip OK, hash 346487f99a3f8cdc, encode  12.63 s, decode   0.41 s, level 4, 3316424 bytes
+room:      Block codec, Ada and SPARK                           13.39  round trip OK, hash 993542fbf1d5b3c5, encode  12.57 s, decode   0.41 s, level 4, 3212628 bytes
