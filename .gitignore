@@ -7,3 +7,10 @@ ada/obj/
 ada/obj-lib/
 ada/lib/
 haskell/.stack-work/
+# Alire workspace state is machine-specific
+ada/alire/
+ada/config/
+ada/alire.lock
+# Prover transcripts and redo state
+gnatprove-run.txt
+.redo/

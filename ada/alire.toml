@@ -1,0 +1,14 @@
+name = "codec_study"
+description = "Block codec study: a SPARK decoder, an Ada encoder and the experiment coders"
+version = "0.1.0-dev"
+
+authors = ["Jacob Seman"]
+maintainers = ["Jacob Seman <90524106+Jbsco@users.noreply.github.com>"]
+maintainers-logins = ["Jbsco"]
+licenses = "MIT"
+tags = ["spark", "compression", "audio"]
+
+project-files = ["huffman_audio.gpr", "codec_lib.gpr"]
+
+[[depends-on]]
+gnatprove = "^15.1.0"
