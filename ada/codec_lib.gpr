@@ -1,0 +1,17 @@
+--  The block codec as a shared library with C entry points, its Ada runtime included and elaborated at load.
+library project Codec_Lib is
+   for Source_Dirs use (".");
+   for Source_Files use ("bit_streams.ads", "bit_streams.adb", "canonical_decoding.ads", "canonical_decoding.adb", "checksums.ads", "checksums.adb", "range_coding.ads", "range_coding.adb",
+                         "block_codec.ads", "block_codec.adb", "block_codec_ffi.ads", "block_codec_ffi.adb");
+   for Object_Dir use "obj-lib";
+   for Library_Dir use "lib";
+   for Library_Name use "blockcodec";
+   for Library_Kind use "relocatable";
+   for Library_Interface use ("Block_Codec_FFI");
+   for Library_Standalone use "encapsulated";
+   for Library_Auto_Init use "true";
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-O2", "-gnat2022", "-gnatwa");
+   end Compiler;
+end Codec_Lib;
