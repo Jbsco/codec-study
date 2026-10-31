@@ -1,0 +1,63 @@
+name: SPARK Proofs
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# A new push to a branch supersedes the proof run of its previous tip.
+concurrency:
+  group: spark-proofs-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The hosted-only steps stay, gated, so a job moves back to a hosted runner by its runs-on line alone.
+      - name: Cache Alire
+        if: runner.environment == 'github-hosted'
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.config/alire
+            ~/.cache/alire
+            ~/.local/share/alire
+          key: alire-prove-${{ runner.os }}-${{ hashFiles('ada/alire.toml') }}
+          restore-keys: alire-prove-${{ runner.os }}-
+
+      - name: Install Alire
+        if: runner.environment == 'github-hosted'
+        uses: alire-project/setup-alire@v3
+        with:
+          version: 2.1.1
+
+      # The toolchain select rewrites the account's default toolchain, so only a hosted runner does it; the
+      # checkout's own dependency fetch runs everywhere.
+      - name: Select GNAT toolchain
+        if: runner.environment == 'github-hosted'
+        run: |
+          cd ada
+          alr -n toolchain --select gnat_native gprbuild
+
+      - name: Fetch gnatprove
+        run: |
+          cd ada
+          alr -n update
+          alr -n exec -- gnatprove --version
+
+      - name: Run SPARK proofs
+        env:
+          PROVE_JOBS: 4
+          PROVE_SWITCHES: --timeout=600
+        run: |
+          set -o pipefail
+          bash prove.do 2>&1 | tee prove-output.log
+          grep -q "decoder 100% proved" prove-output.log
+          grep -q "(0 pragma Assume, 0 justified" prove-output.log
