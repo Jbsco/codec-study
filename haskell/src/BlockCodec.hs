@@ -76,7 +76,10 @@ lmsPass taps split r = U.create $ do
 
 -- | LPC residuals of z from position from on, each predicted from the samples before it in z.
 seededResiduals :: U.Vector Int -> U.Vector Int -> Int -> Int -> U.Vector Int
-seededResiduals z q qshift from = U.generate (U.length z - from) (\k -> let i = k + from in U.unsafeIndex z i - U.ifoldl' (\a j c -> a + c * U.unsafeIndex z (i - 1 - j)) 0 q `shiftR` qshift)
+seededResiduals z q qshift from = U.generate (U.length z - from) (\k -> U.unsafeIndex z (k + from) - U.sum (U.zipWith (*) reversedQ (U.unsafeSlice (k + from - order) order z)) `shiftR` qshift)
+  where
+    order = U.length q
+    reversedQ = U.reverse q
 sixteenZeros = 15 * 64
 matchLength = 32
 symbolCount = 1024
@@ -363,8 +366,8 @@ lpcResiduals y q qshift width
     limit = bit (width + 3) :: Int
     at = U.unsafeIndex y
     warm = U.generate order (\i -> at i - fixedPrediction (\j -> at (i - j)) (min rampOrder i))
-    r = U.generate (U.length y - order) (\k -> let i = k + order
-                                               in at i - U.ifoldl' (\s j c -> s + c * at (i - 1 - j)) 0 q `shiftR` qshift)
+    reversedQ = U.reverse q
+    r = U.generate (U.length y - order) (\k -> at (k + order) - U.sum (U.zipWith (*) reversedQ (U.unsafeSlice k order y)) `shiftR` qshift)
 
 -- | An LPC coding: order, coefficient precision and shift, the residual code and its parameters, and the values.
 data Lpc = Lpc
