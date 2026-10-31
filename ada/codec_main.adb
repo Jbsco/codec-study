@@ -113,7 +113,7 @@ procedure Codec_Main is
 
    procedure Put_Real (Value : Long_Float; Aft : Natural := 2) is
    begin
-      Real_Text.Put (Value, Fore => 3, Aft => Aft, Exp => 0);
+      Real_Text.Put (Value, Fore => 4, Aft => Aft, Exp => 0);
    end Put_Real;
 
    type Kind_Counts is array (0 .. 11) of Natural;
