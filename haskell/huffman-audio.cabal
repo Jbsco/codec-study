@@ -51,7 +51,7 @@ executable huffman-audio
     huffman-audio,
     deepseq,
     vector
-  ghc-options: -threaded -rtsopts "-with-rtsopts=-N -A64m"
+  ghc-options: -threaded -rtsopts "-with-rtsopts=-N -A4m"
 
 executable huffman-audio-hybrid
   import: common-options
@@ -62,7 +62,7 @@ executable huffman-audio-hybrid
     base,
     huffman-audio,
     vector
-  ghc-options: -threaded -rtsopts "-with-rtsopts=-N -A64m"
+  ghc-options: -threaded -rtsopts "-with-rtsopts=-N -A4m"
   -- The Ada library is linked by path, as in hadlink; run with LD_LIBRARY_PATH=../ada/lib.
   ld-options:
     -L../ada/lib
