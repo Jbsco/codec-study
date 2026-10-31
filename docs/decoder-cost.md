@@ -4,11 +4,12 @@
 
 | Unit | Bytes |
 |---|---|
-| Block decoder, run-time checks on, before the adaptive stage | 6,120 code, 386 read-only data |
-| Block decoder, `-gnatp`, the checks the proof makes redundant removed | 4,426 code, 354 read-only data |
-| Block encoder, `-gnatp`, plus libgcc's software double precision for the analysis | 6,916 code |
+| Block decoder with the adaptive stage and the CRC, run-time checks on | 8,064 code, 506 read-only data |
+| The same, `-gnatp`, the checks the proof makes redundant removed | 6,074 code, 446 read-only data |
+| Block decoder before the adaptive stage and the CRC, `-gnatp` | 4,426 code, 354 read-only data |
+| Block encoder before the adaptive stage, `-gnatp`, plus libgcc's software double precision for the analysis | 6,916 code |
 
-The first codec's decoder, without linear prediction, was 3,370 bytes with checks off. Linear prediction added about 1 KB; the adaptive stage adds its two loops, measured in the current README. The Cortex-M4 has a single-precision FPU, so the encoder's 64-bit floating-point analysis runs in libgcc software routines; the decoder uses no floating point at all.
+The first codec's decoder, without linear prediction, was 3,370 bytes with checks off. Linear prediction added about 1.1 KB; the adaptive stage and the CRC together about 1.6 KB. The Cortex-M4 has a single-precision FPU, so the encoder's 64-bit floating-point analysis runs in libgcc software routines; the decoder uses no floating point at all.
 
 ## Memory
 
