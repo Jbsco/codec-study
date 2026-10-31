@@ -1,26 +1,23 @@
 -- | Code a WAV file with each parallel scheme, decode it again and compare every sample. Prints the size, a
--- hash of the coded stream, and the wall time of each step.
+-- hash of the coded stream, and the wall time of each step. With --block, only the block codec runs.
 module Main (main) where
 
 import Control.DeepSeq (force)
 import Control.Exception (evaluate)
 import Control.Monad (forM_)
-import Data.Bits (xor)
 import qualified Data.Vector.Storable as S
 import qualified Data.Vector.Unboxed as U
-import Data.Word (Word64, Word8)
+import Data.Word (Word8)
 import GHC.Clock (getMonotonicTime)
 import GHC.Conc (getNumCapabilities)
 import System.Environment (getArgs)
 import Text.Printf (printf)
 
+import BlockCodec (decodeBlock, encodeBlock)
 import Blocks
+import Report
 import Tiers
 import Wav
-
--- | FNV-1a over the coded bytes; equal hashes show that every core count writes the same stream.
-fnv1a :: S.Vector Word8 -> Word64
-fnv1a = S.foldl' (\h b -> (h `xor` fromIntegral b) * 1099511628211) 14695981039346656037
 
 type Scheme = (String, [U.Vector Int] -> S.Vector Word8, S.Vector Word8 -> [U.Vector Int])
 
@@ -29,7 +26,8 @@ main = do
   args <- getArgs
   case args of
     [path] -> run path
-    _ -> putStrLn "usage: huffman-audio <file.wav>"
+    [path, "--block"] -> readWav path >>= blockLine "Block codec, Haskell" encodeBlock decodeBlock
+    _ -> putStrLn "usage: huffman-audio <file.wav> [--block]"
 
 run :: FilePath -> IO ()
 run path = do
@@ -57,3 +55,4 @@ run path = do
     printf "  %-52s %6.2f  %s, hash %016x, encode %5.2f s, decode %5.2f s\n" name
       (8 * fromIntegral (S.length coded) / fromIntegral total :: Double)
       (if out == chans then "round trip OK" else "ROUND TRIP FAILED" :: String) (fnv1a coded) (t1 - t0) (t2 - t1)
+  blockLine "Block codec, Haskell" encodeBlock decodeBlock audio

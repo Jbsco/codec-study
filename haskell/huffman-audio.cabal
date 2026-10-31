@@ -27,9 +27,12 @@ library
   hs-source-dirs: src
   exposed-modules:
     Bits
+    BlockCodec
     Blocks
     Coding
     Parallel
+    Report
+    Stream
     Tiers
     Wav
   build-depends:
@@ -49,3 +52,4 @@ executable huffman-audio
     deepseq,
     vector
   ghc-options: -threaded -rtsopts "-with-rtsopts=-N -A64m"
+
