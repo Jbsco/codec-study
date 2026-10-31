@@ -1,12 +1,14 @@
 --  Code a WAV file with the block codec, decode it again and compare every sample. Prints the size, a hash of
 --  the coded stream, the wall time of each step, and which block coding was chosen how often.
---  Usage: codec_main <file.wav> [level 0 to 4, 4 when left out]
+--  Usage: codec_main <file.wav> [level 0 to 4, 4 when left out] [--stream <out.bin>, to write the coded stream]
 with Ada.Command_Line;
+with Ada.Direct_IO;
 with Ada.Real_Time;
 with Ada.Text_IO;
 with Interfaces; use Interfaces;
 with Bit_Streams; use Bit_Streams;
 with Block_Codec; use Block_Codec;
+with Checksums;
 with Huffman_Codes; use Huffman_Codes;
 with Wav_Files;
 
@@ -266,11 +268,30 @@ procedure Codec_Main is
         + T * (0.12147294837882355 + T * (-0.025792345031509872))))));
    end Log2;
 
+   package Byte_IO is new Ada.Direct_IO (Byte);
+
+   --  Write Data to the file named after "--stream" on the command line, when present.
+   procedure Write_Stream (Data : Byte_Array) is
+      File : Byte_IO.File_Type;
+   begin
+      for I in 2 .. Ada.Command_Line.Argument_Count - 1 loop
+         if Ada.Command_Line.Argument (I) = "--stream" then
+            Byte_IO.Create (File, Byte_IO.Out_File, Ada.Command_Line.Argument (I + 1));
+            for B of Data loop
+               Byte_IO.Write (File, B);
+            end loop;
+            Byte_IO.Close (File);
+         end if;
+      end loop;
+   end Write_Stream;
+
    Input : Wav_Files.Audio;
 begin
    Wav_Files.Read (Ada.Command_Line.Argument (1), 3600, Input);
    declare
-      Level : constant Natural := (if Ada.Command_Line.Argument_Count >= 2 then Natural'Value (Ada.Command_Line.Argument (2)) else 4);
+      Level : constant Natural :=
+        (if Ada.Command_Line.Argument_Count >= 2 and then Ada.Command_Line.Argument (2) /= "--stream"
+         then Natural'Value (Ada.Command_Line.Argument (2)) else 4);
       Setting : constant Level_Setting := Levels (Level);
       Frames : constant Natural := Input.Frames;
       Channels : constant Natural := Input.Channels;
@@ -283,8 +304,10 @@ begin
       Most_Blocks : constant Natural := Channels * Groups * 2**Top;
       Index : constant Byte_Array_Access := new Byte_Array (0 .. 4 * Groups + 8);
       Data : constant Byte_Array_Access := new Byte_Array (0 .. Channels * Groups * (Bound (Max_Block) + 16 * 2**Top));
-      Stream : constant Byte_Array_Access := new Byte_Array (0 .. Index_At + Index'Length + 2 * Most_Blocks + Data'Length);
+      Stream : constant Byte_Array_Access := new Byte_Array (0 .. Index_At + Index'Length + 2 + 4 * Most_Blocks + Data'Length);
       Sizes : array (0 .. Most_Blocks - 1) of Natural := [others => 0];
+      Crcs : array (0 .. Most_Blocks - 1) of Unsigned_16 := [others => 0];
+      Bad_Crcs : Natural := 0;
       Blocks, Index_Pos, Data_Length, Length : Natural := 0;
       Pos : Natural := 0;
       Start : constant Ada.Real_Time.Time := Ada.Real_Time.Clock;
@@ -409,6 +432,7 @@ begin
                      Data (Data_Length .. Data_Length + B - 1) := Trial (L, J, S) (0 .. B - 1);
                      Count_Kind (Data.all, Data_Length, B, Natural'Min (First_Of (L, J) + Max_Block / 2**L, Frames) - First_Of (L, J), Kinds, Side);
                      Sizes (Blocks) := B;
+                     Crcs (Blocks) := Checksums.Of_Bytes (Trial (L, J, S) (0 .. B - 1));
                      Blocks := Blocks + 1;
                      Data_Length := Data_Length + B;
                   end;
@@ -444,7 +468,7 @@ begin
                               end if;
                            end loop;
                         end if;
-                        Cost (L, J) := 16 * Channels + (if Pair then 2 else 0);
+                        Cost (L, J) := 32 * Channels + (if Pair then 2 else 0);
                         for C in 1 .. Channels loop
                            Cost (L, J) := Cost (L, J) + 8 * Bytes (L, J, (if Pair then Mode_Signals (Choice (L, J), C) else C));
                         end loop;
@@ -472,8 +496,10 @@ begin
       Put (Index.all, Index_Pos, 0, (8 - Index_Pos mod 8) mod 8);
       Stream (Index_At .. Index_At + Index_Pos / 8 - 1) := Index (0 .. Index_Pos / 8 - 1);
       Pos := (Index_At + Index_Pos / 8) * 8;
+      Put (Stream.all, Pos, Unsigned_64 (Checksums.Of_Bytes (Stream (0 .. Pos / 8 - 1))), 16);
       for I in 0 .. Blocks - 1 loop
          Put (Stream.all, Pos, Unsigned_64 (Sizes (I)), 16);
+         Put (Stream.all, Pos, Unsigned_64 (Crcs (I)), 16);
       end loop;
       Length := Pos / 8 + Data_Length;
       Stream (Pos / 8 .. Length - 1) := Data (0 .. Data_Length - 1);
@@ -517,7 +543,9 @@ begin
             Walk (G * Max_Block, 0);
          end loop;
          Pos := (Bit_Pos + 7) / 8 * 8;
-         Offset := Pos / 8 + 2 * Count * Channels;
+         Same := Same and then Checksums.Matches (Stream.all, Pos / 8, Checksums.Of_Bytes (Stream (0 .. Pos / 8 - 1)));
+         Pos := Pos + 16;
+         Offset := Pos / 8 + 4 * Count * Channels;
          Block := 0;
          for C in 1 .. Channels loop
             Output (C) := new Sample_Array (0 .. Frames - 1);
@@ -538,6 +566,10 @@ begin
                   begin
                      Get (Stream.all, Pos, Field, 16);
                      Size := Natural (Field);
+                     if not Checksums.Matches (Stream.all, Pos / 8, Checksums.Of_Bytes (Stream (Offset .. Offset + Size - 1))) then
+                        Bad_Crcs := Bad_Crcs + 1;
+                     end if;
+                     Pos := Pos + 16;
                      if S <= Channels then
                         Decode (Stream (Offset .. Offset + Size - 1), Output (S) (From .. First - 1), Signal_Depth (S),
                                 Got (C) (0 .. Size_Of - 1), Used, Status);
@@ -576,7 +608,7 @@ begin
                end loop;
             end;
          end loop;
-         Same := Same and then Offset = Length and then Block = Blocks;
+         Same := Same and then Offset = Length and then Block = Blocks and then Bad_Crcs = 0;
          for C in 1 .. Channels loop
             for I in 0 .. Frames - 1 loop
                declare
@@ -590,6 +622,7 @@ begin
             end loop;
          end loop;
       end;
+      Write_Stream (Stream (0 .. Length - 1));
       for B of Stream (0 .. Length - 1) loop
          Hash := (Hash xor Unsigned_64 (B)) * 1099511628211;
       end loop;

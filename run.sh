@@ -22,5 +22,8 @@ for w in build/wav/*.wav; do
   "$hs/huffman-audio/huffman-audio" "$w" >> results/haskell.txt
   "$hs/huffman-audio-hybrid/huffman-audio-hybrid" "$w" >> results/codec_hybrid.txt
 done
+ada/obj/checksums_test
+ada/obj/codec_main build/wav/rec_speech_8k.wav 1 --stream build/speech_8k.bin > /dev/null
+ada/obj/corrupt_test build/speech_8k.bin 40
 grep -c 'round trip OK' results/ada.txt results/codec_ada.txt results/haskell.txt results/codec_hybrid.txt
 ! grep -h 'FAILED' results/ada.txt results/codec_ada.txt results/haskell.txt results/codec_hybrid.txt

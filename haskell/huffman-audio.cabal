@@ -28,6 +28,7 @@ library
   exposed-modules:
     Bits
     BlockCodec
+    Checksum
     Blocks
     Coding
     Parallel

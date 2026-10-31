@@ -1,6 +1,8 @@
 -- | The stream of the block codec, as ada/codec_main.adb writes it: frames in 32 bits; channels, depth and a
--- float flag in 8 bits each; for float input a mode and a scale per channel; the index; a 16-bit byte length for
--- every block; then the blocks, leaf by leaf and channel by channel. The index holds, for each group of 4096
+-- float flag in 8 bits each; for float input a mode and a scale per channel; the index; a CRC-16 of everything
+-- so far; a 16-bit byte length and a CRC-16 for every block; then the blocks, leaf by leaf and channel by
+-- channel. A decoder checks each block's CRC before decoding it, so one damaged block is found and reported by
+-- position and the others still decode. The index holds, for each group of 4096
 -- frames, its split tree in pre-order down to blocks of 512 frames: a split bit on every node that has its own
 -- second half, and a 2-bit stereo mode on every leaf of a two-channel stream, padded to a byte at the end. A pair
 -- of channels in the same float mode codes each leaf as left and right, left and side, side and right, or mid
@@ -19,6 +21,7 @@ import Data.Word (Word8)
 import BlockCodec (Effort (..), log2', maxBlock, maxHistory, usesHistory)
 import Bits (getBits)
 import Blocks (readWord32, word32)
+import Checksum (crc16)
 import Parallel
 import Wav
 
@@ -124,8 +127,9 @@ packBits = S.fromList . go 0 0
       | otherwise = go acc k rest
 
 encodeStream :: (Effort -> Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8) -> Level -> Prepared -> S.Vector Word8
-encodeStream enc setting p = S.concat ([header, packBits (concatMap (flags 0) trees)] ++ map (word16 . S.length) chosen ++ chosen)
+encodeStream enc setting p = S.concat ([front, word16 (fromIntegral (crc16 front))] ++ concatMap (\b -> [word16 (S.length b), word16 (fromIntegral (crc16 b))]) chosen ++ chosen)
   where
+    front = S.concat [header, packBits (concatMap (flags 0) trees)]
     n = pFrames p
     width = if pFloat p then 32 else pDepth p
     chans = pCoded p
@@ -155,7 +159,7 @@ encodeStream enc setting p = S.concat ([header, packBits (concatMap (flags 0) tr
           | stereoSearch setting == 2 = foldl (\best m -> if cost m < cost best then m else best) 0 [1 .. 3]
           | otherwise = 0
         picked = if pair then [blocks !! (k - 1) | k <- modeSignals !! m0] else blocks
-        leafCost = 16 * nch + (if pair then 2 else 0) + 8 * sum (map S.length picked)
+        leafCost = 32 * nch + (if pair then 2 else 0) + 8 * sum (map S.length picked)
         leaf = Leaf m0 picked
         (lc, l) = tree first (level + 1)
         (rc, r) = tree (first + size `shiftR` 1) (level + 1)
@@ -173,8 +177,10 @@ encodeStream enc setting p = S.concat ([header, packBits (concatMap (flags 0) tr
                     ++ concat [[fromIntegral m, fromIntegral s] | (m, s) <- pModes p])
       ]
 
-decodeStream :: (Int -> U.Vector Int -> Int -> S.Vector Word8 -> U.Vector Int) -> S.Vector Word8 -> [U.Vector Int]
-decodeStream dec v = map (U.concat . reverse) (go 0 (replicate nch []))
+-- | The decoded channels, and the positions of the blocks whose CRC does not match (an empty list when the
+-- header CRC and every block CRC match). A block with a bad CRC decodes anyway, so the caller sees its length.
+decodeStream :: (Int -> U.Vector Int -> Int -> S.Vector Word8 -> U.Vector Int) -> S.Vector Word8 -> ([U.Vector Int], [Int])
+decodeStream dec v = (map (U.concat . reverse) (go 0 (replicate nch [])), bad)
   where
     n = readWord32 v 0
     nch = fromIntegral (S.unsafeIndex v 4)
@@ -200,10 +206,14 @@ decodeStream dec v = map (U.concat . reverse) (go 0 (replicate nch []))
     (leafList, indexEnd) = walkGroups 0 (8 * (7 + (if float then 2 * nch else 0)))
     leafV = V.fromList leafList
     count = V.length leafV
-    sizesAt = (indexEnd + 7) `quot` 8
-    sizes = [readWord16 v (sizesAt + 2 * i) | i <- [0 .. nch * count - 1]]
-    offsets = scanl (+) (sizesAt + 2 * nch * count) sizes
+    frontEnd = (indexEnd + 7) `quot` 8
+    sizesAt = frontEnd + 2
+    sizes = [readWord16 v (sizesAt + 4 * i) | i <- [0 .. nch * count - 1]]
+    crcs = [readWord16 v (sizesAt + 4 * i + 2) | i <- [0 .. nch * count - 1]]
+    offsets = scanl (+) (sizesAt + 4 * nch * count) sizes
     blocks = V.fromList (zipWith (\o l -> S.slice o l v) offsets sizes)
+    bad = [-1 | readWord16 v frontEnd /= fromIntegral (crc16 (S.take frontEnd v))]
+          ++ [i | (i, b, c) <- zip3 [0 ..] (V.toList blocks) crcs, fromIntegral (crc16 b) /= c]
     lengthOf i = let (_, c, _) = leafV V.! (i `quot` nch) in c
     modeOf leaf = let (_, _, m) = leafV V.! leaf in m
     signalOf i = if pair then modeSignals !! modeOf (i `quot` 2) !! (i `rem` 2) else i `rem` nch + 1

@@ -10,10 +10,10 @@ Every coded stream is decoded again and compared sample for sample.
 ## Files
 
 - `ada/block_codec.ads`, `.adb`: the block codec. The decoder is SPARK, with no heap and no exceptions; malformed input returns `Truncated_Input` or `Bad_Data`. The encoder uses no heap and no shared state, and its linear prediction analysis uses 64-bit floating point.
-- `ada/canonical_decoding.ads`, `.adb`, `ada/bit_streams.ads`, `.adb`: canonical Huffman decoding and bit access, in SPARK.
+- `ada/canonical_decoding.ads`, `.adb`, `ada/bit_streams.ads`, `.adb`, `ada/checksums.ads`, `.adb`: canonical Huffman decoding, bit access and the CRC-16, in SPARK. `ada/checksums_test.adb` and `ada/corrupt_test.adb` test the CRC and the stream's use of it.
 - `ada/codec_main.adb`: the stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/block_codec_ffi.ads`, `.adb` and `ada/codec_lib.gpr` build the block codec as a C library, `ada/lib/libblockcodec.so`.
 - `ada/audio_huffman.adb`, with `huffman_codes`, `predictors`, `residual_coders` and `wav_files`: the experiment.
-- `haskell/src/BlockCodec.hs`, `Stream.hs`: the block codec and its stream in Haskell, with groups coded in parallel. `haskell/hybrid/`: the same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
+- `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`: the block codec, its stream and the CRC-16 in Haskell, with groups coded in parallel. `haskell/hybrid/`: the same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: the test files, `make_corpus.sh`, which builds them, and `SHA256SUMS`.
 - `run.sh`, `compare.sh`, `bench.sh`, `levels.sh`, `sizes.sh`, `tables.sh`: run every coder, the common lossless tools, the timing, the encoder levels, and the tables. Their output is in `results/`.
 
@@ -58,7 +58,9 @@ A block is 1 to 4096 samples of one signal. Fields are most significant bit firs
 
 The encoder computes the exact size of every predictor and code and writes the shortest, the first on a tie. For linear prediction it weights the block with a window whose first and last quarters rise as a smoothstep, runs the Levinson-Durbin recursion to order 32, and picks the order with the least Rice cost at 15-bit precision. It then picks the precision, from 5 to 15 bits, and the residual code. Each coefficient is rounded with the rounding error of the ones before it carried forward. Ada and Haskell perform the same floating-point operations in the same order, so they choose the same coefficients.
 
-The stream holds the frame count in 32 bits; the channel count, depth and a float flag in 8 bits each; for float input a mode and a scale per channel; the index; a 16-bit byte length for each block; then the blocks. The index holds a split tree for each group of 4096 frames, in pre-order, padded to a byte at the end. A node halves down to 512 frames and carries a split bit when its second half starts before the last frame. Each leaf of a two-channel stream carries a 2-bit stereo mode: left and right, left and side, side and right, or mid and side. The mid is the mean of the two channels rounded down, and the side, left minus right, is coded one bit wider. The encoder codes every node of the tree, and keeps a node whole unless its halves cost fewer bits, index and byte lengths included. Two channels in different float modes stay left and right.
+The stream holds the frame count in 32 bits; the channel count, depth and a float flag in 8 bits each; for float input a mode and a scale per channel; the index; a CRC-16 of everything so far; a 16-bit byte length and a CRC-16 for each block; then the blocks. The index holds a split tree for each group of 4096 frames, in pre-order, padded to a byte at the end. A node halves down to 512 frames and carries a split bit when its second half starts before the last frame. Each leaf of a two-channel stream carries a 2-bit stereo mode: left and right, left and side, side and right, or mid and side. The mid is the mean of the two channels rounded down, and the side, left minus right, is coded one bit wider. The encoder codes every node of the tree, and keeps a node whole unless its halves cost fewer bits, index and byte lengths included. Two channels in different float modes stay left and right.
+
+The CRC is CRC-16/CCITT-FALSE: polynomial 0x1021, most significant bit first, initial value 0xFFFF, no reflection and no final exclusive or; the check value of "123456789" is 0x29B1. It is computed over bytes and knows nothing of audio. A decoder checks each block's CRC before decoding it, so one damaged block is found and reported by position and the others still decode. The two CRCs per block cost 0.003 bits per sample over the corpus (7.095 to 7.098 at level 4). `checksums_test` checks the check value, the bitwise form against the table form on 4096 pseudo-random bytes, and the effect of one flipped bit; `corrupt_test` flips one bit in a written stream's header and one in a block and checks which CRC fails.
 
 Float input becomes integers first. When every sample equals an integer over one power of two up to 2^31, those integers are coded (mode 1). This is the case for float made from 24-bit audio. Otherwise the float bit patterns are coded through an order-keeping map (mode 2).
 
@@ -207,7 +209,7 @@ The tool rows hold encoders, container handling and command-line front ends as w
 
 ### Proof
 
-gnatprove 15.1 at level 2 proves the block decoder, `Canonical_Decoding` and `Bit_Streams` free of run-time errors for any input content, given the preconditions on the buffer bounds and the range of the earlier samples: 406 checks, 38 by flow analysis and 368 by the provers (300 run-time checks, 24 assertions, 44 contracts), none unproved. The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample without help. The encoder is outside SPARK.
+gnatprove 15.1 at level 2 proves the block decoder, `Canonical_Decoding`, `Checksums` and `Bit_Streams` free of run-time errors for any input content, given the preconditions on the buffer bounds and the range of the earlier samples: 421 checks, 45 by flow analysis and 376 by the provers (307 run-time checks, 24 assertions, 45 contracts), none unproved. The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample without help. The encoder is outside SPARK.
 
 ## Hardware notes
 
@@ -226,7 +228,7 @@ GNAT 15.2 and gprbuild 25.0.1 (for example from the Alire toolchains) on the PAT
     ./compare.sh && ./bench.sh     # common lossless tools, and the timing of the three implementations
     ./levels.sh                    # every file at every encoder level, in Ada and Haskell
     ./tables.sh > results/tables.md
-    cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb block_codec.adb
+    cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb checksums.adb block_codec.adb
 
 The hybrid executable finds the SPARK library through `LD_LIBRARY_PATH=ada/lib`, which `run.sh` and `bench.sh` set.
 

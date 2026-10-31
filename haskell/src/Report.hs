@@ -28,8 +28,8 @@ blockLine name enc dec level audio = do
   t0 <- getMonotonicTime
   stream <- evaluate (force (encodeStream enc (levels !! level) p))
   t1 <- getMonotonicTime
-  out <- evaluate (force (decodeStream dec stream))
+  (out, badCrcs) <- evaluate (force (decodeStream dec stream))
   t2 <- getMonotonicTime
   printf "  %-52s %6.2f  %s, hash %016x, encode %5.2f s, decode %5.2f s, level %d, %d bytes\n" name
     (8 * fromIntegral (S.length stream) / fromIntegral total :: Double)
-    (if out == coded0 then "round trip OK" else "ROUND TRIP FAILED" :: String) (fnv1a stream) (t1 - t0) (t2 - t1) level (S.length stream)
+    (if out == coded0 && null badCrcs then "round trip OK" else "ROUND TRIP FAILED" :: String) (fnv1a stream) (t1 - t0) (t2 - t1) level (S.length stream)
