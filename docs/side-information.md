@@ -4,15 +4,15 @@ Everything in a stream that is not a coded residual: block headers, the linear p
 
 ## Measured share, level-4 streams, from the `bits:` line of `codec_main`
 
-| Files | Headers | LPC coefficients | LPC warm-up | Code tables | Index and lengths | Residuals |
+| Files | Headers | LPC coefficients | LPC warm-up | Code tables | Framing | Residuals |
 |---|---|---|---|---|---|---|
-| Generated signals | 0.15% | 0.29% | 0.27% | 0.55% | 0.12% | 98.61% |
-| Sample-rate sweep | 0.08% | 0.03% | 0.07% | 0.11% | 0.06% | 99.65% |
-| Bit-depth sweep | 0.06% | 0.01% | 0.05% | 0.17% | 0.05% | 99.66% |
-| Recordings | 0.07% | 0.65% | 0.79% | 0.05% | 0.05% | 98.39% |
-| All 40 files | 0.08% | 0.46% | 0.56% | 0.13% | 0.06% | 98.70% |
+| Generated signals | 0.15% | 0.29% | 0.27% | 0.55% | 1.03% | 97.72% |
+| Sample-rate sweep | 0.08% | 0.03% | 0.07% | 0.11% | 0.55% | 99.17% |
+| Bit-depth sweep | 0.06% | 0.01% | 0.05% | 0.17% | 0.39% | 99.31% |
+| Recordings | 0.07% | 0.65% | 0.78% | 0.05% | 0.24% | 98.20% |
+| All 40 files | 0.08% | 0.46% | 0.56% | 0.13% | 0.39% | 98.38% |
 
-Side information takes 1.3 percent of all bits. The two largest parts are the linear prediction coefficients and their warm-up, both on the recordings.
+Side information takes 1.6 percent of all bits. The two largest parts are the linear prediction coefficients and their warm-up, both on the recordings; the framing of the groups, 15 bytes per group of 4096 frames, is third, and the largest part on the generated signals and the sweeps, where the blocks themselves are small (`container.md`).
 
 ## What entropy coding the side information would save
 

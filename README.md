@@ -154,15 +154,15 @@ Level 1 encodes the corpus 16 times faster than level 4 in Ada, 10.4 s against 1
 
 ### Side information
 
-Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side information takes 1.3% of all bits. Coding the LPC coefficients in Rice or Exp-Golomb codes, with a parameter per block, would save 0.02% of all bits, and loses on speech, where the parameter costs more than it saves. Coding the LPC warm-up from the samples before the block, at the block's residual rate, would save 0.26%, and 0.36% on the recordings.
+Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side information takes 1.6% of all bits, 0.4% of it the framing of the groups, which `docs/container.md` measures against the previous layout. Coding the LPC coefficients in Rice or Exp-Golomb codes, with a parameter per block, would save 0.02% of all bits, and loses on speech, where the parameter costs more than it saves. Coding the LPC warm-up from the samples before the block, at the block's residual rate, would save 0.26%, and 0.36% on the recordings.
 
-| Files | Headers | LPC coefficients | LPC warm-up | Code tables | Index and lengths | Residuals |
+| Files | Headers | LPC coefficients | LPC warm-up | Code tables | Framing | Residuals |
 |---|---|---|---|---|---|---|
-| Generated signals | 0.15% | 0.29% | 0.27% | 0.55% | 0.12% | 98.61% |
-| Sample-rate sweep | 0.08% | 0.03% | 0.07% | 0.11% | 0.06% | 99.65% |
-| Bit-depth sweep | 0.06% | 0.01% | 0.05% | 0.17% | 0.05% | 99.66% |
-| Recordings | 0.07% | 0.65% | 0.79% | 0.05% | 0.05% | 98.39% |
-| All 40 files | 0.08% | 0.46% | 0.56% | 0.13% | 0.06% | 98.70% |
+| Generated signals | 0.15% | 0.29% | 0.27% | 0.55% | 1.03% | 97.72% |
+| Sample-rate sweep | 0.08% | 0.03% | 0.07% | 0.11% | 0.55% | 99.17% |
+| Bit-depth sweep | 0.06% | 0.01% | 0.05% | 0.17% | 0.39% | 99.31% |
+| Recordings | 0.07% | 0.65% | 0.78% | 0.05% | 0.24% | 98.20% |
+| All 40 files | 0.08% | 0.46% | 0.56% | 0.13% | 0.39% | 98.38% |
 
 ### Three implementations of the block codec
 
