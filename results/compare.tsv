@@ -1,0 +1,760 @@
+depth_pink_24	gzip -1	1285670	441000	ok
+depth_pink_24	gzip -9	1284611	441000	ok
+depth_pink_24	bzip2 -9	1272399	441000	ok
+depth_pink_24	xz -6	1278228	441000	ok
+depth_pink_24	xz -9e	1278228	441000	ok
+depth_pink_24	zstd -3	1285548	441000	ok
+depth_pink_24	zstd -19	1285078	441000	ok
+depth_pink_24	lz4 -1	1323087	441000	ok
+depth_pink_24	lz4 -12	1323087	441000	ok
+depth_pink_24	brotli -q 11	1228713	441000	ok
+depth_pink_24	flac -0	1174991	441000	ok
+depth_pink_24	flac -5	1167453	441000	ok
+depth_pink_24	flac -8	1167446	441000	ok
+depth_pink_24	wavpack -f	1158164	441000	ok
+depth_pink_24	wavpack	1154050	441000	ok
+depth_pink_24	wavpack -hh	1150554	441000	ok
+depth_pink_24	wavpack -hh -x4	1148922	441000	ok
+depth_pink_24	ffmpeg alac	1161782	441000	ok
+depth_pink_24	ffmpeg tta	1161895	441000	ok
+depth_pink_32f	gzip -1	1640375	441000	ok
+depth_pink_32f	gzip -9	1635598	441000	ok
+depth_pink_32f	bzip2 -9	1672313	441000	ok
+depth_pink_32f	xz -6	1614532	441000	ok
+depth_pink_32f	xz -9e	1615756	441000	ok
+depth_pink_32f	zstd -3	1633899	441000	ok
+depth_pink_32f	zstd -19	1635537	441000	ok
+depth_pink_32f	lz4 -1	1764077	441000	ok
+depth_pink_32f	lz4 -12	1764077	441000	ok
+depth_pink_32f	brotli -q 11	1591797	441000	ok
+depth_pink_32f	flac -0	0	441000	unsupported
+depth_pink_32f	flac -5	0	441000	unsupported
+depth_pink_32f	flac -8	0	441000	unsupported
+depth_pink_32f	wavpack -f	1422162	441000	ok
+depth_pink_32f	wavpack	1418046	441000	ok
+depth_pink_32f	wavpack -hh	1414554	441000	ok
+depth_pink_32f	wavpack -hh -x4	1412930	441000	ok
+depth_pink_32f	ffmpeg alac	0	441000	unsupported
+depth_pink_32f	ffmpeg tta	0	441000	unsupported
+depth_pink_32	gzip -1	1739951	441000	ok
+depth_pink_32	gzip -9	1738686	441000	ok
+depth_pink_32	bzip2 -9	1759818	441000	ok
+depth_pink_32	xz -6	1740168	441000	ok
+depth_pink_32	xz -9e	1740168	441000	ok
+depth_pink_32	zstd -3	1764120	441000	ok
+depth_pink_32	zstd -19	1739499	441000	ok
+depth_pink_32	lz4 -1	1764087	441000	ok
+depth_pink_32	lz4 -12	1764087	441000	ok
+depth_pink_32	brotli -q 11	1712294	441000	ok
+depth_pink_32	flac -0	1615991	441000	ok
+depth_pink_32	flac -5	1608453	441000	ok
+depth_pink_32	flac -8	1608446	441000	ok
+depth_pink_32	wavpack -f	1599422	441000	ok
+depth_pink_32	wavpack	1595304	441000	ok
+depth_pink_32	wavpack -hh	1591812	441000	ok
+depth_pink_32	wavpack -hh -x4	1590192	441000	ok
+depth_pink_32	ffmpeg alac	0	441000	unsupported
+depth_pink_32	ffmpeg tta	0	441000	unsupported
+depth_pink_8	gzip -1	314079	441000	ok
+depth_pink_8	gzip -9	317836	441000	ok
+depth_pink_8	bzip2 -9	274536	441000	ok
+depth_pink_8	xz -6	289300	441000	ok
+depth_pink_8	xz -9e	287708	441000	ok
+depth_pink_8	zstd -3	314268	441000	ok
+depth_pink_8	zstd -19	311418	441000	ok
+depth_pink_8	lz4 -1	441063	441000	ok
+depth_pink_8	lz4 -12	420472	441000	ok
+depth_pink_8	brotli -q 11	277301	441000	ok
+depth_pink_8	flac -0	293011	441000	ok
+depth_pink_8	flac -5	285631	441000	ok
+depth_pink_8	flac -8	285590	441000	ok
+depth_pink_8	wavpack -f	276904	441000	ok
+depth_pink_8	wavpack	273110	441000	ok
+depth_pink_8	wavpack -hh	271050	441000	ok
+depth_pink_8	wavpack -hh -x4	267362	441000	ok
+depth_pink_8	ffmpeg alac	720815	441000	ok
+depth_pink_8	ffmpeg tta	276694	441000	ok
+depth_sine_12in16	gzip -1	9735	441000	ok
+depth_sine_12in16	gzip -9	5308	441000	ok
+depth_sine_12in16	bzip2 -9	2755	441000	ok
+depth_sine_12in16	xz -6	1324	441000	ok
+depth_sine_12in16	xz -9e	1284	441000	ok
+depth_sine_12in16	zstd -3	1287	441000	ok
+depth_sine_12in16	zstd -19	1220	441000	ok
+depth_sine_12in16	lz4 -1	4783	441000	ok
+depth_sine_12in16	lz4 -12	4594	441000	ok
+depth_sine_12in16	brotli -q 11	1115	441000	ok
+depth_sine_12in16	flac -0	213053	441000	ok
+depth_sine_12in16	flac -5	136219	441000	ok
+depth_sine_12in16	flac -8	136219	441000	ok
+depth_sine_12in16	wavpack -f	193046	441000	ok
+depth_sine_12in16	wavpack	189784	441000	ok
+depth_sine_12in16	wavpack -hh	193100	441000	ok
+depth_sine_12in16	wavpack -hh -x4	163966	441000	ok
+depth_sine_12in16	ffmpeg alac	368838	441000	ok
+depth_sine_12in16	ffmpeg tta	339593	441000	ok
+depth_sine_24	gzip -1	11418	441000	ok
+depth_sine_24	gzip -9	8668	441000	ok
+depth_sine_24	bzip2 -9	7648	441000	ok
+depth_sine_24	xz -6	1728	441000	ok
+depth_sine_24	xz -9e	1728	441000	ok
+depth_sine_24	zstd -3	2340	441000	ok
+depth_sine_24	zstd -19	1522	441000	ok
+depth_sine_24	lz4 -1	6608	441000	ok
+depth_sine_24	lz4 -12	6608	441000	ok
+depth_sine_24	brotli -q 11	1413	441000	ok
+depth_sine_24	flac -0	709155	441000	ok
+depth_sine_24	flac -5	600087	441000	ok
+depth_sine_24	flac -8	477179	441000	ok
+depth_sine_24	wavpack -f	752146	441000	ok
+depth_sine_24	wavpack	772782	441000	ok
+depth_sine_24	wavpack -hh	780898	441000	ok
+depth_sine_24	wavpack -hh -x4	418778	441000	ok
+depth_sine_24	ffmpeg alac	814475	441000	ok
+depth_sine_24	ffmpeg tta	680028	441000	ok
+depth_sine_32f	gzip -1	33812	441000	ok
+depth_sine_32f	gzip -9	16186	441000	ok
+depth_sine_32f	bzip2 -9	12687	441000	ok
+depth_sine_32f	xz -6	6196	441000	ok
+depth_sine_32f	xz -9e	6220	441000	ok
+depth_sine_32f	zstd -3	8077	441000	ok
+depth_sine_32f	zstd -19	6728	441000	ok
+depth_sine_32f	lz4 -1	28916	441000	ok
+depth_sine_32f	lz4 -12	14733	441000	ok
+depth_sine_32f	brotli -q 11	6689	441000	ok
+depth_sine_32f	flac -0	0	441000	unsupported
+depth_sine_32f	flac -5	0	441000	unsupported
+depth_sine_32f	flac -8	0	441000	unsupported
+depth_sine_32f	wavpack -f	901828	441000	ok
+depth_sine_32f	wavpack	922268	441000	ok
+depth_sine_32f	wavpack -hh	930868	441000	ok
+depth_sine_32f	wavpack -hh -x4	520260	441000	ok
+depth_sine_32f	ffmpeg alac	0	441000	unsupported
+depth_sine_32f	ffmpeg tta	0	441000	unsupported
+depth_sine_32	gzip -1	31183	441000	ok
+depth_sine_32	gzip -9	12020	441000	ok
+depth_sine_32	bzip2 -9	9904	441000	ok
+depth_sine_32	xz -6	2972	441000	ok
+depth_sine_32	xz -9e	2908	441000	ok
+depth_sine_32	zstd -3	5378	441000	ok
+depth_sine_32	zstd -19	3621	441000	ok
+depth_sine_32	lz4 -1	14023	441000	ok
+depth_sine_32	lz4 -12	9725	441000	ok
+depth_sine_32	brotli -q 11	3796	441000	ok
+depth_sine_32	flac -0	1150155	441000	ok
+depth_sine_32	flac -5	950556	441000	ok
+depth_sine_32	flac -8	928267	441000	ok
+depth_sine_32	wavpack -f	1193562	441000	ok
+depth_sine_32	wavpack	1214042	441000	ok
+depth_sine_32	wavpack -hh	1222962	441000	ok
+depth_sine_32	wavpack -hh -x4	800806	441000	ok
+depth_sine_32	ffmpeg alac	0	441000	unsupported
+depth_sine_32	ffmpeg tta	0	441000	unsupported
+depth_sine_8	gzip -1	4486	441000	ok
+depth_sine_8	gzip -9	2401	441000	ok
+depth_sine_8	bzip2 -9	1157	441000	ok
+depth_sine_8	xz -6	556	441000	ok
+depth_sine_8	xz -9e	556	441000	ok
+depth_sine_8	zstd -3	538	441000	ok
+depth_sine_8	zstd -19	456	441000	ok
+depth_sine_8	lz4 -1	2199	441000	ok
+depth_sine_8	lz4 -12	2196	441000	ok
+depth_sine_8	brotli -q 11	367	441000	ok
+depth_sine_8	flac -0	146491	441000	ok
+depth_sine_8	flac -5	142690	441000	ok
+depth_sine_8	flac -8	142690	441000	ok
+depth_sine_8	wavpack -f	166018	441000	ok
+depth_sine_8	wavpack	155994	441000	ok
+depth_sine_8	wavpack -hh	157652	441000	ok
+depth_sine_8	wavpack -hh -x4	118938	441000	ok
+depth_sine_8	ffmpeg alac	542721	441000	ok
+depth_sine_8	ffmpeg tta	106828	441000	ok
+rate_pink_16000	gzip -1	297881	160000	ok
+rate_pink_16000	gzip -9	297368	160000	ok
+rate_pink_16000	bzip2 -9	276828	160000	ok
+rate_pink_16000	xz -6	283240	160000	ok
+rate_pink_16000	xz -9e	283240	160000	ok
+rate_pink_16000	zstd -3	297216	160000	ok
+rate_pink_16000	zstd -19	297390	160000	ok
+rate_pink_16000	lz4 -1	320063	160000	ok
+rate_pink_16000	lz4 -12	320063	160000	ok
+rate_pink_16000	brotli -q 11	267015	160000	ok
+rate_pink_16000	flac -0	271457	160000	ok
+rate_pink_16000	flac -5	268756	160000	ok
+rate_pink_16000	flac -8	268731	160000	ok
+rate_pink_16000	wavpack -f	260016	160000	ok
+rate_pink_16000	wavpack	258534	160000	ok
+rate_pink_16000	wavpack -hh	257176	160000	ok
+rate_pink_16000	wavpack -hh -x4	256542	160000	ok
+rate_pink_16000	ffmpeg alac	261967	160000	ok
+rate_pink_16000	ffmpeg tta	261007	160000	ok
+rate_pink_192000	gzip -1	3575353	1920000	ok
+rate_pink_192000	gzip -9	3569879	1920000	ok
+rate_pink_192000	bzip2 -9	3289133	1920000	ok
+rate_pink_192000	xz -6	3398260	1920000	ok
+rate_pink_192000	xz -9e	3398892	1920000	ok
+rate_pink_192000	zstd -3	3568980	1920000	ok
+rate_pink_192000	zstd -19	3569157	1920000	ok
+rate_pink_192000	lz4 -1	3840063	1920000	ok
+rate_pink_192000	lz4 -12	3840063	1920000	ok
+rate_pink_192000	brotli -q 11	3188333	1920000	ok
+rate_pink_192000	flac -0	3167768	1920000	ok
+rate_pink_192000	flac -5	3134652	1920000	ok
+rate_pink_192000	flac -8	3134520	1920000	ok
+rate_pink_192000	wavpack -f	3119744	1920000	ok
+rate_pink_192000	wavpack	3101654	1920000	ok
+rate_pink_192000	wavpack -hh	3085286	1920000	ok
+rate_pink_192000	wavpack -hh -x4	3076738	1920000	ok
+rate_pink_192000	ffmpeg alac	3135811	1920000	ok
+rate_pink_192000	ffmpeg tta	3128442	1920000	ok
+rate_pink_8000	gzip -1	149179	80000	ok
+rate_pink_8000	gzip -9	148896	80000	ok
+rate_pink_8000	bzip2 -9	140687	80000	ok
+rate_pink_8000	xz -6	141848	80000	ok
+rate_pink_8000	xz -9e	141848	80000	ok
+rate_pink_8000	zstd -3	148842	80000	ok
+rate_pink_8000	zstd -19	148936	80000	ok
+rate_pink_8000	lz4 -1	160063	80000	ok
+rate_pink_8000	lz4 -12	160063	80000	ok
+rate_pink_8000	brotli -q 11	134014	80000	ok
+rate_pink_8000	flac -0	139848	80000	ok
+rate_pink_8000	flac -5	138526	80000	ok
+rate_pink_8000	flac -8	138514	80000	ok
+rate_pink_8000	wavpack -f	130156	80000	ok
+rate_pink_8000	wavpack	129432	80000	ok
+rate_pink_8000	wavpack -hh	128718	80000	ok
+rate_pink_8000	wavpack -hh -x4	128336	80000	ok
+rate_pink_8000	ffmpeg alac	131326	80000	ok
+rate_pink_8000	ffmpeg tta	130629	80000	ok
+rate_pink_96000	gzip -1	1786309	960000	ok
+rate_pink_96000	gzip -9	1783631	960000	ok
+rate_pink_96000	bzip2 -9	1645172	960000	ok
+rate_pink_96000	xz -6	1699168	960000	ok
+rate_pink_96000	xz -9e	1699168	960000	ok
+rate_pink_96000	zstd -3	1782902	960000	ok
+rate_pink_96000	zstd -19	1783459	960000	ok
+rate_pink_96000	lz4 -1	1920063	960000	ok
+rate_pink_96000	lz4 -12	1920063	960000	ok
+rate_pink_96000	brotli -q 11	1594214	960000	ok
+rate_pink_96000	flac -0	1587947	960000	ok
+rate_pink_96000	flac -5	1571307	960000	ok
+rate_pink_96000	flac -8	1571241	960000	ok
+rate_pink_96000	wavpack -f	1560806	960000	ok
+rate_pink_96000	wavpack	1551750	960000	ok
+rate_pink_96000	wavpack -hh	1542324	960000	ok
+rate_pink_96000	wavpack -hh -x4	1538280	960000	ok
+rate_pink_96000	ffmpeg alac	1568256	960000	ok
+rate_pink_96000	ffmpeg tta	1564121	960000	ok
+rate_sine_16000	gzip -1	2146	160000	ok
+rate_sine_16000	gzip -9	896	160000	ok
+rate_sine_16000	bzip2 -9	203	160000	ok
+rate_sine_16000	xz -6	256	160000	ok
+rate_sine_16000	xz -9e	256	160000	ok
+rate_sine_16000	zstd -3	123	160000	ok
+rate_sine_16000	zstd -19	121	160000	ok
+rate_sine_16000	lz4 -1	1360	160000	ok
+rate_sine_16000	lz4 -12	1360	160000	ok
+rate_sine_16000	brotli -q 11	90	160000	ok
+rate_sine_16000	flac -0	220261	160000	ok
+rate_sine_16000	flac -5	105624	160000	ok
+rate_sine_16000	flac -8	65401	160000	ok
+rate_sine_16000	wavpack -f	180370	160000	ok
+rate_sine_16000	wavpack	150222	160000	ok
+rate_sine_16000	wavpack -hh	82104	160000	ok
+rate_sine_16000	wavpack -hh -x4	848	160000	ok
+rate_sine_16000	ffmpeg alac	179792	160000	ok
+rate_sine_16000	ffmpeg tta	142563	160000	ok
+rate_sine_192000	gzip -1	28455	1920000	ok
+rate_sine_192000	gzip -9	17274	1920000	ok
+rate_sine_192000	bzip2 -9	5828	1920000	ok
+rate_sine_192000	xz -6	1076	1920000	ok
+rate_sine_192000	xz -9e	1076	1920000	ok
+rate_sine_192000	zstd -3	800	1920000	ok
+rate_sine_192000	zstd -19	770	1920000	ok
+rate_sine_192000	lz4 -1	15516	1920000	ok
+rate_sine_192000	lz4 -12	15516	1920000	ok
+rate_sine_192000	brotli -q 11	450	1920000	ok
+rate_sine_192000	flac -0	576517	1920000	ok
+rate_sine_192000	flac -5	556151	1920000	ok
+rate_sine_192000	flac -8	556151	1920000	ok
+rate_sine_192000	wavpack -f	1522752	1920000	ok
+rate_sine_192000	wavpack	1545884	1920000	ok
+rate_sine_192000	wavpack -hh	1450678	1920000	ok
+rate_sine_192000	wavpack -hh -x4	672778	1920000	ok
+rate_sine_192000	ffmpeg alac	990593	1920000	ok
+rate_sine_192000	ffmpeg tta	838630	1920000	ok
+rate_sine_8000	gzip -1	1036	80000	ok
+rate_sine_8000	gzip -9	410	80000	ok
+rate_sine_8000	bzip2 -9	154	80000	ok
+rate_sine_8000	xz -6	220	80000	ok
+rate_sine_8000	xz -9e	220	80000	ok
+rate_sine_8000	zstd -3	94	80000	ok
+rate_sine_8000	zstd -19	89	80000	ok
+rate_sine_8000	lz4 -1	717	80000	ok
+rate_sine_8000	lz4 -12	717	80000	ok
+rate_sine_8000	brotli -q 11	75	80000	ok
+rate_sine_8000	flac -0	149144	80000	ok
+rate_sine_8000	flac -5	55273	80000	ok
+rate_sine_8000	flac -8	42416	80000	ok
+rate_sine_8000	wavpack -f	122658	80000	ok
+rate_sine_8000	wavpack	105620	80000	ok
+rate_sine_8000	wavpack -hh	1272	80000	ok
+rate_sine_8000	wavpack -hh -x4	316	80000	ok
+rate_sine_8000	ffmpeg alac	89628	80000	ok
+rate_sine_8000	ffmpeg tta	88660	80000	ok
+rate_sine_96000	gzip -1	13349	960000	ok
+rate_sine_96000	gzip -9	7752	960000	ok
+rate_sine_96000	bzip2 -9	1895	960000	ok
+rate_sine_96000	xz -6	624	960000	ok
+rate_sine_96000	xz -9e	624	960000	ok
+rate_sine_96000	zstd -3	427	960000	ok
+rate_sine_96000	zstd -19	412	960000	ok
+rate_sine_96000	lz4 -1	7794	960000	ok
+rate_sine_96000	lz4 -12	7794	960000	ok
+rate_sine_96000	brotli -q 11	276	960000	ok
+rate_sine_96000	flac -0	426524	960000	ok
+rate_sine_96000	flac -5	414987	960000	ok
+rate_sine_96000	flac -8	414889	960000	ok
+rate_sine_96000	wavpack -f	539558	960000	ok
+rate_sine_96000	wavpack	541788	960000	ok
+rate_sine_96000	wavpack -hh	558428	960000	ok
+rate_sine_96000	wavpack -hh -x4	479106	960000	ok
+rate_sine_96000	ffmpeg alac	674971	960000	ok
+rate_sine_96000	ffmpeg tta	499671	960000	ok
+rec_electronic	gzip -1	5250484	1764000	ok
+rec_electronic	gzip -9	5248995	1764000	ok
+rec_electronic	bzip2 -9	5308415	1764000	ok
+rec_electronic	xz -6	5170172	1764000	ok
+rec_electronic	xz -9e	5177628	1764000	ok
+rec_electronic	zstd -3	5265055	1764000	ok
+rec_electronic	zstd -19	5260744	1764000	ok
+rec_electronic	lz4 -1	5292091	1764000	ok
+rec_electronic	lz4 -12	5292091	1764000	ok
+rec_electronic	brotli -q 11	5111933	1764000	ok
+rec_electronic	flac -0	4411305	1764000	ok
+rec_electronic	flac -5	4127438	1764000	ok
+rec_electronic	flac -8	4120410	1764000	ok
+rec_electronic	wavpack -f	4150640	1764000	ok
+rec_electronic	wavpack	4130634	1764000	ok
+rec_electronic	wavpack -hh	4113156	1764000	ok
+rec_electronic	wavpack -hh -x4	4102174	1764000	ok
+rec_electronic	ffmpeg alac	4135786	1764000	ok
+rec_electronic	ffmpeg tta	4181918	1764000	ok
+rec_orchestra_f32	gzip -1	6293666	1920000	ok
+rec_orchestra_f32	gzip -9	6249110	1920000	ok
+rec_orchestra_f32	bzip2 -9	5482910	1920000	ok
+rec_orchestra_f32	xz -6	5067192	1920000	ok
+rec_orchestra_f32	xz -9e	5077892	1920000	ok
+rec_orchestra_f32	zstd -3	6263938	1920000	ok
+rec_orchestra_f32	zstd -19	5947046	1920000	ok
+rec_orchestra_f32	lz4 -1	7648978	1920000	ok
+rec_orchestra_f32	lz4 -12	7550609	1920000	ok
+rec_orchestra_f32	brotli -q 11	5556951	1920000	ok
+rec_orchestra_f32	flac -0	0	1920000	unsupported
+rec_orchestra_f32	flac -5	0	1920000	unsupported
+rec_orchestra_f32	flac -8	0	1920000	unsupported
+rec_orchestra_f32	wavpack -f	3345518	1920000	ok
+rec_orchestra_f32	wavpack	3329624	1920000	ok
+rec_orchestra_f32	wavpack -hh	3318144	1920000	ok
+rec_orchestra_f32	wavpack -hh -x4	3313912	1920000	ok
+rec_orchestra_f32	ffmpeg alac	3449791	1920000	ok
+rec_orchestra_f32	ffmpeg tta	3327833	1920000	ok
+rec_orchestra	gzip -1	5278169	1920000	ok
+rec_orchestra	gzip -9	5263928	1920000	ok
+rec_orchestra	bzip2 -9	5080118	1920000	ok
+rec_orchestra	xz -6	5115548	1920000	ok
+rec_orchestra	xz -9e	5102656	1920000	ok
+rec_orchestra	zstd -3	5267482	1920000	ok
+rec_orchestra	zstd -19	5267203	1920000	ok
+rec_orchestra	lz4 -1	5750210	1920000	ok
+rec_orchestra	lz4 -12	5730173	1920000	ok
+rec_orchestra	brotli -q 11	4787636	1920000	ok
+rec_orchestra	flac -0	3456860	1920000	ok
+rec_orchestra	flac -5	3338794	1920000	ok
+rec_orchestra	flac -8	3337926	1920000	ok
+rec_orchestra	wavpack -f	3345058	1920000	ok
+rec_orchestra	wavpack	3329166	1920000	ok
+rec_orchestra	wavpack -hh	3317930	1920000	ok
+rec_orchestra	wavpack -hh -x4	3313682	1920000	ok
+rec_orchestra	ffmpeg alac	3449791	1920000	ok
+rec_orchestra	ffmpeg tta	3327833	1920000	ok
+rec_piano_96k	gzip -1	8882975	3840000	ok
+rec_piano_96k	gzip -9	8912277	3840000	ok
+rec_piano_96k	bzip2 -9	7154736	3840000	ok
+rec_piano_96k	xz -6	6701752	3840000	ok
+rec_piano_96k	xz -9e	6699456	3840000	ok
+rec_piano_96k	zstd -3	9002658	3840000	ok
+rec_piano_96k	zstd -19	8567729	3840000	ok
+rec_piano_96k	lz4 -1	11520095	3840000	ok
+rec_piano_96k	lz4 -12	10760838	3840000	ok
+rec_piano_96k	brotli -q 11	6866863	3840000	ok
+rec_piano_96k	flac -0	3313399	3840000	ok
+rec_piano_96k	flac -5	3096061	3840000	ok
+rec_piano_96k	flac -8	3071311	3840000	ok
+rec_piano_96k	wavpack -f	3693756	3840000	ok
+rec_piano_96k	wavpack	3316342	3840000	ok
+rec_piano_96k	wavpack -hh	3206882	3840000	ok
+rec_piano_96k	wavpack -hh -x4	3034106	3840000	ok
+rec_piano_96k	ffmpeg alac	6183380	3840000	ok
+rec_piano_96k	ffmpeg tta	5971303	3840000	ok
+rec_piano	gzip -1	3221735	1764000	ok
+rec_piano	gzip -9	3119714	1764000	ok
+rec_piano	bzip2 -9	2519569	1764000	ok
+rec_piano	xz -6	2011000	1764000	ok
+rec_piano	xz -9e	2008172	1764000	ok
+rec_piano	zstd -3	3094535	1764000	ok
+rec_piano	zstd -19	2938223	1764000	ok
+rec_piano	lz4 -1	4748748	1764000	ok
+rec_piano	lz4 -12	3722315	1764000	ok
+rec_piano	brotli -q 11	2292725	1764000	ok
+rec_piano	flac -0	954302	1764000	ok
+rec_piano	flac -5	841883	1764000	ok
+rec_piano	flac -8	835209	1764000	ok
+rec_piano	wavpack -f	1053356	1764000	ok
+rec_piano	wavpack	920672	1764000	ok
+rec_piano	wavpack -hh	885916	1764000	ok
+rec_piano	wavpack -hh -x4	834916	1764000	ok
+rec_piano	ffmpeg alac	2711430	1764000	ok
+rec_piano	ffmpeg tta	2594407	1764000	ok
+rec_room	gzip -1	4895647	1920000	ok
+rec_room	gzip -9	4879360	1920000	ok
+rec_room	bzip2 -9	4401932	1920000	ok
+rec_room	xz -6	4209244	1920000	ok
+rec_room	xz -9e	4287104	1920000	ok
+rec_room	zstd -3	4867523	1920000	ok
+rec_room	zstd -19	4871532	1920000	ok
+rec_room	lz4 -1	5760091	1920000	ok
+rec_room	lz4 -12	5727785	1920000	ok
+rec_room	brotli -q 11	4216700	1920000	ok
+rec_room	flac -0	3362585	1920000	ok
+rec_room	flac -5	3237955	1920000	ok
+rec_room	flac -8	3235917	1920000	ok
+rec_room	wavpack -f	3246428	1920000	ok
+rec_room	wavpack	3232090	1920000	ok
+rec_room	wavpack -hh	3213258	1920000	ok
+rec_room	wavpack -hh -x4	3209470	1920000	ok
+rec_room	ffmpeg alac	3282608	1920000	ok
+rec_room	ffmpeg tta	3220110	1920000	ok
+rec_speech_16k	gzip -1	571652	320000	ok
+rec_speech_16k	gzip -9	570985	320000	ok
+rec_speech_16k	bzip2 -9	496380	320000	ok
+rec_speech_16k	xz -6	522268	320000	ok
+rec_speech_16k	xz -9e	522800	320000	ok
+rec_speech_16k	zstd -3	572663	320000	ok
+rec_speech_16k	zstd -19	556011	320000	ok
+rec_speech_16k	lz4 -1	640063	320000	ok
+rec_speech_16k	lz4 -12	637087	320000	ok
+rec_speech_16k	brotli -q 11	474692	320000	ok
+rec_speech_16k	flac -0	417127	320000	ok
+rec_speech_16k	flac -5	380287	320000	ok
+rec_speech_16k	flac -8	378411	320000	ok
+rec_speech_16k	wavpack -f	380346	320000	ok
+rec_speech_16k	wavpack	369002	320000	ok
+rec_speech_16k	wavpack -hh	361802	320000	ok
+rec_speech_16k	wavpack -hh -x4	361134	320000	ok
+rec_speech_16k	ffmpeg alac	378883	320000	ok
+rec_speech_16k	ffmpeg tta	364280	320000	ok
+rec_speech_8k	gzip -1	100848	160000	ok
+rec_speech_8k	gzip -9	96125	160000	ok
+rec_speech_8k	bzip2 -9	79213	160000	ok
+rec_speech_8k	xz -6	81680	160000	ok
+rec_speech_8k	xz -9e	81684	160000	ok
+rec_speech_8k	zstd -3	96799	160000	ok
+rec_speech_8k	zstd -19	91087	160000	ok
+rec_speech_8k	lz4 -1	132990	160000	ok
+rec_speech_8k	lz4 -12	111398	160000	ok
+rec_speech_8k	brotli -q 11	82507	160000	ok
+rec_speech_8k	flac -0	80504	160000	ok
+rec_speech_8k	flac -5	78075	160000	ok
+rec_speech_8k	flac -8	77668	160000	ok
+rec_speech_8k	wavpack -f	71156	160000	ok
+rec_speech_8k	wavpack	67798	160000	ok
+rec_speech_8k	wavpack -hh	67816	160000	ok
+rec_speech_8k	wavpack -hh -x4	66404	160000	ok
+rec_speech_8k	ffmpeg alac	225743	160000	ok
+rec_speech_8k	ffmpeg tta	65772	160000	ok
+rec_speech	gzip -1	5430601	1920000	ok
+rec_speech	gzip -9	5421161	1920000	ok
+rec_speech	bzip2 -9	5549091	1920000	ok
+rec_speech	xz -6	5154752	1920000	ok
+rec_speech	xz -9e	5222288	1920000	ok
+rec_speech	zstd -3	5427339	1920000	ok
+rec_speech	zstd -19	5447671	1920000	ok
+rec_speech	lz4 -1	5760091	1920000	ok
+rec_speech	lz4 -12	5760091	1920000	ok
+rec_speech	brotli -q 11	4781370	1920000	ok
+rec_speech	flac -0	3923031	1920000	ok
+rec_speech	flac -5	3778733	1920000	ok
+rec_speech	flac -8	3768420	1920000	ok
+rec_speech	wavpack -f	3866596	1920000	ok
+rec_speech	wavpack	3791466	1920000	ok
+rec_speech	wavpack -hh	3729716	1920000	ok
+rec_speech	wavpack -hh -x4	3725350	1920000	ok
+rec_speech	ffmpeg alac	3826703	1920000	ok
+rec_speech	ffmpeg tta	3768503	1920000	ok
+rec_vinyl_192k	gzip -1	21880773	7680000	ok
+rec_vinyl_192k	gzip -9	21855167	7680000	ok
+rec_vinyl_192k	bzip2 -9	21250894	7680000	ok
+rec_vinyl_192k	xz -6	17566544	7680000	ok
+rec_vinyl_192k	xz -9e	17583172	7680000	ok
+rec_vinyl_192k	zstd -3	21805532	7680000	ok
+rec_vinyl_192k	zstd -19	21883260	7680000	ok
+rec_vinyl_192k	lz4 -1	23040107	7680000	ok
+rec_vinyl_192k	lz4 -12	23040107	7680000	ok
+rec_vinyl_192k	brotli -q 11	19259503	7680000	ok
+rec_vinyl_192k	flac -0	8759646	7680000	ok
+rec_vinyl_192k	flac -5	6612698	7680000	ok
+rec_vinyl_192k	flac -8	6144307	7680000	ok
+rec_vinyl_192k	wavpack -f	11263928	7680000	ok
+rec_vinyl_192k	wavpack	10883676	7680000	ok
+rec_vinyl_192k	wavpack -hh	10882306	7680000	ok
+rec_vinyl_192k	wavpack -hh -x4	5987280	7680000	ok
+rec_vinyl_192k	ffmpeg alac	11449417	7680000	ok
+rec_vinyl_192k	ffmpeg tta	7293048	7680000	ok
+signal_brown	gzip -1	1634595	882000	ok
+signal_brown	gzip -9	1641996	882000	ok
+signal_brown	bzip2 -9	1355213	882000	ok
+signal_brown	xz -6	1555724	882000	ok
+signal_brown	xz -9e	1558372	882000	ok
+signal_brown	zstd -3	1642986	882000	ok
+signal_brown	zstd -19	1634911	882000	ok
+signal_brown	lz4 -1	1764063	882000	ok
+signal_brown	lz4 -12	1764063	882000	ok
+signal_brown	brotli -q 11	1366111	882000	ok
+signal_brown	flac -0	1300418	882000	ok
+signal_brown	flac -5	1293720	882000	ok
+signal_brown	flac -8	1293718	882000	ok
+signal_brown	wavpack -f	1270954	882000	ok
+signal_brown	wavpack	1263774	882000	ok
+signal_brown	wavpack -hh	1264674	882000	ok
+signal_brown	wavpack -hh -x4	1251216	882000	ok
+signal_brown	ffmpeg alac	1292066	882000	ok
+signal_brown	ffmpeg tta	1268213	882000	ok
+signal_chord	gzip -1	1675054	882000	ok
+signal_chord	gzip -9	1698772	882000	ok
+signal_chord	bzip2 -9	1323558	882000	ok
+signal_chord	xz -6	1465448	882000	ok
+signal_chord	xz -9e	1470596	882000	ok
+signal_chord	zstd -3	1709193	882000	ok
+signal_chord	zstd -19	1620096	882000	ok
+signal_chord	lz4 -1	1764063	882000	ok
+signal_chord	lz4 -12	1764063	882000	ok
+signal_chord	brotli -q 11	1401402	882000	ok
+signal_chord	flac -0	319379	882000	ok
+signal_chord	flac -5	310465	882000	ok
+signal_chord	flac -8	310465	882000	ok
+signal_chord	wavpack -f	564886	882000	ok
+signal_chord	wavpack	570778	882000	ok
+signal_chord	wavpack -hh	559642	882000	ok
+signal_chord	wavpack -hh -x4	376982	882000	ok
+signal_chord	ffmpeg alac	385460	882000	ok
+signal_chord	ffmpeg tta	318128	882000	ok
+signal_dither	gzip -1	350248	882000	ok
+signal_dither	gzip -9	242613	882000	ok
+signal_dither	bzip2 -9	236232	882000	ok
+signal_dither	xz -6	202976	882000	ok
+signal_dither	xz -9e	201556	882000	ok
+signal_dither	zstd -3	292878	882000	ok
+signal_dither	zstd -19	217774	882000	ok
+signal_dither	lz4 -1	758056	882000	ok
+signal_dither	lz4 -12	303905	882000	ok
+signal_dither	brotli -q 11	217603	882000	ok
+signal_dither	flac -0	238834	882000	ok
+signal_dither	flac -5	232402	882000	ok
+signal_dither	flac -8	232402	882000	ok
+signal_dither	wavpack -f	246218	882000	ok
+signal_dither	wavpack	246834	882000	ok
+signal_dither	wavpack -hh	248620	882000	ok
+signal_dither	wavpack -hh -x4	245760	882000	ok
+signal_dither	ffmpeg alac	291655	882000	ok
+signal_dither	ffmpeg tta	241839	882000	ok
+signal_fm	gzip -1	31452	882000	ok
+signal_fm	gzip -9	21483	882000	ok
+signal_fm	bzip2 -9	40167	882000	ok
+signal_fm	xz -6	8944	882000	ok
+signal_fm	xz -9e	8944	882000	ok
+signal_fm	zstd -3	9499	882000	ok
+signal_fm	zstd -19	8822	882000	ok
+signal_fm	lz4 -1	15810	882000	ok
+signal_fm	lz4 -12	15810	882000	ok
+signal_fm	brotli -q 11	7906	882000	ok
+signal_fm	flac -0	412364	882000	ok
+signal_fm	flac -5	362981	882000	ok
+signal_fm	flac -8	351575	882000	ok
+signal_fm	wavpack -f	631808	882000	ok
+signal_fm	wavpack	662888	882000	ok
+signal_fm	wavpack -hh	663238	882000	ok
+signal_fm	wavpack -hh -x4	507822	882000	ok
+signal_fm	ffmpeg alac	613312	882000	ok
+signal_fm	ffmpeg tta	451071	882000	ok
+signal_impulses	gzip -1	8107	882000	ok
+signal_impulses	gzip -9	2226	882000	ok
+signal_impulses	bzip2 -9	127	882000	ok
+signal_impulses	xz -6	440	882000	ok
+signal_impulses	xz -9e	440	882000	ok
+signal_impulses	zstd -3	230	882000	ok
+signal_impulses	zstd -19	256	882000	ok
+signal_impulses	lz4 -1	6997	882000	ok
+signal_impulses	lz4 -12	6997	882000	ok
+signal_impulses	brotli -q 11	81	882000	ok
+signal_impulses	flac -0	46588	882000	ok
+signal_impulses	flac -5	113588	882000	ok
+signal_impulses	flac -8	113588	882000	ok
+signal_impulses	wavpack -f	3738	882000	ok
+signal_impulses	wavpack	3898	882000	ok
+signal_impulses	wavpack -hh	4298	882000	ok
+signal_impulses	wavpack -hh -x4	3658	882000	ok
+signal_impulses	ffmpeg alac	24067	882000	ok
+signal_impulses	ffmpeg tta	129506	882000	ok
+signal_pink	gzip -1	1641244	882000	ok
+signal_pink	gzip -9	1638769	882000	ok
+signal_pink	bzip2 -9	1508834	882000	ok
+signal_pink	xz -6	1561192	882000	ok
+signal_pink	xz -9e	1561192	882000	ok
+signal_pink	zstd -3	1638118	882000	ok
+signal_pink	zstd -19	1638558	882000	ok
+signal_pink	lz4 -1	1764063	882000	ok
+signal_pink	lz4 -12	1764063	882000	ok
+signal_pink	brotli -q 11	1464645	882000	ok
+signal_pink	flac -0	1459589	882000	ok
+signal_pink	flac -5	1444270	882000	ok
+signal_pink	flac -8	1444216	882000	ok
+signal_pink	wavpack -f	1434230	882000	ok
+signal_pink	wavpack	1425934	882000	ok
+signal_pink	wavpack -hh	1419158	882000	ok
+signal_pink	wavpack -hh -x4	1415298	882000	ok
+signal_pink	ffmpeg alac	1440856	882000	ok
+signal_pink	ffmpeg tta	1437246	882000	ok
+signal_sawtooth	gzip -1	21758	882000	ok
+signal_sawtooth	gzip -9	9703	882000	ok
+signal_sawtooth	bzip2 -9	5365	882000	ok
+signal_sawtooth	xz -6	1392	882000	ok
+signal_sawtooth	xz -9e	1380	882000	ok
+signal_sawtooth	zstd -3	1878	882000	ok
+signal_sawtooth	zstd -19	1183	882000	ok
+signal_sawtooth	lz4 -1	10650	882000	ok
+signal_sawtooth	lz4 -12	7924	882000	ok
+signal_sawtooth	brotli -q 11	920	882000	ok
+signal_sawtooth	flac -0	1417967	882000	ok
+signal_sawtooth	flac -5	1411395	882000	ok
+signal_sawtooth	flac -8	1411395	882000	ok
+signal_sawtooth	wavpack -f	829766	882000	ok
+signal_sawtooth	wavpack	923850	882000	ok
+signal_sawtooth	wavpack -hh	1311700	882000	ok
+signal_sawtooth	wavpack -hh -x4	909710	882000	ok
+signal_sawtooth	ffmpeg alac	1338842	882000	ok
+signal_sawtooth	ffmpeg tta	1578908	882000	ok
+signal_silence	gzip -1	7781	882000	ok
+signal_silence	gzip -9	1797	882000	ok
+signal_silence	bzip2 -9	116	882000	ok
+signal_silence	xz -6	432	882000	ok
+signal_silence	xz -9e	432	882000	ok
+signal_silence	zstd -3	118	882000	ok
+signal_silence	zstd -19	118	882000	ok
+signal_silence	lz4 -1	6991	882000	ok
+signal_silence	lz4 -12	6991	882000	ok
+signal_silence	brotli -q 11	69	882000	ok
+signal_silence	flac -0	17388	882000	ok
+signal_silence	flac -5	10788	882000	ok
+signal_silence	flac -8	10788	882000	ok
+signal_silence	wavpack -f	2538	882000	ok
+signal_silence	wavpack	2538	882000	ok
+signal_silence	wavpack -hh	2538	882000	ok
+signal_silence	wavpack -hh -x4	2538	882000	ok
+signal_silence	ffmpeg alac	5706	882000	ok
+signal_silence	ffmpeg tta	111768	882000	ok
+signal_sine	gzip -1	14136	882000	ok
+signal_sine	gzip -9	9648	882000	ok
+signal_sine	bzip2 -9	5466	882000	ok
+signal_sine	xz -6	1320	882000	ok
+signal_sine	xz -9e	1320	882000	ok
+signal_sine	zstd -3	1724	882000	ok
+signal_sine	zstd -19	1094	882000	ok
+signal_sine	lz4 -1	7873	882000	ok
+signal_sine	lz4 -12	7873	882000	ok
+signal_sine	brotli -q 11	960	882000	ok
+signal_sine	flac -0	538719	882000	ok
+signal_sine	flac -5	390414	882000	ok
+signal_sine	flac -8	440024	882000	ok
+signal_sine	wavpack -f	641318	882000	ok
+signal_sine	wavpack	692768	882000	ok
+signal_sine	wavpack -hh	662408	882000	ok
+signal_sine	wavpack -hh -x4	462642	882000	ok
+signal_sine	ffmpeg alac	750446	882000	ok
+signal_sine	ffmpeg tta	558947	882000	ok
+signal_square	gzip -1	23489	882000	ok
+signal_square	gzip -9	7265	882000	ok
+signal_square	bzip2 -9	215	882000	ok
+signal_square	xz -6	3064	882000	ok
+signal_square	xz -9e	500	882000	ok
+signal_square	zstd -3	18143	882000	ok
+signal_square	zstd -19	321	882000	ok
+signal_square	lz4 -1	18022	882000	ok
+signal_square	lz4 -12	7057	882000	ok
+signal_square	brotli -q 11	185	882000	ok
+signal_square	flac -0	146156	882000	ok
+signal_square	flac -5	138880	882000	ok
+signal_square	flac -8	138880	882000	ok
+signal_square	wavpack -f	97908	882000	ok
+signal_square	wavpack	99480	882000	ok
+signal_square	wavpack -hh	119080	882000	ok
+signal_square	wavpack -hh -x4	97818	882000	ok
+signal_square	ffmpeg alac	1279962	882000	ok
+signal_square	ffmpeg tta	1497317	882000	ok
+signal_sweep	gzip -1	1637744	882000	ok
+signal_sweep	gzip -9	1664080	882000	ok
+signal_sweep	bzip2 -9	1496602	882000	ok
+signal_sweep	xz -6	1335304	882000	ok
+signal_sweep	xz -9e	1336100	882000	ok
+signal_sweep	zstd -3	1681624	882000	ok
+signal_sweep	zstd -19	1606226	882000	ok
+signal_sweep	lz4 -1	1756351	882000	ok
+signal_sweep	lz4 -12	1730225	882000	ok
+signal_sweep	brotli -q 11	1520490	882000	ok
+signal_sweep	flac -0	766655	882000	ok
+signal_sweep	flac -5	458583	882000	ok
+signal_sweep	flac -8	385946	882000	ok
+signal_sweep	wavpack -f	890208	882000	ok
+signal_sweep	wavpack	781084	882000	ok
+signal_sweep	wavpack -hh	684878	882000	ok
+signal_sweep	wavpack -hh -x4	498010	882000	ok
+signal_sweep	ffmpeg alac	764553	882000	ok
+signal_sweep	ffmpeg tta	621780	882000	ok
+signal_triangle	gzip -1	14188	882000	ok
+signal_triangle	gzip -9	9670	882000	ok
+signal_triangle	bzip2 -9	5345	882000	ok
+signal_triangle	xz -6	1324	882000	ok
+signal_triangle	xz -9e	1324	882000	ok
+signal_triangle	zstd -3	2318	882000	ok
+signal_triangle	zstd -19	1094	882000	ok
+signal_triangle	lz4 -1	7873	882000	ok
+signal_triangle	lz4 -12	7873	882000	ok
+signal_triangle	brotli -q 11	927	882000	ok
+signal_triangle	flac -0	1121784	882000	ok
+signal_triangle	flac -5	1114577	882000	ok
+signal_triangle	flac -8	1114577	882000	ok
+signal_triangle	wavpack -f	831228	882000	ok
+signal_triangle	wavpack	1311528	882000	ok
+signal_triangle	wavpack -hh	1202898	882000	ok
+signal_triangle	wavpack -hh -x4	610058	882000	ok
+signal_triangle	ffmpeg alac	1339393	882000	ok
+signal_triangle	ffmpeg tta	1215438	882000	ok
+signal_white	gzip -1	1736480	882000	ok
+signal_white	gzip -9	1735203	882000	ok
+signal_white	bzip2 -9	1713246	882000	ok
+signal_white	xz -6	1720280	882000	ok
+signal_white	xz -9e	1720280	882000	ok
+signal_white	zstd -3	1764096	882000	ok
+signal_white	zstd -19	1764096	882000	ok
+signal_white	lz4 -1	1764063	882000	ok
+signal_white	lz4 -12	1764063	882000	ok
+signal_white	brotli -q 11	1695273	882000	ok
+signal_white	flac -0	1724976	882000	ok
+signal_white	flac -5	1718904	882000	ok
+signal_white	flac -8	1718904	882000	ok
+signal_white	wavpack -f	1678228	882000	ok
+signal_white	wavpack	1680730	882000	ok
+signal_white	wavpack -hh	1686752	882000	ok
+signal_white	wavpack -hh -x4	1677180	882000	ok
+signal_white	ffmpeg alac	1730133	882000	ok
+signal_white	ffmpeg tta	1711838	882000	ok
