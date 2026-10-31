@@ -15,7 +15,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `ada/audio_huffman.adb`, with `huffman_codes`, `predictors`, `residual_coders` and `wav_files`: the experiment.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`: the block codec and its stream in Haskell, with groups coded in parallel. `haskell/hybrid/`: the same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: the test files, `make_corpus.sh`, which builds them, and `SHA256SUMS`.
-- `run.sh`, `compare.sh`, `bench.sh`, `sizes.sh`, `tables.sh`: run every coder, the common lossless tools, the timing, and the tables. Their output is in `results/`.
+- `run.sh`, `compare.sh`, `bench.sh`, `levels.sh`, `sizes.sh`, `tables.sh`: run every coder, the common lossless tools, the timing, the encoder levels, and the tables. Their output is in `results/`.
 
 ## Corpus
 
@@ -133,6 +133,32 @@ Mean bits per sample over each group of files, measured on the whole corpus as e
 | and stereo modes | 3.48 | 6.51 | 9.35 | 10.41 | 7.14 |
 | and split blocks, with 16-bit byte lengths | 3.47 | 6.51 | 9.24 | 10.35 | 7.10 |
 
+### Levels
+
+The encoder searches at five levels, and every level writes the same format, so one decoder reads them all. `codec_main <file.wav> <level>`, `huffman-audio <file.wav> --block <level>` and `huffman-audio-hybrid <file.wav> <level>` take the level, 4 when left out. The estimated order is the one whose Levinson-Durbin prediction error implies the fewest bits, 0.5 (n - p) log2(error) + 15p for order p over n samples. The estimated stereo mode is the pair whose summed absolute second differences have the least summed logarithm. Ada and Haskell compute the logarithm from the exponent and a fixed polynomial in the fraction, so they choose the same orders and modes. Times are single runs on the AMD Ryzen 7 7700X; `levels.sh` produces the table and `results/levels.txt`, which lists every file at every level, and checks that Ada and Haskell write the same bytes.
+
+| Level | Search | Mean bits per sample | Coded corpus | Of PCM | Encode, Ada, 1 thread | Decode, Ada | Encode, Haskell, 16 threads | Decode, Haskell |
+|---|---|---|---|---|---|---|---|---|
+| 0 | 4096-frame blocks; polynomial, delay and tiers; left and right | 7.519 | 47.35 MB | 40.2% | 4.9 s | 1.61 s | 0.59 s | 0.23 s |
+| 1 | and 1 estimated order of linear prediction at 15 bits; stereo mode estimated | 7.180 | 42.73 MB | 36.3% | 10.7 s | 2.08 s | 1.16 s | 0.53 s |
+| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048 | 7.145 | 42.56 MB | 36.1% | 31.0 s | 2.08 s | 4.61 s | 0.55 s |
+| 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded | 7.111 | 42.26 MB | 35.9% | 99.8 s | 2.08 s | 19.68 s | 0.61 s |
+| 4 | and every order and precision 5 to 15; blocks down to 512 | 7.095 | 42.18 MB | 35.8% | 243.5 s | 2.00 s | 52.75 s | 0.49 s |
+
+Level 1 encodes the corpus 23 times faster than level 4 in Ada, 10.7 s against 243.5 s, for 1.3% more bytes; the one estimated order of linear prediction keeps most of its gain. Level 3 comes within 0.2% of level 4 in 41% of its time. Decoding takes about 2 s in Ada at every level from 1 up, and 1.6 s at level 0.
+
+### Side information
+
+Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side information takes 1.3% of all bits. Coding the LPC coefficients in Rice or Exp-Golomb codes, with a parameter per block, would save 0.02% of all bits, and loses on speech, where the parameter costs more than it saves. Coding the LPC warm-up from the samples before the block, at the block's residual rate, would save 0.26%, and 0.36% on the recordings.
+
+| Files | Headers | LPC coefficients | LPC warm-up | Code tables | Index and lengths | Residuals |
+|---|---|---|---|---|---|---|
+| Generated signals | 0.15% | 0.29% | 0.27% | 0.55% | 0.12% | 98.61% |
+| Sample-rate sweep | 0.08% | 0.03% | 0.07% | 0.11% | 0.06% | 99.65% |
+| Bit-depth sweep | 0.06% | 0.01% | 0.05% | 0.17% | 0.05% | 99.66% |
+| Recordings | 0.07% | 0.65% | 0.79% | 0.05% | 0.05% | 98.39% |
+| All 40 files | 0.08% | 0.46% | 0.56% | 0.13% | 0.06% | 98.70% |
+
 ### Three implementations of the block codec
 
 Times for the whole corpus, 44,883,000 samples, on an AMD Ryzen 7 7700X with 8 cores and 16 threads. Each stream is hashed, and every implementation, at every core count, writes all 40 streams byte for byte the same as Ada.
@@ -198,6 +224,7 @@ GNAT 15.2 and gprbuild 25.0.1 (for example from the Alire toolchains) on the PAT
     corpus/make_corpus.sh          # rebuilds corpus/ from source (the committed files are the reference)
     ./run.sh                       # builds everything, runs every coder, writes results/
     ./compare.sh && ./bench.sh     # common lossless tools, and the timing of the three implementations
+    ./levels.sh                    # every file at every encoder level, in Ada and Haskell
     ./tables.sh > results/tables.md
     cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb block_codec.adb
 
