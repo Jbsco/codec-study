@@ -611,7 +611,7 @@ begin
       Put_Real (Long_Float (Ada.Real_Time.To_Duration (Encoded - Start)), 2);
       Put (" s, decode");
       Put_Real (Long_Float (Ada.Real_Time.To_Duration (Ada.Real_Time.Clock - Encoded)), 2);
-      Put_Line (" s");
+      Put_Line (" s, level" & Level'Image & "," & Length'Image & " bytes");
       Put ("    blocks: constant" & Kinds (0)'Image & ", orders 0-4");
       for K in 1 .. 5 loop
          Put (Kinds (K)'Image);
@@ -623,7 +623,6 @@ begin
                 & ", code tables" & Side.Tables'Image & ", residuals" & Side.Residuals'Image & ", index and lengths"
                 & Long_Long_Integer (Index_Pos + 16 * Blocks)'Image & "; coefficients in Rice or Exp-Golomb codes"
                 & Side.Coded_Coefficients'Image & ", warm-up at the residual rate" & Side.Seeded_Warm_Up'Image);
-      Put_Line ("    level" & Level'Image);
       Put_Line ("    frames per block: 4096" & Leaves (0)'Image & ", 2048" & Leaves (1)'Image & ", 1024" & Leaves (2)'Image
                 & ", 512" & Leaves (3)'Image);
       if Pair then
