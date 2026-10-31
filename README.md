@@ -170,17 +170,17 @@ Times for the whole corpus, 44,883,000 samples, on an AMD Ryzen 7 7700X with 8 c
 
 | Implementation | Threads | Encode | Decode |
 |---|---|---|---|
-| Ada and SPARK (`codec_main`, assertions on) | 1 | 301.42 s | 1.99 s |
-| Haskell | 1 | 295.35 s | 2.05 s |
-| Haskell | 4 | 82.18 s | 0.84 s |
-| Haskell | 8 | 48.84 s | 0.68 s |
-| Haskell | 16 | 45.93 s | 0.51 s |
-| Haskell + SPARK library | 1 | 318.00 s | 1.31 s |
-| Haskell + SPARK library | 4 | 93.81 s | 0.67 s |
-| Haskell + SPARK library | 8 | 61.72 s | 0.47 s |
-| Haskell + SPARK library | 16 | 57.70 s | 0.46 s |
+| Ada and SPARK (`codec_main`, assertions on) | 1 | 260.02 s | 2.34 s |
+| Haskell | 1 | 334.13 s | 2.10 s |
+| Haskell | 4 | 97.54 s | 0.91 s |
+| Haskell | 8 | 63.98 s | 0.68 s |
+| Haskell | 16 | 57.30 s | 0.68 s |
+| Haskell + SPARK library | 1 | 248.67 s | 1.72 s |
+| Haskell + SPARK library | 4 | 74.43 s | 0.96 s |
+| Haskell + SPARK library | 8 | 54.55 s | 0.73 s |
+| Haskell + SPARK library | 16 | 49.95 s | 0.75 s |
 
-The encoder codes every node of each group's split tree, up to 15 blocks per group for each of up to four signals, and tries every predictor, 32 orders of linear prediction and 11 coefficient precisions on each block. Before linear prediction, back-references, stereo modes and split blocks, the Ada encoder took 11.26 s and decoding 1.46 s. The Rice parameter search starts from the bit length of the mean code value and walks to the least cost, which the convexity of the cost allows; it finds the same parameter as a walk from zero, and took that encoder from 11.26 s to 9.48 s. Decoding stays near 2 s: only blocks that reach back before themselves wait for earlier samples, and Haskell decodes all other blocks in parallel first.
+These are level 4 times, with the per-block CRCs. The encoder codes every node of each group's split tree, up to 15 blocks per group for each of up to four signals, and tries every predictor, 32 orders of linear prediction and 11 coefficient precisions on each block. Before linear prediction, back-references, stereo modes and split blocks, the Ada encoder took 11.26 s and decoding 1.46 s. The Rice parameter search starts from the bit length of the mean code value and walks to the least cost, which the convexity of the cost allows; it finds the same parameter as a walk from zero, and took that encoder from 11.26 s to 9.48 s. Decoding stays near 2 s: only blocks that reach back before themselves wait for earlier samples, and Haskell decodes all other blocks in parallel first.
 
 The Haskell side uses unboxed vectors, whose loops fuse without intermediate arrays; strict, unpacked writer state; `countLeadingZeros` for unary and bit-length codes; and decoding from a 32-bit peek instead of bit by bit. Ada and Haskell compute the linear prediction analysis with the same 64-bit floating-point operations in the same order. Parallelism comes from sparks over pure functions, so the output cannot depend on scheduling. The executables run with `-N -A4m`; a 4 MB allocation area measured faster than 64 MB. `bench.sh` produces the table.
 
