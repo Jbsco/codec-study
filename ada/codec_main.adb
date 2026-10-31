@@ -115,14 +115,34 @@ procedure Codec_Main is
 
    type Kind_Counts is array (0 .. 10) of Natural;
 
-   --  Count the coding of the block at byte Offset: constant, predictor 0 to 7, then Rice or run-length codes.
-   procedure Count_Kind (Stream : Byte_Array; Offset : Natural; Kinds : in out Kind_Counts) is
+   --  Bits of the coded blocks by role, and two estimates for LPC blocks: the coefficients in the better of Rice
+   --  and Exp-Golomb codes with a per-block parameter, and the warm-up coded at the block's residual rate.
+   type Side_Counts is record
+      Headers, Coefficients, Warm_Up, Tables, Residuals, Coded_Coefficients, Seeded_Warm_Up : Long_Long_Integer := 0;
+   end record;
+
+   function Bits_Of_Length (U : Unsigned_64) return Natural is
+      L : Natural := 0;
+   begin
+      while Shift_Right (U, L) /= 0 loop
+         L := L + 1;
+      end loop;
+      return L;
+   end Bits_Of_Length;
+
+   --  Count the coding of the Size-byte block at byte Offset: constant, predictor 0 to 7, then Rice or run-length
+   --  codes, and add its bits by role to Side.
+   procedure Count_Kind (Stream : Byte_Array; Offset, Size, Samples : Natural; Kinds : in out Kind_Counts; Side : in out Side_Counts) is
       Kind_Pos : Natural := Offset * 8;
       Field : Unsigned_64;
+      Coefficient_Bits, Warm_Bits, Order_Of : Long_Long_Integer := 0;
+      Coded : Long_Long_Integer := 0;
+      Table_At : Natural;
    begin
       Get (Stream, Kind_Pos, Field, 1);
       if Field = 0 then
          Kinds (0) := Kinds (0) + 1;
+         Side.Headers := Side.Headers + Long_Long_Integer (8 * Size);
          return;
       end if;
       Get (Stream, Kind_Pos, Field, 5);
@@ -133,11 +153,37 @@ procedure Codec_Main is
          Get (Stream, Kind_Pos, Field, (if Field = 1 then 15 else 12));
       elsif Field = 7 then
          declare
-            Order, Precision, K, Bit : Unsigned_64;
+            Order, Precision, K, Bit, Value : Unsigned_64;
+            Values : array (1 .. 32) of Unsigned_64 := [others => 0];
+            Warm_Start : Natural;
          begin
             Get (Stream, Kind_Pos, Order, 5);
             Get (Stream, Kind_Pos, Precision, 4);
-            Kind_Pos := Kind_Pos + 5 + Natural (Order + 1) * Natural (Precision + 1);
+            Kind_Pos := Kind_Pos + 5;
+            for J in 1 .. Natural (Order) + 1 loop
+               Get (Stream, Kind_Pos, Value, Natural (Precision) + 1);
+               declare
+                  Q : constant Long_Long_Integer :=
+                    (if Value >= 2**Natural (Precision) then Long_Long_Integer (Value) - 2**(Natural (Precision) + 1) else Long_Long_Integer (Value));
+               begin
+                  Values (J) := (if Q >= 0 then Unsigned_64 (2 * Q) else Unsigned_64 (-(2 * Q) - 1));
+               end;
+            end loop;
+            Order_Of := Long_Long_Integer (Order) + 1;
+            Coefficient_Bits := Order_Of * (Long_Long_Integer (Precision) + 1);
+            Coded := Long_Long_Integer'Last;
+            for P in 0 .. 15 loop
+               declare
+                  Rice, Golomb : Long_Long_Integer := 5;
+               begin
+                  for J in 1 .. Natural (Order) + 1 loop
+                     Rice := Rice + Long_Long_Integer (Shift_Right (Values (J), P)) + 1 + Long_Long_Integer (P);
+                     Golomb := Golomb + Long_Long_Integer (2 * Bits_Of_Length (Shift_Right (Values (J), P) + 1) - 1 + P);
+                  end loop;
+                  Coded := Long_Long_Integer'Min (Coded, Long_Long_Integer'Min (Rice, Golomb));
+               end;
+            end loop;
+            Warm_Start := Kind_Pos;
             Get (Stream, Kind_Pos, K, 6);
             for Unused in 0 .. Order loop
                loop
@@ -146,10 +192,48 @@ procedure Codec_Main is
                end loop;
                Kind_Pos := Kind_Pos + Natural (K);
             end loop;
+            Warm_Bits := Long_Long_Integer (Kind_Pos - Warm_Start);
          end;
       end if;
       Get (Stream, Kind_Pos, Field, 1);
       Kinds (9 + Natural (Field)) := Kinds (9 + Natural (Field)) + 1;
+      Table_At := Kind_Pos;
+      if Field = 0 then
+         Kind_Pos := Kind_Pos + 6;
+      else
+         declare
+            M, Bit, Rest : Unsigned_64;
+            Zeros : Natural;
+         begin
+            Get (Stream, Kind_Pos, M, 11);
+            for Unused in 1 .. M loop
+               Zeros := 0;
+               loop
+                  Get (Stream, Kind_Pos, Bit, 1);
+                  exit when Bit = 1;
+                  Zeros := Zeros + 1;
+               end loop;
+               Get (Stream, Kind_Pos, Rest, Zeros);
+               Kind_Pos := Kind_Pos + 5;
+            end loop;
+         end;
+      end if;
+      declare
+         Header_Bits : constant Long_Long_Integer :=
+           Long_Long_Integer (Table_At - Offset * 8) - Coefficient_Bits - Warm_Bits;
+         Table_Bits : constant Long_Long_Integer := Long_Long_Integer (Kind_Pos - Table_At);
+         Residual_Bits : constant Long_Long_Integer := Long_Long_Integer (8 * Size + Offset * 8 - Kind_Pos);
+      begin
+         Side.Headers := Side.Headers + Header_Bits;
+         Side.Coefficients := Side.Coefficients + Coefficient_Bits;
+         Side.Warm_Up := Side.Warm_Up + Warm_Bits;
+         Side.Tables := Side.Tables + Table_Bits;
+         Side.Residuals := Side.Residuals + Residual_Bits;
+         if Order_Of > 0 then
+            Side.Coded_Coefficients := Side.Coded_Coefficients + Coded;
+            Side.Seeded_Warm_Up := Side.Seeded_Warm_Up + Order_Of * Residual_Bits / Long_Long_Integer (Samples - Natural (Order_Of));
+         end if;
+      end;
    end Count_Kind;
 
    --  V divided by two, rounded down.
@@ -187,6 +271,7 @@ begin
       Same : Boolean := True;
       Hash : Unsigned_64 := 14695981039346656037;
       Kinds : Kind_Counts := [others => 0];
+      Side : Side_Counts;
       Stereo : array (0 .. 3) of Natural := [others => 0];
       Leaves : array (0 .. Top) of Natural := [others => 0];
       Signal : array (1 .. Channels + 2) of Sample_Array_Access;
@@ -197,6 +282,7 @@ begin
       --  A node of a group's split tree is whole when it is a smallest block or its second half starts before the
       --  last frame; otherwise it is the same as its first half and carries no split bit.
       function Whole (First, Level : Natural) return Boolean is (Level = Top or else First + Max_Block / 2**(Level + 1) < Frames);
+
    begin
       if Input.Is_Float then
          for C in 1 .. Channels loop
@@ -248,6 +334,7 @@ begin
 
             function First_Of (L, J : Natural) return Natural is (G * Max_Block + J * (Max_Block / 2**L));
 
+
             procedure Emit (L, J : Natural) is
             begin
                if not Whole (First_Of (L, J), L) then
@@ -273,7 +360,7 @@ begin
                      B : constant Natural := Bytes (L, J, S);
                   begin
                      Data (Data_Length .. Data_Length + B - 1) := Trial (L, J, S) (0 .. B - 1);
-                     Count_Kind (Data.all, Data_Length, Kinds);
+                     Count_Kind (Data.all, Data_Length, B, Natural'Min (First_Of (L, J) + Max_Block / 2**L, Frames) - First_Of (L, J), Kinds, Side);
                      Sizes (Blocks) := B;
                      Blocks := Blocks + 1;
                      Data_Length := Data_Length + B;
@@ -477,6 +564,10 @@ begin
       Put_Line (", delay" & Kinds (6)'Image & ", tiers" & Kinds (7)'Image & ", LPC" & Kinds (8)'Image & "; Rice" & Kinds (9)'Image
                 & ", run-length" & Kinds (10)'Image
                 & (if Input.Is_Float then "; float as " & (if Mode (1) = 1 then "integers / 2**" & Scale (1)'Image else "ordered bits") else ""));
+      Put_Line ("    bits: headers" & Side.Headers'Image & ", LPC coefficients" & Side.Coefficients'Image & ", LPC warm-up" & Side.Warm_Up'Image
+                & ", code tables" & Side.Tables'Image & ", residuals" & Side.Residuals'Image & ", index and lengths"
+                & Long_Long_Integer (Index_Pos + 16 * Blocks)'Image & "; coefficients in Rice or Exp-Golomb codes"
+                & Side.Coded_Coefficients'Image & ", warm-up at the residual rate" & Side.Seeded_Warm_Up'Image);
       Put_Line ("    frames per block: 4096" & Leaves (0)'Image & ", 2048" & Leaves (1)'Image & ", 1024" & Leaves (2)'Image
                 & ", 512" & Leaves (3)'Image);
       if Pair then
