@@ -1,6 +1,7 @@
 --  Code a WAV file with the block codec, decode it again and compare every sample. Prints the size, a hash of
 --  the coded stream, the wall time of each step, and which block coding was chosen how often.
---  Usage: codec_main <file.wav> [level 0 to 4, 4 when left out] [--stream <out.bin>, to write the coded stream]
+--  Usage: codec_main <file.wav> [level 0 to 5, 4 when left out] [--stream <out.bin>, to write the coded stream]
+--  [--features <out.tsv>, to write each group's features and whether the search split its root]
 with Ada.Command_Line;
 with Ada.Direct_IO;
 with Ada.Real_Time;
@@ -115,7 +116,7 @@ procedure Codec_Main is
       Real_Text.Put (Value, Fore => 3, Aft => Aft, Exp => 0);
    end Put_Real;
 
-   type Kind_Counts is array (0 .. 10) of Natural;
+   type Kind_Counts is array (0 .. 11) of Natural;
 
    --  Bits of the coded blocks by role, and two estimates for LPC blocks: the coefficients in the better of Rice
    --  and Exp-Golomb codes with a per-block parameter, and the warm-up coded at the block's residual rate.
@@ -173,6 +174,11 @@ procedure Codec_Main is
             end loop;
             Order_Of := Long_Long_Integer (Order) + 1;
             Coefficient_Bits := Order_Of * (Long_Long_Integer (Precision) + 1);
+            Get (Stream, Kind_Pos, Value, 1);
+            if Value = 1 then
+               Kind_Pos := Kind_Pos + 4;
+               Kinds (11) := Kinds (11) + 1;
+            end if;
             Coded := Long_Long_Integer'Last;
             for P in 0 .. 15 loop
                declare
@@ -186,14 +192,16 @@ procedure Codec_Main is
                end;
             end loop;
             Warm_Start := Kind_Pos;
-            Get (Stream, Kind_Pos, K, 6);
-            for Unused in 0 .. Order loop
-               loop
-                  Get (Stream, Kind_Pos, Bit, 1);
-                  exit when Bit = 1;
+            if Value = 0 then
+               Get (Stream, Kind_Pos, K, 6);
+               for Unused in 0 .. Order loop
+                  loop
+                     Get (Stream, Kind_Pos, Bit, 1);
+                     exit when Bit = 1;
+                  end loop;
+                  Kind_Pos := Kind_Pos + Natural (K);
                end loop;
-               Kind_Pos := Kind_Pos + Natural (K);
-            end loop;
+            end if;
             Warm_Bits := Long_Long_Integer (Kind_Pos - Warm_Start);
          end;
       end if;
@@ -251,13 +259,14 @@ procedure Codec_Main is
 
    --  The search at each level: the deepest tree level the encoder tries, how it picks a stereo mode (0 left and
    --  right only, 1 by an estimate from second differences, 2 by coding all four signals), and its linear
-   --  prediction effort. Every level writes the same format.
+   --  prediction effort, and whether it tries the adaptive stage. Every level writes the same format.
    type Level_Setting is record
       Deepest, Stereo_Search : Natural;
       Effort : Effort_Type;
    end record;
-   Levels : constant array (0 .. 4) of Level_Setting :=
-     [(0, 0, (0, 15)), (0, 1, (1, 15)), (1, 1, (2, 12)), (2, 2, (4, 9)), (3, 2, (32, 5))];
+   Levels : constant array (0 .. 5) of Level_Setting :=
+     [(0, 0, (0, 15, False)), (0, 1, (1, 15, False)), (1, 1, (2, 12, False)), (2, 2, (4, 9, False)), (3, 2, (32, 5, False)),
+      (3, 2, (32, 5, True))];
 
    --  The base-2 logarithm of a positive X within 3e-6, as in the block encoder.
    function Log2 (X : Long_Float) return Long_Float is
@@ -269,6 +278,18 @@ procedure Codec_Main is
    end Log2;
 
    package Byte_IO is new Ada.Direct_IO (Byte);
+   Features : Ada.Text_IO.File_Type;
+   Writing_Features : Boolean := False;
+
+   --  Integer part of the base-2 logarithm of V plus one, zero for zero: a magnitude in bits.
+   function Bits_Of (V : Long_Long_Integer) return Natural is
+      B : Natural := 0;
+   begin
+      while V / 2**B > 0 loop
+         B := B + 1;
+      end loop;
+      return B;
+   end Bits_Of;
 
    --  Write Data to the file named after "--stream" on the command line, when present.
    procedure Write_Stream (Data : Byte_Array) is
@@ -288,6 +309,12 @@ procedure Codec_Main is
    Input : Wav_Files.Audio;
 begin
    Wav_Files.Read (Ada.Command_Line.Argument (1), 3600, Input);
+   for I in 2 .. Ada.Command_Line.Argument_Count - 1 loop
+      if Ada.Command_Line.Argument (I) = "--features" then
+         Ada.Text_IO.Create (Features, Ada.Text_IO.Out_File, Ada.Command_Line.Argument (I + 1));
+         Writing_Features := True;
+      end if;
+   end loop;
    declare
       Level : constant Natural :=
         (if Ada.Command_Line.Argument_Count >= 2 and then Ada.Command_Line.Argument (2) /= "--stream"
@@ -491,8 +518,33 @@ begin
                end loop;
             end loop;
             Emit (0, 0);
+            --  Features of the group's first channel: bits of the summed absolute first differences of each
+            --  eighth, bits of the peak sample, and the frames; then the label, whether the root was split.
+            if Writing_Features and then First_Of (0, 0) + Max_Block <= Frames then
+               declare
+                  Peak : Long_Long_Integer := 0;
+               begin
+                  for Eighth in 0 .. 7 loop
+                     declare
+                        Sum : Long_Long_Integer := 0;
+                        From : constant Natural := First_Of (0, 0) + Eighth * (Max_Block / 8);
+                     begin
+                        for I in From + 1 .. From + Max_Block / 8 - 1 loop
+                           Sum := Sum + abs (Signal (1) (I) - Signal (1) (I - 1));
+                           Peak := Long_Long_Integer'Max (Peak, abs Signal (1) (I));
+                        end loop;
+                        Ada.Text_IO.Put (Features, Natural'Image (Bits_Of (Sum)));
+                     end;
+                  end loop;
+                  Ada.Text_IO.Put (Features, Natural'Image (Bits_Of (Peak)) & Natural'Image (Boolean'Pos (Split (0, 0))));
+                  Ada.Text_IO.New_Line (Features);
+               end;
+            end if;
          end;
       end loop;
+      if Writing_Features then
+         Ada.Text_IO.Close (Features);
+      end if;
       Put (Index.all, Index_Pos, 0, (8 - Index_Pos mod 8) mod 8);
       Stream (Index_At .. Index_At + Index_Pos / 8 - 1) := Index (0 .. Index_Pos / 8 - 1);
       Pos := (Index_At + Index_Pos / 8) * 8;
@@ -650,7 +702,7 @@ begin
          Put (Kinds (K)'Image);
       end loop;
       Put_Line (", delay" & Kinds (6)'Image & ", tiers" & Kinds (7)'Image & ", LPC" & Kinds (8)'Image & "; Rice" & Kinds (9)'Image
-                & ", run-length" & Kinds (10)'Image
+                & ", run-length" & Kinds (10)'Image & "; adaptive stage" & Kinds (11)'Image
                 & (if Input.Is_Float then "; float as " & (if Mode (1) = 1 then "integers / 2**" & Scale (1)'Image else "ordered bits") else ""));
       Put_Line ("    bits: headers" & Side.Headers'Image & ", LPC coefficients" & Side.Coefficients'Image & ", LPC warm-up" & Side.Warm_Up'Image
                 & ", code tables" & Side.Tables'Image & ", residuals" & Side.Residuals'Image & ", index and lengths"
