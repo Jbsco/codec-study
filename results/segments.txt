@@ -1,0 +1,5 @@
+level 4, 40 files
+--seek-every 0:    42320414 bytes, 7.543 bits per sample
+--seek-every 10:   42323212 bytes, 7.544 bits per sample
+--seek-every 1:    42397880 bytes, 7.557 bits per sample
+--independent:     43138198 bytes, 7.689 bits per sample
