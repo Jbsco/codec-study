@@ -18,7 +18,8 @@ import Wav
 fnv1a :: S.Vector Word8 -> Word64
 fnv1a = S.foldl' (\h b -> (h `xor` fromIntegral b) * 1099511628211) 14695981039346656037
 
-blockLine :: String -> (Int -> U.Vector Int -> S.Vector Word8) -> (Int -> Int -> S.Vector Word8 -> U.Vector Int) -> Audio -> IO ()
+blockLine :: String -> (Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8) -> (Int -> U.Vector Int -> Int -> S.Vector Word8 -> U.Vector Int)
+          -> Audio -> IO ()
 blockLine name enc dec audio = do
   let p = prepare audio
   coded0 <- evaluate (force (pCoded p))

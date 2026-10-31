@@ -1,14 +1,17 @@
 -- | The stream of the block codec, as ada/codec_main.adb writes it: frames in 32 bits; channels, depth and a
 -- float flag in 8 bits each; for float input a mode and a scale per channel; a 32-bit byte length for every
--- block; then the blocks. Blocks encode and decode in parallel with any block coder of the same format.
+-- block; then the blocks. Blocks encode in parallel with any block coder of the same format. Blocks that need
+-- no samples from before them decode in parallel; then each channel decodes the rest in order.
 module Stream (Prepared (..), prepare, encodeStream, decodeStream) where
 
 import Data.Bits
+import qualified Data.Vector as V
 import qualified Data.Vector.Storable as S
 import qualified Data.Vector.Unboxed as U
+import Data.Maybe (fromMaybe)
 import Data.Word (Word8)
 
-import BlockCodec (maxBlock)
+import BlockCodec (maxBlock, maxHistory, usesHistory)
 import Blocks (readWord32, word32)
 import Parallel
 import Wav
@@ -55,20 +58,21 @@ toIntegers xs = do
         up = e - 150 + s
         mag = if up >= 0 then (8388608 + m) `shiftL` up else (8388608 + m) `shiftR` negate up
 
-encodeStream :: (Int -> U.Vector Int -> S.Vector Word8) -> Prepared -> S.Vector Word8
+encodeStream :: (Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8) -> Prepared -> S.Vector Word8
 encodeStream enc p = S.concat (header : map (word32 . S.length) blocks ++ blocks)
   where
     n = pFrames p
     width = if pFloat p then 32 else pDepth p
-    blocks = parMapNF (enc width) [U.slice s (min maxBlock (n - s)) c | c <- pCoded p, s <- [0, maxBlock .. n - 1]]
+    blocks = parMapNF (\(c, s) -> enc width (U.slice (max 0 (s - maxHistory)) (min s maxHistory) c) (U.slice s (min maxBlock (n - s)) c))
+               [(c, s) | c <- pCoded p, s <- [0, maxBlock .. n - 1]]
     header = S.concat
       [ word32 n
       , S.fromList ([fromIntegral (length (pCoded p)), fromIntegral (pDepth p), if pFloat p then 1 else 0]
                     ++ concat [[fromIntegral m, fromIntegral s] | (m, s) <- pModes p])
       ]
 
-decodeStream :: (Int -> Int -> S.Vector Word8 -> U.Vector Int) -> S.Vector Word8 -> [U.Vector Int]
-decodeStream dec v = [U.concat (take count (drop (c * count) decoded)) | c <- [0 .. nch - 1]]
+decodeStream :: (Int -> U.Vector Int -> Int -> S.Vector Word8 -> U.Vector Int) -> S.Vector Word8 -> [U.Vector Int]
+decodeStream dec v = parMapNF channel [0 .. nch - 1]
   where
     n = readWord32 v 0
     nch = fromIntegral (S.unsafeIndex v 4)
@@ -79,4 +83,21 @@ decodeStream dec v = [U.concat (take count (drop (c * count) decoded)) | c <- [0
     count = length lengths
     sizes = [readWord32 v (sizesAt + 4 * i) | i <- [0 .. nch * count - 1]]
     offsets = scanl (+) (sizesAt + 4 * nch * count) sizes
-    decoded = parMapNF (\(o, l, m) -> dec width m (S.slice o l v)) (zip3 offsets sizes (concat (replicate nch lengths)))
+    blocks = V.fromList (zipWith (\o l -> S.slice o l v) offsets sizes)
+    counts = V.fromList (concat (replicate nch lengths))
+    alone = V.fromList (parMapNF (\i -> if usesHistory (blocks V.! i) then Nothing else Just (dec width U.empty (counts V.! i) (blocks V.! i)))
+                                 [0 .. nch * count - 1])
+    channel c = U.concat (reverse (go 0 []))
+      where
+        go b done
+          | b == count = done
+          | otherwise =
+              let i = c * count + b
+                  out = fromMaybe (dec width (recent done) (counts V.! i) (blocks V.! i)) (alone V.! i)
+              in out `seq` go (b + 1) (out : done)
+    recent done = U.concat (latest maxHistory done [])
+    latest _ [] got = got
+    latest need (b : bs) got
+      | need <= 0 = got
+      | U.length b >= need = U.drop (U.length b - need) b : got
+      | otherwise = latest (need - U.length b) bs (b : got)

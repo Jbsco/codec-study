@@ -103,6 +103,32 @@ package body Block_Codec with SPARK_Mode is
       R (0 .. L - 1) := Cur (0 .. L - 1);
    end Tier_Residuals;
 
+   --  The smallest distance P, at most the length of History, at which the first 32 samples of X repeat the
+   --  samples P before them, counting back into History, or zero.
+   function Find_Back (X, History : Sample_Array) return Natural with SPARK_Mode => Off is
+      function Before (K : Integer) return Long_Long_Integer is
+        (if K >= 0 then X (X'First + K) else History (History'Last + 1 + K));
+   begin
+      if X'Length >= Match_Length then
+         for P in 1 .. History'Length loop
+            if (for all J in 0 .. Match_Length - 1 => Before (J - P) = X (X'First + J)) then
+               return P;
+            end if;
+         end loop;
+      end if;
+      return 0;
+   end Find_Back;
+
+   --  Residuals from the sample Back before each one, the samples of History scaled down by the shift.
+   procedure Back_Residuals (Y : Sample_Buffer; History : Sample_Array; Back, Shift : Natural; R : out Sample_Buffer)
+     with SPARK_Mode => Off
+   is
+   begin
+      for I in Y'Range loop
+         R (I) := Y (I) - (if I >= Back then Y (I - Back) else Floor_Shift (History (History'Last + 1 + I - Back), Shift));
+      end loop;
+   end Back_Residuals;
+
    procedure Residuals (Y : Sample_Buffer; Predictor, Delay_Length : Natural; R : out Sample_Buffer)
      with SPARK_Mode => Off
    is
@@ -548,7 +574,7 @@ package body Block_Codec with SPARK_Mode is
       end loop;
    end Best_Lpc;
 
-   procedure Encode (X : Sample_Array; Depth : Sample_Bits; Output : in out Byte_Array; Bytes : out Natural)
+   procedure Encode (X, History : Sample_Array; Depth : Sample_Bits; Output : in out Byte_Array; Bytes : out Natural)
      with SPARK_Mode => Off
    is
       N : constant Natural := X'Length;
@@ -563,6 +589,8 @@ package body Block_Codec with SPARK_Mode is
             Common : Unsigned_64 := 0;
             Shift : Natural := 0;
             Delay_Length : Natural;
+            Back : constant Natural := Find_Back (X, History);
+            From_History : Boolean := False;
             Best_Bits, Lpc_Bits : Unsigned_64 := Unsigned_64'Last;
             Best_Predictor, Best_Coder, Best_K : Natural := 0;
             Lpc : Lpc_Choice;
@@ -581,7 +609,7 @@ package body Block_Codec with SPARK_Mode is
                if Predictor /= Delay_Predictor or else Delay_Length > 0 then
                   Residuals (Y, Predictor, Delay_Length, R);
                   declare
-                     Header : constant Unsigned_64 := (if Predictor = Delay_Predictor then 22 else 10);
+                     Header : constant Unsigned_64 := (if Predictor = Delay_Predictor then 23 else 10);
                      K : Natural;
                      Rice, Run : Unsigned_64;
                   begin
@@ -601,6 +629,29 @@ package body Block_Codec with SPARK_Mode is
                   end;
                end if;
             end loop;
+            if Back > 0 then
+               Back_Residuals (Y, History, Back, Shift, R);
+               declare
+                  K : Natural;
+                  Rice, Run : Unsigned_64;
+               begin
+                  Rice_Cost (R, K, Rice);
+                  Run := Run_Cost (R);
+                  if 26 + 6 + Rice < Best_Bits then
+                     Best_Bits := 26 + 6 + Rice;
+                     Best_Predictor := Delay_Predictor;
+                     Best_Coder := 0;
+                     Best_K := K;
+                     From_History := True;
+                  end if;
+                  if 26 + Run < Best_Bits then
+                     Best_Bits := 26 + Run;
+                     Best_Predictor := Delay_Predictor;
+                     Best_Coder := 1;
+                     From_History := True;
+                  end if;
+               end;
+            end if;
             Best_Lpc (Y, Depth - Shift, Lpc_Bits, Lpc);
             Put (Output, Pos, 1, 1);
             Put (Output, Pos, Unsigned_64 (Shift), 5);
@@ -628,10 +679,19 @@ package body Block_Codec with SPARK_Mode is
             else
                Put (Output, Pos, Unsigned_64 (Best_Predictor), 3);
                if Best_Predictor = Delay_Predictor then
-                  Put (Output, Pos, Unsigned_64 (Delay_Length), 12);
+                  Put (Output, Pos, Boolean'Pos (From_History), 1);
+                  if From_History then
+                     Put (Output, Pos, Unsigned_64 (Back), 15);
+                  else
+                     Put (Output, Pos, Unsigned_64 (Delay_Length), 12);
+                  end if;
                end if;
                Put (Output, Pos, Unsigned_64 (Best_Coder), 1);
-               Residuals (Y, Best_Predictor, Delay_Length, R);
+               if From_History then
+                  Back_Residuals (Y, History, Back, Shift, R);
+               else
+                  Residuals (Y, Best_Predictor, Delay_Length, R);
+               end if;
                if Best_Coder = 0 then
                   Put_Rice (R, Best_K, Output, Pos);
                else
@@ -937,13 +997,15 @@ package body Block_Codec with SPARK_Mode is
       end;
    end Decode_Lpc;
 
-   procedure Decode (Input : Byte_Array; Depth : Sample_Bits; X : out Sample_Array; Used : out Natural; Status : out Status_Type) is
+   procedure Decode (Input : Byte_Array; History : Sample_Array; Depth : Sample_Bits; X : out Sample_Array; Used : out Natural;
+                     Status : out Status_Type) is
       N : constant Natural := X'Length;
       Total : constant Natural := Input'Length * 8;
       Pos : Natural := 0;
       Field : Unsigned_64;
       Shift, Predictor : Natural;
       Delay_Length : Natural := 0;
+      From_History : Boolean := False;
       Width : Width_Bits;
       R : Residual_Buffer (0 .. N - 1) := [others => 0];
       Y, Next : Sample_Buffer (0 .. N - 1) := [others => 0];
@@ -978,12 +1040,17 @@ package body Block_Codec with SPARK_Mode is
       end if;
       Width := Depth - Shift;
       if Predictor = Delay_Predictor then
-         if Total - Pos < 12 then
+         if Total - Pos < 1 then
             return;
          end if;
-         Get (Input, Pos, Field, 12);
+         Get (Input, Pos, Field, 1);
+         From_History := Field = 1;
+         if Total - Pos < (if From_History then 15 else 12) then
+            return;
+         end if;
+         Get (Input, Pos, Field, (if From_History then 15 else 12));
          Delay_Length := Natural (Field);
-         if Delay_Length = 0 or else Delay_Length >= N then
+         if Delay_Length = 0 or else (if From_History then Delay_Length > History'Length else Delay_Length >= N) then
             Status := Bad_Data;
             return;
          end if;
@@ -1062,8 +1129,11 @@ package body Block_Codec with SPARK_Mode is
          for I in 0 .. N - 1 loop
             declare
                V : constant Long_Long_Integer :=
-                 R (I) + (if Predictor = Delay_Predictor then (if I = 0 then 0 elsif I < Delay_Length then Y (I - 1) else Y (I - Delay_Length))
-                          else Fixed_Prediction (Y, I, Natural'Min (Predictor, I)));
+                 R (I) + (if Predictor /= Delay_Predictor then Fixed_Prediction (Y, I, Natural'Min (Predictor, I))
+                          elsif I >= Delay_Length then Y (I - Delay_Length)
+                          elsif From_History then Floor_Shift (History (History'Last - (Delay_Length - 1 - I)), Shift)
+                          elsif I = 0 then 0
+                          else Y (I - 1));
             begin
                if not In_Range (V, Width) then
                   return;

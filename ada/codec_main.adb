@@ -17,6 +17,7 @@ procedure Codec_Main is
    package Real_Text is new Float_IO (Long_Float);
 
    type Byte_Array_Access is access Byte_Array;
+   type Sample_Array_Access is access Sample_Array;
 
    --  Float bit patterns from the order-keeping integers of Wav_Files, and back.
    function Bits_Of (V : Long_Long_Integer) return Long_Long_Integer is (if V >= 0 then V else 2**31 - 1 - V);
@@ -160,7 +161,9 @@ begin
                Last : constant Natural := Natural'Min (First + Max_Block, Frames) - 1;
                Bytes : Natural;
             begin
-               Encode (Sample_Array (Input.Samples (C) (First .. Last)), Depth, Stream (Length .. Length + Bound (Max_Block) - 1), Bytes);
+               Encode (Sample_Array (Input.Samples (C) (First .. Last)),
+                       Sample_Array (Input.Samples (C) (Natural'Max (0, First - Max_History) .. First - 1)), Depth,
+                       Stream (Length .. Length + Bound (Max_Block) - 1), Bytes);
                Sizes ((C - 1) * Blocks + B) := Bytes;
                declare
                   Kind_Pos : Natural := Length * 8;
@@ -174,7 +177,8 @@ begin
                      Get (Stream.all, Kind_Pos, Field, 3);
                      Kinds (1 + Natural (Field)) := Kinds (1 + Natural (Field)) + 1;
                      if Field = 5 then
-                        Get (Stream.all, Kind_Pos, Field, 12);
+                        Get (Stream.all, Kind_Pos, Field, 1);
+                        Get (Stream.all, Kind_Pos, Field, (if Field = 1 then 15 else 12));
                      elsif Field = 7 then
                         declare
                            Order, Precision, K, Bit : Unsigned_64;
@@ -207,7 +211,7 @@ begin
 
       declare
          Offset : Natural := Header;
-         Out_Block : Sample_Array (0 .. Max_Block - 1);
+         Decoded : constant Sample_Array_Access := new Sample_Array (0 .. Frames - 1);
          Status : Status_Type;
          Used : Natural;
       begin
@@ -218,12 +222,13 @@ begin
                   Count : constant Natural := Natural'Min (First + Max_Block, Frames) - First;
                   Size : constant Natural := Sizes ((C - 1) * Blocks + B);
                begin
-                  Decode (Stream (Offset .. Offset + Size - 1), Depth, Out_Block (0 .. Count - 1), Used, Status);
+                  Decode (Stream (Offset .. Offset + Size - 1), Decoded (Natural'Max (0, First - Max_History) .. First - 1), Depth,
+                          Decoded (First .. First + Count - 1), Used, Status);
                   Same := Same and then Used = Size;
                   for K in 0 .. Count - 1 loop
                      declare
                         V : constant Long_Long_Integer :=
-                          (if Mode (C) = 1 then From_Integer (Out_Block (K), Scale (C)) else Out_Block (K));
+                          (if Mode (C) = 1 then From_Integer (Decoded (First + K), Scale (C)) else Decoded (First + K));
                         Original : constant Long_Long_Integer :=
                           (if Mode (C) = 1 then From_Integer (Input.Samples (C) (First + K), Scale (C)) else Input.Samples (C) (First + K));
                      begin

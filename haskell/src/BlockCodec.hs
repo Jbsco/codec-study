@@ -1,9 +1,9 @@
 -- | The block codec of ada/block_codec.adb written again in Haskell, byte for byte the same format. A block
 -- holds a constant, or the residuals of one predictor after the low bits every sample shares are removed:
--- polynomial orders 0 to 4, the distance back to an exact repeat, tiers of pairs, or linear prediction of order
--- 1 to 32 with quantized coefficients. The residuals take Rice codes or run-length Huffman codes, and the
--- encoder writes whichever combination is shortest.
-module BlockCodec (maxBlock, bound, encodeBlock, decodeBlock) where
+-- polynomial orders 0 to 4, the distance back to an exact repeat within the block or in the samples before it,
+-- tiers of pairs, or linear prediction of order 1 to 32 with quantized coefficients. The residuals take Rice
+-- codes or run-length Huffman codes, and the encoder writes whichever combination is shortest.
+module BlockCodec (maxBlock, maxHistory, bound, encodeBlock, decodeBlock, usesHistory) where
 
 import Control.Monad (foldM, forM_, when)
 import Control.Monad.ST (ST, runST)
@@ -17,8 +17,9 @@ import Data.Word (Word32, Word64, Word8)
 
 import Bits
 
-maxBlock :: Int
+maxBlock, maxHistory :: Int
 maxBlock = 4096
+maxHistory = 16384
 
 -- | The most bytes a block of N samples takes.
 bound :: Int -> Int
@@ -30,6 +31,11 @@ tierPredictor = 6
 lpcPredictor = 7
 maxOrder = 32
 rampOrder = 2
+
+-- | The encoder's number for the delay that reaches before the block; the format writes it as the delay
+-- predictor with its history flag set.
+backDelay :: Int
+backDelay = 8
 sixteenZeros = 15 * 64
 matchLength = 32
 symbolCount = 1024
@@ -83,6 +89,26 @@ findDelay :: U.Vector Int -> Int
 findDelay y = case [p | p <- [1 .. U.length y - matchLength], all (\j -> U.unsafeIndex y (p + j) == U.unsafeIndex y j) [0 .. matchLength - 1]] of
   (p : _) -> p
   [] -> 0
+
+-- | The smallest distance, at most the length of the history, at which the first 32 samples repeat the samples
+-- that far before them, counting back into the history, or zero.
+findBack :: U.Vector Int -> U.Vector Int -> Int
+findBack history x
+  | U.length x < matchLength = 0
+  | otherwise = case [p | p <- [1 .. lh], all (\j -> before (j - p) == U.unsafeIndex x j) [0 .. matchLength - 1]] of
+      (p : _) -> p
+      [] -> 0
+  where
+    lh = U.length history
+    before k = if k >= 0 then U.unsafeIndex x k else U.unsafeIndex history (lh + k)
+
+-- | Residuals from the sample the given distance before each one, history samples scaled down by the shift.
+backResiduals :: Int -> Int -> U.Vector Int -> U.Vector Int -> U.Vector Int
+backResiduals back zeros history y = U.imap (\i v -> v - reference i) y
+  where
+    reference i
+      | i >= back = U.unsafeIndex y (i - back)
+      | otherwise = U.unsafeIndex history (U.length history + i - back) `shiftR` zeros
 
 -- | The Rice parameter of least cost, the smallest of equals, walked from the bit length of the mean code value.
 riceCost :: U.Vector Int -> (Int, Word64)
@@ -329,8 +355,9 @@ putLpc buf w0 l = do
   w7 <- put buf w6 (if lRice l then 0 else 1) 1
   if lRice l then putRice buf w7 (lK l) (lR l) else putRun buf w7 (lR l)
 
-encodeBlock :: Int -> U.Vector Int -> S.Vector Word8
-encodeBlock depth x = runST $ do
+-- | Code one block, given the samples just before it, the latest last.
+encodeBlock :: Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8
+encodeBlock depth history x = runST $ do
   buf <- SM.new (bound (U.length x))
   w <- if U.all (== U.head x) x
     then put buf start 0 1 >>= \w1 -> putLong buf w1 (fromIntegral (U.head x)) depth
@@ -340,10 +367,12 @@ encodeBlock depth x = runST $ do
       case lpc of
         Just (lpcBits, l) | lpcBits < bestBits -> putLpc buf w2 l
         _ -> do
-          w3 <- put buf w2 (fromIntegral bestPredictor) 3
-          w4 <- if bestPredictor == delayPredictor then put buf w3 (fromIntegral delay) 12 else pure w3
+          w3 <- put buf w2 (fromIntegral (if bestPredictor == backDelay then delayPredictor else bestPredictor)) 3
+          w4 <- if bestPredictor == delayPredictor then put buf w3 0 1 >>= \w' -> put buf w' (fromIntegral delay) 12
+                else if bestPredictor == backDelay then put buf w3 1 1 >>= \w' -> put buf w' (fromIntegral back) 15
+                else pure w3
           w5 <- put buf w4 (if bestRice then 0 else 1) 1
-          let r = residuals bestPredictor delay y
+          let r = candidateResiduals bestPredictor
           if bestRice then putRice buf w5 bestK r else putRun buf w5 r
   bytes <- finish buf w
   S.force . S.take bytes <$> S.unsafeFreeze buf
@@ -353,11 +382,13 @@ encodeBlock depth x = runST $ do
     lowZeros = countTrailingZeros common
     y = U.map (`unsafeShiftR` lowZeros) x
     delay = findDelay y
+    back = findBack history x
+    candidateResiduals p = if p == backDelay then backResiduals back lowZeros history y else residuals p delay y
     candidates =
       [ (bits, p, rice, k)
-      | p <- [0 .. tierPredictor], p /= delayPredictor || delay > 0
-      , let r = residuals p delay y
-            header = if p == delayPredictor then 22 else 10
+      | p <- [0 .. tierPredictor] ++ [backDelay | back > 0], p /= delayPredictor || delay > 0
+      , let r = candidateResiduals p
+            header = if p == delayPredictor then 23 else if p == backDelay then 26 else 10
             (k, riceBits) = riceCost r
       , (bits, rice) <- [(header + 6 + riceBits, True), (header + runCost r, False)]
       ]
@@ -432,14 +463,19 @@ getRunR v p0 n = runST $ do
           l = fromIntegral (getBits v (p + 2 * z + 1) 5)
       in readEntries (k - 1) (p + 2 * z + 6) s ((s, l) : acc)
 
-rebuild :: Int -> Int -> U.Vector Int -> U.Vector Int
-rebuild predictor delay r
+-- | Samples from residuals; for a delay that reaches before the block, Before gives the scaled sample at a
+-- negative position.
+rebuild :: Int -> Int -> Maybe (Int -> Int) -> U.Vector Int -> U.Vector Int
+rebuild predictor delay before r
   | predictor == tierPredictor = untier r
   | otherwise = U.create $ do
       y <- UM.new n
       forM_ [0 .. n - 1] $ \i -> do
         p <- if predictor == delayPredictor
-          then if i == 0 then pure 0 else UM.unsafeRead y (if i >= delay then i - delay else i - 1)
+          then if i >= delay then UM.unsafeRead y (i - delay)
+               else case before of
+                 Just h -> pure (h (i - delay))
+                 Nothing -> if i == 0 then pure 0 else UM.unsafeRead y (i - 1)
           else do
             let k = min predictor i
             s1 <- if k >= 1 then UM.unsafeRead y (i - 1) else pure 0
@@ -493,15 +529,27 @@ decodeLpc v p0 n = U.create $ do
     (warm, pc) = getRiceR v (p0 + 14 + order * precision) order
     r = fst ((if getBits v pc 1 == 0 then getRiceR else getRunR) v (pc + 1) (n - order))
 
-decodeBlock :: Int -> Int -> S.Vector Word8 -> U.Vector Int
-decodeBlock depth n v
+-- | Whether a coded block repeats samples from before it, and so needs them to decode.
+usesHistory :: S.Vector Word8 -> Bool
+usesHistory v = getBits v 0 1 == 1 && getBits v 6 3 == fromIntegral delayPredictor && getBits v 9 1 == 1
+
+-- | Decode N samples of one block, given the decoded samples just before it, the latest last.
+decodeBlock :: Int -> U.Vector Int -> Int -> S.Vector Word8 -> U.Vector Int
+decodeBlock depth history n v
   | getBits v 0 1 == 0 =
       let u = fromIntegral (getLong v 1 depth) :: Int
       in U.replicate n (if u >= bit (depth - 1) then u - bit depth else u)
   | predictor == lpcPredictor = U.map (`unsafeShiftL` lowZeros) (decodeLpc v 9 n)
-  | otherwise = U.map (`unsafeShiftL` lowZeros) (rebuild predictor delay r)
+  | otherwise = U.map (`unsafeShiftL` lowZeros) (rebuild predictor delay before r)
   where
     lowZeros = fromIntegral (getBits v 1 5)
     predictor = fromIntegral (getBits v 6 3)
-    (delay, p0) = if predictor == delayPredictor then (fromIntegral (getBits v 9 12), 21) else (0, 9)
+    fromHistory = predictor == delayPredictor && getBits v 9 1 == 1
+    (delay, p0)
+      | predictor /= delayPredictor = (0, 9)
+      | fromHistory = (fromIntegral (getBits v 10 15), 25)
+      | otherwise = (fromIntegral (getBits v 10 12), 22)
+    before
+      | fromHistory = Just (\k -> U.unsafeIndex history (U.length history + k) `shiftR` lowZeros)
+      | otherwise = Nothing
     r = fst ((if getBits v p0 1 == 0 then getRiceR else getRunR) v (p0 + 1) n)
