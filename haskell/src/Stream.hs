@@ -1,11 +1,14 @@
 -- | The stream of the block codec, as ada/codec_main.adb writes it: frames in 32 bits; channels, depth and a
--- float flag in 8 bits each; for float input a mode and a scale per channel; for two channels a 2-bit stereo mode
--- per group of 4096 frames; a 32-bit byte length for every block; then the blocks, group by group. A pair of
--- channels in the same float mode codes each group as left and right, left and side, side and right, or mid and
--- side, whichever is shortest. Groups encode in parallel with any block coder of the same format. Blocks that
--- need no samples from before them decode in parallel; then the groups decode the rest in order.
+-- float flag in 8 bits each; for float input a mode and a scale per channel; the index; a 16-bit byte length for
+-- every block; then the blocks, leaf by leaf and channel by channel. The index holds, for each group of 4096
+-- frames, its split tree in pre-order down to blocks of 512 frames: a split bit on every node that has its own
+-- second half, and a 2-bit stereo mode on every leaf of a two-channel stream, padded to a byte at the end. A pair
+-- of channels in the same float mode codes each leaf as left and right, left and side, side and right, or mid
+-- and side, whichever is shortest. Groups encode in parallel with any block coder of the same format. Blocks
+-- that need no samples from before them decode in parallel; then the leaves decode the rest in order.
 module Stream (Prepared (..), prepare, encodeStream, decodeStream) where
 
+import Control.DeepSeq (NFData (..))
 import Data.Bits
 import qualified Data.Vector as V
 import qualified Data.Vector.Storable as S
@@ -79,8 +82,41 @@ unpair m [a, b] = case m of
   _ -> [U.zipWith (\x y -> (2 * x + y .&. 1 + y) `shiftR` 1) a b, U.zipWith (\x y -> (2 * x + y .&. 1 - y) `shiftR` 1) a b]
 unpair _ signals = signals
 
+-- | The deepest level of a group's split tree: blocks of 4096, 2048, 1024 and 512 frames.
+top :: Int
+top = 3
+
+-- | A group's split tree: a leaf with its stereo mode and blocks, two halves, or a node that is its first half.
+data Node = Leaf !Int [S.Vector Word8] | Split Node Node | Same Node
+
+instance NFData Node where
+  rnf (Leaf m bs) = rnf m `seq` rnf bs
+  rnf (Split a b) = rnf a `seq` rnf b
+  rnf (Same a) = rnf a
+
+-- | A node is whole when it is a smallest block or its second half starts before the last frame.
+whole :: Int -> Int -> Int -> Bool
+whole n first level = level == top || first + maxBlock `shiftR` (level + 1) < n
+
+word16 :: Int -> S.Vector Word8
+word16 x = S.fromList [fromIntegral (x `shiftR` 8), fromIntegral x]
+
+readWord16 :: S.Vector Word8 -> Int -> Int
+readWord16 v i = fromIntegral (S.unsafeIndex v i) `shiftL` 8 .|. fromIntegral (S.unsafeIndex v (i + 1))
+
+-- | Fields of up to a few bits, most significant first, padded to a byte.
+packBits :: [(Int, Int)] -> S.Vector Word8
+packBits = S.fromList . go 0 0
+  where
+    go :: Int -> Int -> [(Int, Int)] -> [Word8]
+    go acc k [] = [fromIntegral (acc `shiftL` (8 - k)) | k > 0]
+    go acc k ((x, w) : rest) = emit (acc `shiftL` w .|. x) (k + w) rest
+    emit acc k rest
+      | k >= 8 = fromIntegral (acc `shiftR` (k - 8)) : emit (acc .&. (bit (k - 8) - 1)) (k - 8) rest
+      | otherwise = go acc k rest
+
 encodeStream :: (Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8) -> Prepared -> S.Vector Word8
-encodeStream enc p = S.concat ([header, modeBytes] ++ map (word32 . S.length) chosen ++ chosen)
+encodeStream enc p = S.concat ([header, packBits (concatMap (flags 0) trees)] ++ map (word16 . S.length) chosen ++ chosen)
   where
     n = pFrames p
     width = if pFloat p then 32 else pDepth p
@@ -91,16 +127,30 @@ encodeStream enc p = S.concat ([header, modeBytes] ++ map (word32 . S.length) ch
     signals = [(c, width) | c <- chans] ++ case chans of
       [l, r] | coupled -> [(mid l r, width), (side l r, width + 1)]
       _ -> []
-    coded = parMapNF (\s -> [enc d (U.slice (max 0 (s - maxHistory)) (min s maxHistory) c) (U.slice s (min maxBlock (n - s)) c) | (c, d) <- signals])
-              [0, maxBlock .. n - 1]
-    cost bs m = sum [S.length (bs !! (k - 1)) | k <- modeSignals !! m]
-    choice bs = if coupled then foldl (\best m -> if cost bs m < cost bs best then m else best) 0 [1 .. 3] else 0
-    modes = map choice coded
-    chosen = concat [if pair then [bs !! (k - 1) | k <- modeSignals !! m] else bs | (bs, m) <- zip coded modes]
-    modeBytes = if pair then S.fromList (map pack (quads modes)) else S.empty
-    pack q = fromIntegral (foldl (\a m -> a `shiftL` 2 .|. m) 0 (take 4 (q ++ repeat 0)))
-    quads [] = []
-    quads xs = take 4 xs : quads (drop 4 xs)
+    trees = parMapNF (\g -> snd (tree (g * maxBlock) 0)) [0 .. (n + maxBlock - 1) `quot` maxBlock - 1]
+    tree first level
+      | not (whole n first level) = let (c, t) = tree first (level + 1) in (c, Same t)
+      | level == top = (leafCost, leaf)
+      | apart < 1 + leafCost = (apart, Split l r)
+      | otherwise = (1 + leafCost, leaf)
+      where
+        size = maxBlock `shiftR` level
+        blocks = [enc d (U.slice (max 0 (first - maxHistory)) (min first maxHistory) c) (U.slice first (min size (n - first)) c) | (c, d) <- signals]
+        cost m = sum [S.length (blocks !! (k - 1)) | k <- modeSignals !! m]
+        m0 = if coupled then foldl (\best m -> if cost m < cost best then m else best) 0 [1 .. 3] else 0
+        picked = if pair then [blocks !! (k - 1) | k <- modeSignals !! m0] else blocks
+        leafCost = 16 * nch + (if pair then 2 else 0) + 8 * sum (map S.length picked)
+        leaf = Leaf m0 picked
+        (lc, l) = tree first (level + 1)
+        (rc, r) = tree (first + size `shiftR` 1) (level + 1)
+        apart = 1 + lc + rc
+    flags level (Same t) = flags (level + 1) t
+    flags level (Split a b) = (1, 1) : flags (level + 1) a ++ flags (level + 1) b
+    flags level (Leaf m _) = [(0, 1) | level < top] ++ [(m, 2) | pair]
+    leaves (Same t) = leaves t
+    leaves (Split a b) = leaves a ++ leaves b
+    leaves (Leaf _ bs) = bs
+    chosen = concatMap leaves trees
     header = S.concat
       [ word32 n
       , S.fromList ([fromIntegral nch, fromIntegral (pDepth p), if pFloat p then 1 else 0]
@@ -115,26 +165,42 @@ decodeStream dec v = map (U.concat . reverse) (go 0 (replicate nch []))
     float = S.unsafeIndex v 6 == 1
     width = if float then 32 else fromIntegral (S.unsafeIndex v 5)
     pair = nch == 2
-    modesAt = 7 + (if float then 2 * nch else 0)
-    lengths = V.fromList [min maxBlock (n - s) | s <- [0, maxBlock .. n - 1]]
-    groups = V.length lengths
-    sizesAt = modesAt + (if pair then (2 * groups + 7) `quot` 8 else 0)
-    sizes = [readWord32 v (sizesAt + 4 * i) | i <- [0 .. nch * groups - 1]]
-    offsets = scanl (+) (sizesAt + 4 * nch * groups) sizes
+    groups = (n + maxBlock - 1) `quot` maxBlock
+    walk first level pos
+      | not (whole n first level) = walk first (level + 1) pos
+      | level < top && getBits v pos 1 == 1 =
+          let (a, p1) = walk first (level + 1) (pos + 1)
+              (b, p2) = walk (first + maxBlock `shiftR` (level + 1)) (level + 1) p1
+          in (a ++ b, p2)
+      | otherwise =
+          let p0 = if level < top then pos + 1 else pos
+              (m, p1) = if pair then (fromIntegral (getBits v p0 2), p0 + 2) else (0, p0)
+          in ([(first, min (maxBlock `shiftR` level) (n - first), m)], p1)
+    walkGroups g pos
+      | g == groups = ([], pos)
+      | otherwise = let (ls, p) = walk (g * maxBlock) 0 pos
+                        (rest, q) = walkGroups (g + 1) p
+                    in (ls ++ rest, q)
+    (leafList, indexEnd) = walkGroups 0 (8 * (7 + (if float then 2 * nch else 0)))
+    leafV = V.fromList leafList
+    count = V.length leafV
+    sizesAt = (indexEnd + 7) `quot` 8
+    sizes = [readWord16 v (sizesAt + 2 * i) | i <- [0 .. nch * count - 1]]
+    offsets = scanl (+) (sizesAt + 2 * nch * count) sizes
     blocks = V.fromList (zipWith (\o l -> S.slice o l v) offsets sizes)
-    modeOf g = if pair then fromIntegral (getBits v (8 * modesAt + 2 * g) 2) else 0
+    lengthOf i = let (_, c, _) = leafV V.! (i `quot` nch) in c
+    modeOf leaf = let (_, _, m) = leafV V.! leaf in m
     signalOf i = if pair then modeSignals !! modeOf (i `quot` 2) !! (i `rem` 2) else i `rem` nch + 1
     depthOf i = if pair && signalOf i == 4 then width + 1 else width
-    alone = V.fromList (parMapNF (\i -> if usesHistory (blocks V.! i) then Nothing
-                                        else Just (dec (depthOf i) U.empty (lengths V.! (i `quot` nch)) (blocks V.! i)))
-                                 [0 .. nch * groups - 1])
-    go g outs
-      | g == groups = outs
+    alone = V.fromList (parMapNF (\i -> if usesHistory (blocks V.! i) then Nothing else Just (dec (depthOf i) U.empty (lengthOf i) (blocks V.! i)))
+                                 [0 .. nch * count - 1])
+    go leaf outs
+      | leaf == count = outs
       | otherwise =
-          let got = [fromMaybe (dec (depthOf i) (recent (signalOf i) outs) (lengths V.! g) (blocks V.! i)) (alone V.! i)
-                    | c <- [0 .. nch - 1], let i = g * nch + c]
-              new = if pair then unpair (modeOf g) got else got
-          in foldr seq () new `seq` go (g + 1) (zipWith (:) new outs)
+          let got = [fromMaybe (dec (depthOf i) (recent (signalOf i) outs) (lengthOf i) (blocks V.! i)) (alone V.! i)
+                    | c <- [0 .. nch - 1], let i = leaf * nch + c]
+              new = if pair then unpair (modeOf leaf) got else got
+          in foldr seq () new `seq` go (leaf + 1) (zipWith (:) new outs)
     recent k outs = case outs of
       [l, r] | pair && k == 3 -> mid (latest l) (latest r)
              | pair && k == 4 -> side (latest l) (latest r)

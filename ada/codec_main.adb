@@ -160,6 +160,9 @@ procedure Codec_Main is
    Mode_Signals : constant array (0 .. 3, 1 .. 2) of Positive := [[1, 2], [1, 4], [4, 2], [3, 4]];
    Mode_Names : constant array (0 .. 3) of String (1 .. 10) := ["left/right", "left/side ", "side/right", "mid/side  "];
 
+   --  Each group of 4096 frames splits into blocks of 4096, 2048, 1024 or 512 frames.
+   Top : constant := 3;
+
    Input : Wav_Files.Audio;
 begin
    Wav_Files.Read (Ada.Command_Line.Argument (1), 3600, Input);
@@ -171,11 +174,13 @@ begin
       Pair : constant Boolean := Channels = 2;
       Mode : array (1 .. Channels) of Natural := [others => 0];
       Scale : array (1 .. Channels) of Natural := [others => 0];
-      Mode_At : constant Natural := 7 + (if Input.Is_Float then 2 * Channels else 0);
-      Header : constant Natural := Mode_At + (if Pair then (2 * Groups + 7) / 8 else 0) + 4 * Channels * Groups;
-      Stream : constant Byte_Array_Access := new Byte_Array (0 .. Header + Channels * Groups * Bound (Max_Block));
-      Length : Natural := Header;
-      Sizes : array (0 .. Channels * Groups - 1) of Natural;
+      Index_At : constant Natural := 7 + (if Input.Is_Float then 2 * Channels else 0);
+      Most_Blocks : constant Natural := Channels * Groups * 2**Top;
+      Index : constant Byte_Array_Access := new Byte_Array (0 .. 4 * Groups + 8);
+      Data : constant Byte_Array_Access := new Byte_Array (0 .. Channels * Groups * (Bound (Max_Block) + 16 * 2**Top));
+      Stream : constant Byte_Array_Access := new Byte_Array (0 .. Index_At + Index'Length + 2 * Most_Blocks + Data'Length);
+      Sizes : array (0 .. Most_Blocks - 1) of Natural := [others => 0];
+      Blocks, Index_Pos, Data_Length, Length : Natural := 0;
       Pos : Natural := 0;
       Start : constant Ada.Real_Time.Time := Ada.Real_Time.Clock;
       Encoded : Ada.Real_Time.Time;
@@ -183,10 +188,15 @@ begin
       Hash : Unsigned_64 := 14695981039346656037;
       Kinds : Kind_Counts := [others => 0];
       Stereo : array (0 .. 3) of Natural := [others => 0];
+      Leaves : array (0 .. Top) of Natural := [others => 0];
       Signal : array (1 .. Channels + 2) of Sample_Array_Access;
       Signal_Depth : array (1 .. Channels + 2) of Sample_Bits := [others => Depth];
-      Trial : array (1 .. Channels + 2) of Byte_Array_Access;
+      Trial : array (0 .. Top, 0 .. 2**Top - 1, 1 .. Channels + 2) of Byte_Array_Access;
       Coupled : Boolean;
+
+      --  A node of a group's split tree is whole when it is a smallest block or its second half starts before the
+      --  last frame; otherwise it is the same as its first half and carries no split bit.
+      function Whole (First, Level : Natural) return Boolean is (Level = Top or else First + Max_Block / 2**(Level + 1) < Frames);
    begin
       if Input.Is_Float then
          for C in 1 .. Channels loop
@@ -211,8 +221,12 @@ begin
          end loop;
          Signal_Depth (4) := Depth + 1;
       end if;
-      for S in Trial'Range loop
-         Trial (S) := new Byte_Array (0 .. Bound (Max_Block) - 1);
+      for L in 0 .. Top loop
+         for J in 0 .. 2**Top - 1 loop
+            for S in 1 .. Channels + 2 loop
+               Trial (L, J, S) := new Byte_Array (0 .. Bound (Max_Block / 2**L) - 1);
+            end loop;
+         end loop;
       end loop;
       Put (Stream.all, Pos, Unsigned_64 (Frames), 32);
       Put (Stream.all, Pos, Unsigned_64 (Channels), 8);
@@ -224,95 +238,181 @@ begin
             Put (Stream.all, Pos, Unsigned_64 (Scale (C)), 8);
          end loop;
       end if;
+
+      --  Code every node of each group's tree, keep the cheaper of each node and its halves, then write the leaves.
       for G in 0 .. Groups - 1 loop
          declare
-            First : constant Natural := G * Max_Block;
-            Last : constant Natural := Natural'Min (First + Max_Block, Frames) - 1;
-            From : constant Natural := Natural'Max (0, First - Max_History);
-            Bytes : array (1 .. Channels + 2) of Natural := [others => 0];
-            Choice : Natural := 0;
-            Mode_Pos : Natural := Mode_At * 8 + 2 * G;
+            Bytes : array (0 .. Top, 0 .. 2**Top - 1, 1 .. Channels + 2) of Natural := [others => [others => [others => 0]]];
+            Choice, Cost : array (0 .. Top, 0 .. 2**Top - 1) of Natural := [others => [others => 0]];
+            Split : array (0 .. Top, 0 .. 2**Top - 1) of Boolean := [others => [others => False]];
+
+            function First_Of (L, J : Natural) return Natural is (G * Max_Block + J * (Max_Block / 2**L));
+
+            procedure Emit (L, J : Natural) is
+            begin
+               if not Whole (First_Of (L, J), L) then
+                  Emit (L + 1, 2 * J);
+                  return;
+               end if;
+               if L < Top then
+                  Put (Index.all, Index_Pos, Boolean'Pos (Split (L, J)), 1);
+                  if Split (L, J) then
+                     Emit (L + 1, 2 * J);
+                     Emit (L + 1, 2 * J + 1);
+                     return;
+                  end if;
+               end if;
+               if Pair then
+                  Put (Index.all, Index_Pos, Unsigned_64 (Choice (L, J)), 2);
+                  Stereo (Choice (L, J)) := Stereo (Choice (L, J)) + 1;
+               end if;
+               Leaves (L) := Leaves (L) + 1;
+               for C in 1 .. Channels loop
+                  declare
+                     S : constant Positive := (if Pair then Mode_Signals (Choice (L, J), C) else C);
+                     B : constant Natural := Bytes (L, J, S);
+                  begin
+                     Data (Data_Length .. Data_Length + B - 1) := Trial (L, J, S) (0 .. B - 1);
+                     Count_Kind (Data.all, Data_Length, Kinds);
+                     Sizes (Blocks) := B;
+                     Blocks := Blocks + 1;
+                     Data_Length := Data_Length + B;
+                  end;
+               end loop;
+            end Emit;
          begin
-            for S in 1 .. (if Coupled then 4 else Channels) loop
-               Encode (Signal (S) (First .. Last), Signal (S) (From .. First - 1), Signal_Depth (S), Trial (S).all, Bytes (S));
-            end loop;
-            if Coupled then
-               for M in 1 .. 3 loop
-                  if Bytes (Mode_Signals (M, 1)) + Bytes (Mode_Signals (M, 2))
-                    < Bytes (Mode_Signals (Choice, 1)) + Bytes (Mode_Signals (Choice, 2))
-                  then
-                     Choice := M;
+            for L in 0 .. Top loop
+               for J in 0 .. 2**L - 1 loop
+                  if First_Of (L, J) < Frames and then Whole (First_Of (L, J), L) then
+                     declare
+                        First : constant Natural := First_Of (L, J);
+                        Last : constant Natural := Natural'Min (First + Max_Block / 2**L, Frames) - 1;
+                        From : constant Natural := Natural'Max (0, First - Max_History);
+                     begin
+                        for S in 1 .. (if Coupled then 4 else Channels) loop
+                           Encode (Signal (S) (First .. Last), Signal (S) (From .. First - 1), Signal_Depth (S), Trial (L, J, S).all,
+                                   Bytes (L, J, S));
+                        end loop;
+                        if Coupled then
+                           for M in 1 .. 3 loop
+                              if Bytes (L, J, Mode_Signals (M, 1)) + Bytes (L, J, Mode_Signals (M, 2))
+                                < Bytes (L, J, Mode_Signals (Choice (L, J), 1)) + Bytes (L, J, Mode_Signals (Choice (L, J), 2))
+                              then
+                                 Choice (L, J) := M;
+                              end if;
+                           end loop;
+                        end if;
+                        Cost (L, J) := 16 * Channels + (if Pair then 2 else 0);
+                        for C in 1 .. Channels loop
+                           Cost (L, J) := Cost (L, J) + 8 * Bytes (L, J, (if Pair then Mode_Signals (Choice (L, J), C) else C));
+                        end loop;
+                     end;
                   end if;
                end loop;
-            end if;
-            if Pair then
-               Put (Stream.all, Mode_Pos, Unsigned_64 (Choice), 2);
-               Stereo (Choice) := Stereo (Choice) + 1;
-            end if;
-            for C in 1 .. Channels loop
-               declare
-                  S : constant Positive := (if Pair then Mode_Signals (Choice, C) else C);
-               begin
-                  Stream (Length .. Length + Bytes (S) - 1) := Trial (S) (0 .. Bytes (S) - 1);
-                  Sizes (G * Channels + C - 1) := Bytes (S);
-                  Count_Kind (Stream.all, Length, Kinds);
-                  Length := Length + Bytes (S);
-               end;
             end loop;
+            for L in reverse 0 .. Top - 1 loop
+               for J in 0 .. 2**L - 1 loop
+                  if First_Of (L, J) < Frames then
+                     if not Whole (First_Of (L, J), L) then
+                        Cost (L, J) := Cost (L + 1, 2 * J);
+                     elsif 1 + Cost (L + 1, 2 * J) + Cost (L + 1, 2 * J + 1) < 1 + Cost (L, J) then
+                        Split (L, J) := True;
+                        Cost (L, J) := 1 + Cost (L + 1, 2 * J) + Cost (L + 1, 2 * J + 1);
+                     else
+                        Cost (L, J) := 1 + Cost (L, J);
+                     end if;
+                  end if;
+               end loop;
+            end loop;
+            Emit (0, 0);
          end;
       end loop;
-      Pos := (Mode_At + (if Pair then (2 * Groups + 7) / 8 else 0)) * 8;
-      for I in Sizes'Range loop
-         Put (Stream.all, Pos, Unsigned_64 (Sizes (I)), 32);
+      Put (Index.all, Index_Pos, 0, (8 - Index_Pos mod 8) mod 8);
+      Stream (Index_At .. Index_At + Index_Pos / 8 - 1) := Index (0 .. Index_Pos / 8 - 1);
+      Pos := (Index_At + Index_Pos / 8) * 8;
+      for I in 0 .. Blocks - 1 loop
+         Put (Stream.all, Pos, Unsigned_64 (Sizes (I)), 16);
       end loop;
+      Length := Pos / 8 + Data_Length;
+      Stream (Pos / 8 .. Length - 1) := Data (0 .. Data_Length - 1);
       Encoded := Ada.Real_Time.Clock;
 
+      --  Read the trees back into leaves, then decode the blocks of each leaf in order.
       declare
-         Offset : Natural := Header;
-         Output : array (1 .. Channels) of Sample_Array_Access;
-         Got : array (1 .. Channels) of Sample_Array_Access;
+         Leaf_First, Leaf_Count, Leaf_Mode : array (0 .. Groups * 2**Top - 1) of Natural := [others => 0];
+         Count : Natural := 0;
+         Bit_Pos : Natural := Index_At * 8;
+         Output, Got : array (1 .. Channels) of Sample_Array_Access;
          Derived : constant Sample_Array_Access := new Sample_Array (0 .. Max_History - 1);
          Status : Status_Type;
-         Used : Natural;
+         Used, Offset, Block : Natural;
+
+         procedure Walk (First, L : Natural) is
+            Field : Unsigned_64 := 0;
+         begin
+            if not Whole (First, L) then
+               Walk (First, L + 1);
+               return;
+            end if;
+            if L < Top then
+               Get (Stream.all, Bit_Pos, Field, 1);
+               if Field = 1 then
+                  Walk (First, L + 1);
+                  Walk (First + Max_Block / 2**(L + 1), L + 1);
+                  return;
+               end if;
+            end if;
+            if Pair then
+               Get (Stream.all, Bit_Pos, Field, 2);
+            end if;
+            Leaf_First (Count) := First;
+            Leaf_Count (Count) := Natural'Min (First + Max_Block / 2**L, Frames) - First;
+            Leaf_Mode (Count) := Natural (Field);
+            Count := Count + 1;
+         end Walk;
       begin
+         for G in 0 .. Groups - 1 loop
+            Walk (G * Max_Block, 0);
+         end loop;
+         Pos := (Bit_Pos + 7) / 8 * 8;
+         Offset := Pos / 8 + 2 * Count * Channels;
+         Block := 0;
          for C in 1 .. Channels loop
             Output (C) := new Sample_Array (0 .. Frames - 1);
             Got (C) := new Sample_Array (0 .. Max_Block - 1);
          end loop;
-         for G in 0 .. Groups - 1 loop
+         for Leaf in 0 .. Count - 1 loop
             declare
-               First : constant Natural := G * Max_Block;
-               Count : constant Natural := Natural'Min (First + Max_Block, Frames) - First;
+               First : constant Natural := Leaf_First (Leaf);
+               Size_Of : constant Natural := Leaf_Count (Leaf);
                From : constant Natural := Natural'Max (0, First - Max_History);
-               Mode_Pos : Natural := Mode_At * 8 + 2 * G;
-               Field : Unsigned_64 := 0;
-               Choice : Natural;
+               Choice : constant Natural := Leaf_Mode (Leaf);
             begin
-               if Pair then
-                  Get (Stream.all, Mode_Pos, Field, 2);
-               end if;
-               Choice := Natural (Field);
                for C in 1 .. Channels loop
                   declare
                      S : constant Positive := (if Pair then Mode_Signals (Choice, C) else C);
-                     Size : constant Natural := Sizes (G * Channels + C - 1);
+                     Field : Unsigned_64;
+                     Size : Natural;
                   begin
+                     Get (Stream.all, Pos, Field, 16);
+                     Size := Natural (Field);
                      if S <= Channels then
                         Decode (Stream (Offset .. Offset + Size - 1), Output (S) (From .. First - 1), Signal_Depth (S),
-                                Got (C) (0 .. Count - 1), Used, Status);
+                                Got (C) (0 .. Size_Of - 1), Used, Status);
                      else
                         for I in From .. First - 1 loop
                            Derived (I - From) :=
                              (if S = 3 then Half_Down (Output (1) (I) + Output (2) (I)) else Output (1) (I) - Output (2) (I));
                         end loop;
                         Decode (Stream (Offset .. Offset + Size - 1), Derived (0 .. First - From - 1), Signal_Depth (S),
-                                Got (C) (0 .. Count - 1), Used, Status);
+                                Got (C) (0 .. Size_Of - 1), Used, Status);
                      end if;
                      Same := Same and then Status = Success and then Used = Size;
                      Offset := Offset + Size;
+                     Block := Block + 1;
                   end;
                end loop;
-               for K in 0 .. Count - 1 loop
+               for K in 0 .. Size_Of - 1 loop
                   if Pair then
                      declare
                         A : constant Long_Long_Integer := Got (1) (K);
@@ -334,7 +434,7 @@ begin
                end loop;
             end;
          end loop;
-         Same := Same and then Offset = Length;
+         Same := Same and then Offset = Length and then Block = Blocks;
          for C in 1 .. Channels loop
             for I in 0 .. Frames - 1 loop
                declare
@@ -377,6 +477,8 @@ begin
       Put_Line (", delay" & Kinds (6)'Image & ", tiers" & Kinds (7)'Image & ", LPC" & Kinds (8)'Image & "; Rice" & Kinds (9)'Image
                 & ", run-length" & Kinds (10)'Image
                 & (if Input.Is_Float then "; float as " & (if Mode (1) = 1 then "integers / 2**" & Scale (1)'Image else "ordered bits") else ""));
+      Put_Line ("    frames per block: 4096" & Leaves (0)'Image & ", 2048" & Leaves (1)'Image & ", 1024" & Leaves (2)'Image
+                & ", 512" & Leaves (3)'Image);
       if Pair then
          Put ("    stereo:");
          for M in 0 .. 3 loop
