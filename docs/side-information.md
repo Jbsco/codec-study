@@ -23,6 +23,8 @@ Measured by recoding each stream's fields and counting, without changing the for
 
 Neither was worth a format change on its own. A tier above the blocks that codes the sequence of per-block choices would address the headers, 0.08 percent.
 
+Measured the same way, after level 5: a Rice parameter per partition of 128, 256, 512 or 1024 samples instead of one per block, chosen per block by a 4-bit field, saves 0.10 percent of the residual bits over the corpus. The gain sits in speech, 4.2 percent at 8 kHz and 0.9 percent at 16 kHz, where the residual energy changes within a block; on every generated signal and noise file the repeated parameter costs more than it saves. FLAC's partitioned Rice is this design. It was not built here, because the corpus-wide gain is at the study's threshold and the format change would cost every block its partition field.
+
 ## Beyond audio
 
 The share of side information grows as blocks shrink and as the model per block grows, and it is the first thing to measure before adding model parameters to any format. The measurement itself is cheap: the parser that produced the table above walks each block's header and counts, and the same walk gives the estimate of any proposed recoding without implementing it.
