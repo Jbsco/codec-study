@@ -7,7 +7,7 @@ FAIL=0
 
 echo "== 1/3  Ada warnings"
 if command -v gprbuild >/dev/null 2>&1; then
-    OUT=$(cd ada && gprbuild -f -P huffman_audio.gpr 2>&1 | grep -v "sframe")
+    OUT=$(cd ada && { gprbuild -f -P huffman_audio.gpr; gprbuild -f -P codec_lib.gpr; } 2>&1 | grep -v "sframe")
     N=$(printf '%s\n' "$OUT" | grep -c 'warning:')
     if [ "$N" != "0" ]; then
         echo "  $N warning(s):"

@@ -14,13 +14,15 @@ concurrency:
 
 jobs:
   prove:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     timeout-minutes: 120
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # The hosted-only steps stay, gated, so a job moves back to a hosted runner by its runs-on line alone.
       - name: Cache Alire
+        if: runner.environment == 'github-hosted'
         uses: actions/cache@v4
         with:
           path: |
@@ -31,14 +33,22 @@ jobs:
           restore-keys: alire-prove-${{ runner.os }}-
 
       - name: Install Alire
+        if: runner.environment == 'github-hosted'
         uses: alire-project/setup-alire@v3
         with:
           version: 2.1.1
 
-      - name: Select GNAT toolchain and fetch gnatprove
+      # The toolchain select rewrites the account's default toolchain, so only a hosted runner does it; the
+      # checkout's own dependency fetch runs everywhere.
+      - name: Select GNAT toolchain
+        if: runner.environment == 'github-hosted'
         run: |
           cd ada
           alr -n toolchain --select gnat_native gprbuild
+
+      - name: Fetch gnatprove
+        run: |
+          cd ada
           alr -n update
           alr -n exec -- gnatprove --version
 
