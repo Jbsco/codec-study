@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Merge results/ada.txt, results/haskell.txt and results/compare.tsv into Markdown tables of bits per sample.
+# Merge the results into Markdown tables of bits per sample: a summary per file, then every method per file.
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -11,32 +11,42 @@ rec_speech_16k rec_speech rec_piano rec_piano_96k rec_orchestra rec_orchestra_f3
 
 awk -v order="$order" '
   function trim(s) { sub(/^ +/, "", s); sub(/ +$/, "", s); return s }
+  function remember(key) { if (!(key in seen)) { seen[key] = 1; keys[++nk] = key } }
   function put(key, line, width,    rest) {
     rest = substr(line, 3 + width); split(rest, f, " ")
-    v[file, key] = (index(line, "round trip OK") ? f[1] : "failed")
-    if (!(key in seen)) { seen[key] = 1; keys[++nk] = key }
+    v[file, key] = (index(line, "round trip OK") ? f[1] : "failed"); remember(key)
   }
   FILENAME ~ /compare.tsv$/ {
     split($0, f, "\t"); key = "tool:" f[2]
-    v[f[1], key] = (f[5] == "ok") ? sprintf("%.2f", f[3] * 8 / f[4]) : "n/a"
-    if (!(key in seen)) { seen[key] = 1; keys[++nk] = key }
+    v[f[1], key] = (f[5] == "ok") ? sprintf("%.2f", f[3] * 8 / f[4]) : "n/a"; remember(key)
     next
   }
   /^build\/wav\// { file = $0; sub(/^build\/wav\//, "", file); sub(/\.wav$/, "", file); next }
   /^ [0-9]/ {
-    if (FILENAME ~ /ada.txt$/) {
+    if (FILENAME ~ /\/ada.txt$/) {
       fmt[file] = ($0 ~ /float/) ? "f32" : $1; sub(/-bit,?/, "", fmt[file])
       rate[file] = $0; sub(/^[^,]*, */, "", rate[file]); sub(/ Hz.*/, "", rate[file])
       ch[file] = $0; sub(/^.* Hz, */, "", ch[file]); sub(/ channels.*/, "", ch[file])
     }
     next
   }
-  /^  / && FILENAME ~ /ada.txt$/ { put("ada:" trim(substr($0, 3, 48)), $0, 48); next }
-  /^  / && FILENAME ~ /haskell.txt$/ { put("hs:" trim(substr($0, 3, 52)), $0, 52); next }
+  /Block codec/ && FILENAME ~ /codec_ada.txt$/ {
+    match($0, /[0-9.]+  round trip OK/); v[file, "block"] = (RSTART ? substr($0, RSTART, RLENGTH - 15) : "failed"); remember("block"); next
+  }
+  /blocks: constant/ && FILENAME ~ /codec_ada.txt$/ {
+    split($0, cnt, /[^0-9]+/)
+    split("constant,order 0,order 1,order 2,order 3,order 4,delay,tiers", label, ",")
+    split("2,5,6,7,8,9,10,11", at, ",")
+    picks = ""
+    for (i = 1; i <= 8; i++) if (cnt[at[i]] + 0 > 0) picks = picks (picks == "" ? "" : ", ") label[i] " " cnt[at[i]]
+    pick[file] = picks; next
+  }
+  /^  / && FILENAME ~ /\/ada.txt$/ { put("ada:" trim(substr($0, 3, 48)), $0, 48); next }
+  /^  / && FILENAME ~ /haskell.txt$/ && !/Block codec/ { put("hs:" trim(substr($0, 3, 52)), $0, 52); next }
   END {
     n = split(order, files, /[ \n]+/)
-    printf "| File | PCM | Best general-purpose | Best audio codec | Ada tiers, 16 from start | Ada tiers, pairs, mean | Ada fixed, Rice | Ada fixed, bit-length | Haskell fixed, shorter | Haskell tiers |\n"
-    printf "|---|---|---|---|---|---|---|---|---|---|\n"
+    printf "| File | PCM | Best general-purpose | Best audio codec | Tiers, 16 from start | Tiers, pairs, mean | Fixed, Rice | Block codec | Block codec choices |\n"
+    printf "|---|---|---|---|---|---|---|---|---|\n"
     for (i = 1; i <= n; i++) {
       x = files[i]; bg = ""; ba = ""; bgv = 1e9; bav = 1e9
       for (k = 1; k <= nk; k++) {
@@ -45,12 +55,10 @@ awk -v order="$order" '
         if (name ~ /^(gzip|bzip2|xz|zstd|lz4|brotli)/) { if (val < bgv) { bgv = val; bg = name } }
         else if (val < bav) { bav = val; ba = name }
       }
-      printf "| %s | %s %s %s | %.2f %s | %.2f %s | %s | %s | %s | %s | %s | %s |\n", x,
-        (fmt[x] == "f32" ? "32 f" : fmt[x]), rate[x] / 1000 "k", (ch[x] == 1 ? "mono" : "stereo"),
-        bgv, "(`" bg "`)", bav, "(`" ba "`)",
+      printf "| %s | %s %s %s | %.2f (`%s`) | %.2f (`%s`) | %s | %s | %s | %s | %s |\n", x,
+        (fmt[x] == "f32" ? "32 f" : fmt[x]), rate[x] / 1000 "k", (ch[x] == 1 ? "mono" : "stereo"), bgv, bg, bav, ba,
         v[x, "ada:Tiers, groups of 16, offset from group start"], v[x, "ada:Tiers, pairs, offset from mean of both anchors"],
-        v[x, "ada:Fixed predictor, Rice per block"], v[x, "ada:Fixed predictor, bit-length Huffman per block"],
-        v[x, "hs:Fixed predictor, shorter of the two per block"], v[x, "hs:Tiers, pairs, offset from mean, bit-length per chunk"]
+        v[x, "ada:Fixed predictor, Rice per block"], v[x, "block"], pick[x]
     }
     printf "\n| Method |"
     for (i = 1; i <= n; i++) printf " %s |", files[i]
@@ -63,4 +71,4 @@ awk -v order="$order" '
       printf "\n"
     }
   }
-' results/ada.txt results/haskell.txt results/compare.tsv
+' results/ada.txt results/codec_ada.txt results/haskell.txt results/compare.tsv
