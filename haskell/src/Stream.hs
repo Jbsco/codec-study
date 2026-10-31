@@ -6,7 +6,7 @@
 -- of channels in the same float mode codes each leaf as left and right, left and side, side and right, or mid
 -- and side, whichever is shortest. Groups encode in parallel with any block coder of the same format. Blocks
 -- that need no samples from before them decode in parallel; then the leaves decode the rest in order.
-module Stream (Prepared (..), prepare, encodeStream, decodeStream) where
+module Stream (Prepared (..), Level (..), levels, prepare, encodeStream, decodeStream) where
 
 import Control.DeepSeq (NFData (..))
 import Data.Bits
@@ -16,7 +16,7 @@ import qualified Data.Vector.Unboxed as U
 import Data.Maybe (fromMaybe)
 import Data.Word (Word8)
 
-import BlockCodec (maxBlock, maxHistory, usesHistory)
+import BlockCodec (Effort (..), log2', maxBlock, maxHistory, usesHistory)
 import Bits (getBits)
 import Blocks (readWord32, word32)
 import Parallel
@@ -86,6 +86,14 @@ unpair _ signals = signals
 top :: Int
 top = 3
 
+-- | The search at each level: the deepest tree level the encoder tries, how it picks a stereo mode (0 left and
+-- right only, 1 by an estimate from second differences, 2 by coding all four signals), and its linear prediction
+-- effort. Every level writes the same format.
+data Level = Level { deepest :: !Int, stereoSearch :: !Int, levelEffort :: !Effort }
+
+levels :: [Level]
+levels = [Level 0 0 (Effort 0 15), Level 0 1 (Effort 1 15), Level 1 1 (Effort 2 12), Level 2 2 (Effort 4 9), Level 3 2 (Effort 32 5)]
+
 -- | A group's split tree: a leaf with its stereo mode and blocks, two halves, or a node that is its first half.
 data Node = Leaf !Int [S.Vector Word8] | Split Node Node | Same Node
 
@@ -115,8 +123,8 @@ packBits = S.fromList . go 0 0
       | k >= 8 = fromIntegral (acc `shiftR` (k - 8)) : emit (acc .&. (bit (k - 8) - 1)) (k - 8) rest
       | otherwise = go acc k rest
 
-encodeStream :: (Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8) -> Prepared -> S.Vector Word8
-encodeStream enc p = S.concat ([header, packBits (concatMap (flags 0) trees)] ++ map (word16 . S.length) chosen ++ chosen)
+encodeStream :: (Effort -> Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8) -> Level -> Prepared -> S.Vector Word8
+encodeStream enc setting p = S.concat ([header, packBits (concatMap (flags 0) trees)] ++ map (word16 . S.length) chosen ++ chosen)
   where
     n = pFrames p
     width = if pFloat p then 32 else pDepth p
@@ -131,13 +139,21 @@ encodeStream enc p = S.concat ([header, packBits (concatMap (flags 0) trees)] ++
     tree first level
       | not (whole n first level) = let (c, t) = tree first (level + 1) in (c, Same t)
       | level == top = (leafCost, leaf)
-      | apart < 1 + leafCost = (apart, Split l r)
+      | level < deepest setting && apart < 1 + leafCost = (apart, Split l r)
       | otherwise = (1 + leafCost, leaf)
       where
         size = maxBlock `shiftR` level
-        blocks = [enc d (U.slice (max 0 (first - maxHistory)) (min first maxHistory) c) (U.slice first (min size (n - first)) c) | (c, d) <- signals]
+        count = min size (n - first)
+        blocks = [enc (levelEffort setting) d (U.slice (max 0 (first - maxHistory)) (min first maxHistory) c) (U.slice first count c) | (c, d) <- signals]
         cost m = sum [S.length (blocks !! (k - 1)) | k <- modeSignals !! m]
-        m0 = if coupled then foldl (\best m -> if cost m < cost best then m else best) 0 [1 .. 3] else 0
+        sums = [U.sum (U.generate (max 0 (count - 2)) (\i -> let j = first + 2 + i in abs (U.unsafeIndex c j - 2 * U.unsafeIndex c (j - 1) + U.unsafeIndex c (j - 2))))
+               | (c, _) <- signals]
+        estimated m = sum [log2' (fromIntegral (sums !! (k - 1) + count)) | k <- modeSignals !! m]
+        m0
+          | not coupled = 0
+          | stereoSearch setting == 1 = foldl (\best m -> if estimated m < estimated best then m else best) 0 [1 .. 3]
+          | stereoSearch setting == 2 = foldl (\best m -> if cost m < cost best then m else best) 0 [1 .. 3]
+          | otherwise = 0
         picked = if pair then [blocks !! (k - 1) | k <- modeSignals !! m0] else blocks
         leafCost = 16 * nch + (if pair then 2 else 0) + 8 * sum (map S.length picked)
         leaf = Leaf m0 picked

@@ -26,8 +26,9 @@ main = do
   args <- getArgs
   case args of
     [path] -> run path
-    [path, "--block"] -> readWav path >>= blockLine "Block codec, Haskell" encodeBlock decodeBlock
-    _ -> putStrLn "usage: huffman-audio <file.wav> [--block]"
+    [path, "--block"] -> readWav path >>= blockLine "Block codec, Haskell" encodeBlock decodeBlock 4
+    [path, "--block", level] -> readWav path >>= blockLine "Block codec, Haskell" encodeBlock decodeBlock (read level)
+    _ -> putStrLn "usage: huffman-audio <file.wav> [--block [level 0 to 4]]"
 
 run :: FilePath -> IO ()
 run path = do
@@ -55,4 +56,4 @@ run path = do
     printf "  %-52s %6.2f  %s, hash %016x, encode %5.2f s, decode %5.2f s\n" name
       (8 * fromIntegral (S.length coded) / fromIntegral total :: Double)
       (if out == chans then "round trip OK" else "ROUND TRIP FAILED" :: String) (fnv1a coded) (t1 - t0) (t2 - t1)
-  blockLine "Block codec, Haskell" encodeBlock decodeBlock audio
+  blockLine "Block codec, Haskell" encodeBlock decodeBlock 4 audio

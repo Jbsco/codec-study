@@ -399,10 +399,22 @@ package body Block_Codec with SPARK_Mode is
 
    type Real_Array is array (Natural range <>) of Long_Float;
    type Coefficient_Sets is array (1 .. Max_Order, 1 .. Max_Order) of Long_Float;
+   type Error_Array is array (1 .. Max_Order) of Long_Float;
+
+   --  The base-2 logarithm of a positive X within 3e-6: its exponent, and a polynomial in its fraction.
+   function Log2 (X : Long_Float) return Long_Float with SPARK_Mode => Off is
+      T : constant Long_Float := 2.0 * Long_Float'Fraction (X) - 1.0;
+   begin
+      return Long_Float (Long_Float'Exponent (X) - 1)
+        + T * (1.4425347795670296 + T * (-0.7180335903817996 + T * (0.45715812106557047 + T * (-0.2773416459579797
+        + T * (0.12147294837882355 + T * (-0.025792345031509872))))));
+   end Log2;
 
    --  Predictor coefficients for each order up to Max_Order, from the Levinson-Durbin recursion on the
    --  autocorrelation of the block under a window whose first and last quarters rise as a smoothstep.
-   procedure Lpc_Analysis (Y : Sample_Buffer; Sets : out Coefficient_Sets; Orders : out Natural) with SPARK_Mode => Off is
+   procedure Lpc_Analysis (Y : Sample_Buffer; Sets : out Coefficient_Sets; Errors : out Error_Array; Orders : out Natural)
+     with SPARK_Mode => Off
+   is
       N : constant Natural := Y'Length;
       M : constant Natural := Natural'Max (1, N / 4);
       Top : constant Natural := Natural'Min (Max_Order, N - 1);
@@ -411,6 +423,7 @@ package body Block_Codec with SPARK_Mode is
       Err : Long_Float;
    begin
       Sets := [others => [others => 0.0]];
+      Errors := [others => 0.0];
       Orders := 0;
       for I in 0 .. N - 1 loop
          declare
@@ -444,6 +457,7 @@ package body Block_Codec with SPARK_Mode is
             A (1 .. P - 1) := Next (1 .. P - 1);
             A (P) := K;
             Err := Err * (1.0 - K * K);
+            Errors (P) := Err;
             for J in 1 .. P loop
                Sets (P, J) := -A (J);
             end loop;
@@ -524,11 +538,13 @@ package body Block_Codec with SPARK_Mode is
 
    --  The shortest LPC coding: the order with the least Rice cost at 15-bit precision, then the precision and the
    --  residual code with the least cost at that order.
-   procedure Best_Lpc (Y : Sample_Buffer; Width : Width_Bits; Bits : out Unsigned_64; Choice : out Lpc_Choice)
+   procedure Best_Lpc (Y : Sample_Buffer; Width : Width_Bits; Effort : Effort_Type; Bits : out Unsigned_64; Choice : out Lpc_Choice)
      with SPARK_Mode => Off
    is
       N : constant Natural := Y'Length;
       Sets : Coefficient_Sets;
+      Errors : Error_Array;
+      Chosen : array (1 .. Max_Order) of Boolean := [others => True];
       Orders, Best_Order : Natural := 0;
       Warm : Sample_Buffer (0 .. Max_Order - 1);
       R : Sample_Buffer (0 .. N - 1);
@@ -540,17 +556,41 @@ package body Block_Codec with SPARK_Mode is
    begin
       Bits := Unsigned_64'Last;
       Choice := (others => <>);
-      Lpc_Analysis (Y, Sets, Orders);
+      Lpc_Analysis (Y, Sets, Errors, Orders);
+      if Effort.Lpc_Orders < Orders then
+         declare
+            Estimate : array (1 .. Max_Order) of Long_Float;
+         begin
+            for P in 1 .. Orders loop
+               Estimate (P) := (if Errors (P) > 0.0 then 0.5 * Long_Float (N - P) * Log2 (Errors (P)) + 15.0 * Long_Float (P) else -1.0E300);
+            end loop;
+            Chosen := [others => False];
+            for Unused in 1 .. Effort.Lpc_Orders loop
+               declare
+                  Pick : Natural := 0;
+               begin
+                  for P in 1 .. Orders loop
+                     if not Chosen (P) and then (Pick = 0 or else Estimate (P) < Estimate (Pick)) then
+                        Pick := P;
+                     end if;
+                  end loop;
+                  Chosen (Pick) := True;
+               end;
+            end loop;
+         end;
+      end if;
       for Order in 1 .. Orders loop
-         Quantize (Sets, Order, 15, Q, Shift, Ok);
-         if Ok then
-            Lpc_Residuals (Y, Q, Order, Shift, Width, Warm (0 .. Order - 1), R (0 .. N - Order - 1), Fits);
-            if Fits then
-               Rice_Cost (Warm (0 .. Order - 1), Kw, Cw);
-               Rice_Cost (R (0 .. N - Order - 1), Kr, Cr);
-               if 24 + Unsigned_64 (15 * Order) + 6 + Cw + 6 + Cr < Least then
-                  Least := 24 + Unsigned_64 (15 * Order) + 6 + Cw + 6 + Cr;
-                  Best_Order := Order;
+         if Chosen (Order) then
+            Quantize (Sets, Order, 15, Q, Shift, Ok);
+            if Ok then
+               Lpc_Residuals (Y, Q, Order, Shift, Width, Warm (0 .. Order - 1), R (0 .. N - Order - 1), Fits);
+               if Fits then
+                  Rice_Cost (Warm (0 .. Order - 1), Kw, Cw);
+                  Rice_Cost (R (0 .. N - Order - 1), Kr, Cr);
+                  if 24 + Unsigned_64 (15 * Order) + 6 + Cw + 6 + Cr < Least then
+                     Least := 24 + Unsigned_64 (15 * Order) + 6 + Cw + 6 + Cr;
+                     Best_Order := Order;
+                  end if;
                end if;
             end if;
          end if;
@@ -558,7 +598,7 @@ package body Block_Codec with SPARK_Mode is
       if Best_Order = 0 then
          return;
       end if;
-      for Precision in 5 .. 15 loop
+      for Precision in Effort.Precision_From .. 15 loop
          Quantize (Sets, Best_Order, Precision, Q, Shift, Ok);
          if Ok then
             Lpc_Residuals (Y, Q, Best_Order, Shift, Width, Warm (0 .. Best_Order - 1), R (0 .. N - Best_Order - 1), Fits);
@@ -583,7 +623,8 @@ package body Block_Codec with SPARK_Mode is
       end loop;
    end Best_Lpc;
 
-   procedure Encode (X, History : Sample_Array; Depth : Sample_Bits; Output : in out Byte_Array; Bytes : out Natural)
+   procedure Encode (X, History : Sample_Array; Depth : Sample_Bits; Effort : Effort_Type; Output : in out Byte_Array;
+                     Bytes : out Natural)
      with SPARK_Mode => Off
    is
       N : constant Natural := X'Length;
@@ -661,7 +702,9 @@ package body Block_Codec with SPARK_Mode is
                   end if;
                end;
             end if;
-            Best_Lpc (Y, Depth - Shift, Lpc_Bits, Lpc);
+            if Effort.Lpc_Orders > 0 then
+               Best_Lpc (Y, Depth - Shift, Effort, Lpc_Bits, Lpc);
+            end if;
             Put (Output, Pos, 1, 1);
             Put (Output, Pos, Unsigned_64 (Shift), 5);
             if Lpc_Bits < Best_Bits then

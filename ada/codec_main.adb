@@ -1,6 +1,6 @@
 --  Code a WAV file with the block codec, decode it again and compare every sample. Prints the size, a hash of
 --  the coded stream, the wall time of each step, and which block coding was chosen how often.
---  Usage: codec_main <file.wav>
+--  Usage: codec_main <file.wav> [level 0 to 4, 4 when left out]
 with Ada.Command_Line;
 with Ada.Real_Time;
 with Ada.Text_IO;
@@ -247,10 +247,31 @@ procedure Codec_Main is
    --  Each group of 4096 frames splits into blocks of 4096, 2048, 1024 or 512 frames.
    Top : constant := 3;
 
+   --  The search at each level: the deepest tree level the encoder tries, how it picks a stereo mode (0 left and
+   --  right only, 1 by an estimate from second differences, 2 by coding all four signals), and its linear
+   --  prediction effort. Every level writes the same format.
+   type Level_Setting is record
+      Deepest, Stereo_Search : Natural;
+      Effort : Effort_Type;
+   end record;
+   Levels : constant array (0 .. 4) of Level_Setting :=
+     [(0, 0, (0, 15)), (0, 1, (1, 15)), (1, 1, (2, 12)), (2, 2, (4, 9)), (3, 2, (32, 5))];
+
+   --  The base-2 logarithm of a positive X within 3e-6, as in the block encoder.
+   function Log2 (X : Long_Float) return Long_Float is
+      T : constant Long_Float := 2.0 * Long_Float'Fraction (X) - 1.0;
+   begin
+      return Long_Float (Long_Float'Exponent (X) - 1)
+        + T * (1.4425347795670296 + T * (-0.7180335903817996 + T * (0.45715812106557047 + T * (-0.2773416459579797
+        + T * (0.12147294837882355 + T * (-0.025792345031509872))))));
+   end Log2;
+
    Input : Wav_Files.Audio;
 begin
    Wav_Files.Read (Ada.Command_Line.Argument (1), 3600, Input);
    declare
+      Level : constant Natural := (if Ada.Command_Line.Argument_Count >= 2 then Natural'Value (Ada.Command_Line.Argument (2)) else 4);
+      Setting : constant Level_Setting := Levels (Level);
       Frames : constant Natural := Input.Frames;
       Channels : constant Natural := Input.Channels;
       Groups : constant Natural := (Frames + Max_Block - 1) / Max_Block;
@@ -283,6 +304,27 @@ begin
       --  last frame; otherwise it is the same as its first half and carries no split bit.
       function Whole (First, Level : Natural) return Boolean is (Level = Top or else First + Max_Block / 2**(Level + 1) < Frames);
 
+      --  The stereo mode whose two signals have the least estimated bits: the base-2 logarithms of their summed
+      --  absolute second differences, each plus the frame count.
+      function Estimated_Mode (First, Last : Natural) return Natural is
+         Sums : array (1 .. 4) of Long_Long_Integer := [others => 0];
+         Cost : array (0 .. 3) of Long_Float;
+         Pick : Natural := 0;
+      begin
+         for S in 1 .. 4 loop
+            for I in First + 2 .. Last loop
+               Sums (S) := Sums (S) + abs (Signal (S) (I) - 2 * Signal (S) (I - 1) + Signal (S) (I - 2));
+            end loop;
+         end loop;
+         for M in 0 .. 3 loop
+            Cost (M) := Log2 (Long_Float (Sums (Mode_Signals (M, 1)) + Long_Long_Integer (Last - First + 1)))
+              + Log2 (Long_Float (Sums (Mode_Signals (M, 2)) + Long_Long_Integer (Last - First + 1)));
+            if Cost (M) < Cost (Pick) then
+               Pick := M;
+            end if;
+         end loop;
+         return Pick;
+      end Estimated_Mode;
    begin
       if Input.Is_Float then
          for C in 1 .. Channels loop
@@ -334,6 +376,11 @@ begin
 
             function First_Of (L, J : Natural) return Natural is (G * Max_Block + J * (Max_Block / 2**L));
 
+            --  The nodes the search codes: the root, the halves of a node above the deepest level searched, and
+            --  the first half of a node that is not whole.
+            function Needed (L, J : Natural) return Boolean is
+              (L = 0 or else (Needed (L - 1, J / 2)
+                              and then (not Whole (First_Of (L - 1, J / 2), L - 1) or else L - 1 < Setting.Deepest)));
 
             procedure Emit (L, J : Natural) is
             begin
@@ -370,17 +417,25 @@ begin
          begin
             for L in 0 .. Top loop
                for J in 0 .. 2**L - 1 loop
-                  if First_Of (L, J) < Frames and then Whole (First_Of (L, J), L) then
+                  if First_Of (L, J) < Frames and then Whole (First_Of (L, J), L) and then Needed (L, J) then
                      declare
                         First : constant Natural := First_Of (L, J);
                         Last : constant Natural := Natural'Min (First + Max_Block / 2**L, Frames) - 1;
                         From : constant Natural := Natural'Max (0, First - Max_History);
                      begin
-                        for S in 1 .. (if Coupled then 4 else Channels) loop
-                           Encode (Signal (S) (First .. Last), Signal (S) (From .. First - 1), Signal_Depth (S), Trial (L, J, S).all,
-                                   Bytes (L, J, S));
+                        if Coupled and then Setting.Stereo_Search = 1 then
+                           Choice (L, J) := Estimated_Mode (First, Last);
+                        end if;
+                        for S in 1 .. (if Coupled and then Setting.Stereo_Search = 2 then 4 else Channels) loop
+                           declare
+                              Coded : constant Positive :=
+                                (if Coupled and then Setting.Stereo_Search = 1 then Mode_Signals (Choice (L, J), S) else S);
+                           begin
+                              Encode (Signal (Coded) (First .. Last), Signal (Coded) (From .. First - 1), Signal_Depth (Coded),
+                                      Setting.Effort, Trial (L, J, Coded).all, Bytes (L, J, Coded));
+                           end;
                         end loop;
-                        if Coupled then
+                        if Coupled and then Setting.Stereo_Search = 2 then
                            for M in 1 .. 3 loop
                               if Bytes (L, J, Mode_Signals (M, 1)) + Bytes (L, J, Mode_Signals (M, 2))
                                 < Bytes (L, J, Mode_Signals (Choice (L, J), 1)) + Bytes (L, J, Mode_Signals (Choice (L, J), 2))
@@ -399,10 +454,10 @@ begin
             end loop;
             for L in reverse 0 .. Top - 1 loop
                for J in 0 .. 2**L - 1 loop
-                  if First_Of (L, J) < Frames then
+                  if First_Of (L, J) < Frames and then Needed (L, J) then
                      if not Whole (First_Of (L, J), L) then
                         Cost (L, J) := Cost (L + 1, 2 * J);
-                     elsif 1 + Cost (L + 1, 2 * J) + Cost (L + 1, 2 * J + 1) < 1 + Cost (L, J) then
+                     elsif L < Setting.Deepest and then 1 + Cost (L + 1, 2 * J) + Cost (L + 1, 2 * J + 1) < 1 + Cost (L, J) then
                         Split (L, J) := True;
                         Cost (L, J) := 1 + Cost (L + 1, 2 * J) + Cost (L + 1, 2 * J + 1);
                      else
@@ -568,6 +623,7 @@ begin
                 & ", code tables" & Side.Tables'Image & ", residuals" & Side.Residuals'Image & ", index and lengths"
                 & Long_Long_Integer (Index_Pos + 16 * Blocks)'Image & "; coefficients in Rice or Exp-Golomb codes"
                 & Side.Coded_Coefficients'Image & ", warm-up at the residual rate" & Side.Seeded_Warm_Up'Image);
+      Put_Line ("    level" & Level'Image);
       Put_Line ("    frames per block: 4096" & Leaves (0)'Image & ", 2048" & Leaves (1)'Image & ", 1024" & Leaves (2)'Image
                 & ", 512" & Leaves (3)'Image);
       if Pair then

@@ -3,7 +3,7 @@
 -- polynomial orders 0 to 4, the distance back to an exact repeat within the block or in the samples before it,
 -- tiers of pairs, or linear prediction of order 1 to 32 with quantized coefficients. The residuals take Rice
 -- codes or run-length Huffman codes, and the encoder writes whichever combination is shortest.
-module BlockCodec (maxBlock, maxHistory, bound, encodeBlock, decodeBlock, usesHistory) where
+module BlockCodec (Effort (..), maxBlock, maxHistory, bound, log2', encodeBlock, decodeBlock, usesHistory) where
 
 import Control.Monad (foldM, forM_, when)
 import Control.Monad.ST (ST, runST)
@@ -257,9 +257,23 @@ putRun buf w0 r = do
     codes = canonical lens
     used = usedSymbols counts
 
--- | Predictor coefficients for each order up to maxOrder, from the Levinson-Durbin recursion on the
--- autocorrelation of the block under a window whose first and last quarters rise as a smoothstep.
-lpcAnalysis :: U.Vector Int -> [U.Vector Double]
+-- | How far the encoder searches: how many orders of linear prediction it codes in full, ranked by the bits their
+-- prediction error implies (0 for none, 32 for all), and the lowest coefficient precision it tries. Every setting
+-- writes the same format.
+data Effort = Effort { effortOrders :: !Int, effortPrecisionFrom :: !Int }
+
+-- | The base-2 logarithm of a positive X within 3e-6: its exponent, and a polynomial in its fraction.
+log2' :: Double -> Double
+log2' x = fromIntegral (exponent x - 1)
+  + t * (1.4425347795670296 + t * (-0.7180335903817996 + t * (0.45715812106557047 + t * (-0.2773416459579797
+  + t * (0.12147294837882355 + t * (-0.025792345031509872))))))
+  where
+    t = 2 * significand x - 1
+
+-- | Predictor coefficients for each order up to maxOrder with the prediction error after it, from the
+-- Levinson-Durbin recursion on the autocorrelation of the block under a window whose first and last quarters rise
+-- as a smoothstep.
+lpcAnalysis :: U.Vector Int -> [(U.Vector Double, Double)]
 lpcAnalysis y
   | not (U.head ac > 0) = []
   | otherwise = go 1 (U.singleton 1) (U.head ac)
@@ -272,7 +286,7 @@ lpcAnalysis y
     ac = U.generate (top + 1) (\k -> U.foldl' (+) 0 (U.zipWith (*) (U.take (n - k) tapered) (U.drop k tapered)))
     go p a err
       | p > top = []
-      | otherwise = U.map negate (U.tail a') : if err' > 0 then go (p + 1) a' err' else []
+      | otherwise = (U.map negate (U.tail a'), err') : if err' > 0 then go (p + 1) a' err' else []
       where
         acc = foldl' (\s j -> s + U.unsafeIndex a j * U.unsafeIndex ac (p - j)) (U.unsafeIndex ac p) [1 .. p - 1]
         k = negate acc / err
@@ -320,22 +334,31 @@ data Lpc = Lpc
 
 -- | The shortest LPC coding: the order with the least Rice cost at 15-bit precision, then the precision and the
 -- residual code with the least cost at that order.
-bestLpc :: Int -> U.Vector Int -> Maybe (Word64, Lpc)
-bestLpc width y
+bestLpc :: Effort -> Int -> U.Vector Int -> Maybe (Word64, Lpc)
+bestLpc effort width y
   | null stage1 || null stage2 = Nothing
   | otherwise = Just (foldl1 (\a b -> if fst b < fst a then b else a) stage2)
   where
-    sets = lpcAnalysis y
+    analysis = lpcAnalysis y
+    sets = map fst analysis
+    n = U.length y
+    estimate p e = if e > 0 then 0.5 * fromIntegral (n - p) * log2' e + 15 * fromIntegral p else -1.0e300
+    estimates = U.fromList [estimate p e | (p, (_, e)) <- zip [1 :: Int ..] analysis]
+    pick chosen = foldl (\best p -> if p `elem` chosen || (best /= 0 && estimates U.! (p - 1) >= estimates U.! (best - 1)) then best else p)
+                        0 [1 .. length sets]
+    chosenOrders
+      | effortOrders effort >= length sets = [1 .. length sets]
+      | otherwise = sortOn id (iterate (\c -> pick c : c) [] !! effortOrders effort)
     stage1 =
       [ (24 + 15 * fromIntegral order + 6 + snd (riceCost warm) + 6 + snd (riceCost r), order)
-      | (order, c) <- zip [1 ..] sets
+      | (order, c) <- zip [1 ..] sets, order `elem` chosenOrders
       , Just (q, s) <- [quantize c 15]
       , Just (warm, r) <- [lpcResiduals y q s width]
       ]
     bestOrder = snd (foldl1 (\a b -> if fst b < fst a then b else a) stage1) :: Int
     stage2 =
       [ (bits, Lpc bestOrder precision s k kw rice q warm r)
-      | precision <- [5 .. 15]
+      | precision <- [effortPrecisionFrom effort .. 15]
       , Just (q, s) <- [quantize (sets !! (bestOrder - 1)) precision]
       , Just (warm, r) <- [lpcResiduals y q s width]
       , let (kw, cw) = riceCost warm
@@ -356,8 +379,8 @@ putLpc buf w0 l = do
   if lRice l then putRice buf w7 (lK l) (lR l) else putRun buf w7 (lR l)
 
 -- | Code one block, given the samples just before it, the latest last.
-encodeBlock :: Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8
-encodeBlock depth history x = runST $ do
+encodeBlock :: Effort -> Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8
+encodeBlock effort depth history x = runST $ do
   buf <- SM.new (bound (U.length x))
   w <- if U.all (== U.head x) x
     then put buf start 0 1 >>= \w1 -> putLong buf w1 (fromIntegral (U.head x)) depth
@@ -377,7 +400,7 @@ encodeBlock depth history x = runST $ do
   bytes <- finish buf w
   S.force . S.take bytes <$> S.unsafeFreeze buf
   where
-    lpc = bestLpc (depth - lowZeros) y
+    lpc = if effortOrders effort > 0 then bestLpc effort (depth - lowZeros) y else Nothing
     common = U.foldl' (\a v -> a .|. (fromIntegral v :: Word64)) 0 x
     lowZeros = countTrailingZeros common
     y = U.map (`unsafeShiftR` lowZeros) x

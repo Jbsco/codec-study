@@ -24,8 +24,17 @@ package Block_Codec with SPARK_Mode is
    --  The most bytes Encode writes for N samples.
    function Bound (N : Block_Length) return Positive is (5 * N + 16);
 
+   --  How far the encoder searches. Lpc_Orders is how many orders of linear prediction it codes in full, ranked by
+   --  the bits their prediction error implies: 0 for none, 32 for all. Precision_From is the lowest coefficient
+   --  precision it tries, up to 15 bits. Every setting writes the same format.
+   type Effort_Type is record
+      Lpc_Orders : Natural range 0 .. 32 := 32;
+      Precision_From : Positive range 5 .. 15 := 5;
+   end record;
+
    --  History holds the samples just before X, the latest last.
-   procedure Encode (X, History : Sample_Array; Depth : Sample_Bits; Output : in out Byte_Array; Bytes : out Natural)
+   procedure Encode (X, History : Sample_Array; Depth : Sample_Bits; Effort : Effort_Type; Output : in out Byte_Array;
+                     Bytes : out Natural)
      with Pre => X'Length in Block_Length and then History'Length <= Max_History
        and then (for all V of X => In_Range (V, Depth)) and then (for all V of History => In_Range (V, Depth))
        and then Valid_Buffer (Output) and then Output'Length >= Bound (X'Length);
