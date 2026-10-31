@@ -9,13 +9,15 @@ on:
 
 jobs:
   style:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux]
     timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # The hosted-only steps stay, gated, so a job moves back to a hosted runner by its runs-on line alone.
       - name: Cache Alire
+        if: runner.environment == 'github-hosted'
         uses: actions/cache@v4
         with:
           path: |
@@ -26,6 +28,7 @@ jobs:
           restore-keys: alire-style-${{ runner.os }}-
 
       - name: Cache Stack
+        if: runner.environment == 'github-hosted'
         uses: actions/cache@v4
         with:
           path: |
@@ -35,17 +38,26 @@ jobs:
           restore-keys: stack-${{ runner.os }}-
 
       - name: Install Alire
+        if: runner.environment == 'github-hosted'
         uses: alire-project/setup-alire@v3
         with:
           version: 2.1.1
 
       - name: Install Stack
+        if: runner.environment == 'github-hosted'
         run: sudo apt-get update && sudo apt-get install -y haskell-stack
 
       - name: Select GNAT toolchain
+        if: runner.environment == 'github-hosted'
         run: |
           cd ada
           alr -n toolchain --select gnat_native gprbuild
+
+      # The checkout's own dependency fetch runs everywhere, so a cold clone resolves its toolchain.
+      - name: Fetch the crate's dependencies
+        run: |
+          cd ada
+          alr -n update
 
       - name: Run the style gate
         run: |
