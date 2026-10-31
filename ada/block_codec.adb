@@ -110,24 +110,44 @@ package body Block_Codec with SPARK_Mode is
       end case;
    end Residuals;
 
-   --  Walk the Rice parameter up from zero while the cost falls; the cost is convex in the parameter.
+   --  The Rice parameter of least cost, the smallest of equals, walked from the bit length of the mean code value;
+   --  the cost is convex in the parameter.
    procedure Rice_Cost (R : Sample_Buffer; K : out Natural; Bits : out Unsigned_64) with SPARK_Mode => Off is
-      Best : Unsigned_64 := Unsigned_64'Last;
+      function Cost (P : Natural) return Unsigned_64 is
+         C : Unsigned_64 := Unsigned_64 (R'Length) * Unsigned_64 (P + 1);
+      begin
+         for V of R loop
+            C := C + Shift_Right (Zigzag (V), P);
+         end loop;
+         return C;
+      end Cost;
+      Sum : Unsigned_64 := 0;
+      Moved : Boolean := False;
    begin
-      K := 0;
-      for P in 0 .. 62 loop
+      for V of R loop
+         Sum := Sum + Zigzag (V);
+      end loop;
+      K := Natural'Max (Bit_Length (Sum / Unsigned_64 (R'Length)), 1) - 1;
+      Bits := Cost (K);
+      while K > 0 loop
          declare
-            C : Unsigned_64 := Unsigned_64 (R'Length) * Unsigned_64 (P + 1);
+            C : constant Unsigned_64 := Cost (K - 1);
          begin
-            for V of R loop
-               C := C + Shift_Right (Zigzag (V), P);
-            end loop;
-            exit when C >= Best;
-            Best := C;
-            K := P;
+            exit when C > Bits;
+            K := K - 1;
+            Bits := C;
+            Moved := True;
          end;
       end loop;
-      Bits := Best;
+      while not Moved and then K < 62 loop
+         declare
+            C : constant Unsigned_64 := Cost (K + 1);
+         begin
+            exit when C >= Bits;
+            K := K + 1;
+            Bits := C;
+         end;
+      end loop;
    end Rice_Cost;
 
    procedure Put_Rice (R : Sample_Buffer; K : Natural; Output : in out Byte_Array; Pos : in out Natural) with SPARK_Mode => Off is

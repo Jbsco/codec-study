@@ -80,16 +80,27 @@ findDelay y = case [p | p <- [1 .. U.length y - matchLength], all (\j -> U.unsaf
   (p : _) -> p
   [] -> 0
 
--- | Walk the Rice parameter up from zero while the cost falls.
+-- | The Rice parameter of least cost, the smallest of equals, walked from the bit length of the mean code value.
 riceCost :: U.Vector Int -> (Int, Word64)
-riceCost r = walk 0 maxBound 0
+riceCost r
+  | k0 > 0, c1 <= c0 = down (k0 - 1) c1
+  | otherwise = up k0 c0
   where
     n = fromIntegral (U.length r) :: Word64
-    walk p best k
-      | p > 62 || c >= best = (k, best)
-      | otherwise = walk (p + 1) c p
+    cost p = n * fromIntegral (p + 1) + U.foldl' (\a v -> a + zigzag v `unsafeShiftR` p) 0 r
+    k0 = max (bitLength (U.foldl' (\a v -> a + zigzag v) 0 r `quot` n)) 1 - 1
+    c0 = cost k0
+    c1 = cost (k0 - 1)
+    down k c
+      | k > 0, c' <= c = down (k - 1) c'
+      | otherwise = (k, c)
       where
-        c = n * fromIntegral (p + 1) + U.foldl' (\a v -> a + zigzag v `unsafeShiftR` p) 0 r
+        c' = cost (k - 1)
+    up k c
+      | k < 62, c' < c = up (k + 1) c'
+      | otherwise = (k, c)
+      where
+        c' = cost (k + 1)
 
 -- | Counts of each run-length symbol, and the bits of the values' signs and lower bits.
 runSymbols :: U.Vector Int -> (U.Vector Int, Word64)
