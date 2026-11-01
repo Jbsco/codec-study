@@ -3,7 +3,7 @@
 # weakened claim is visible immediately. Needs gnatprove on the PATH, or alr to supply it.
 exec >&2
 cd "$(dirname "$0")/ada" || exit 1
-UNITS="bit_streams.adb canonical_decoding.adb checksums.adb block_codec.adb"
+UNITS="bit_streams.adb canonical_decoding.adb checksums.adb range_coding.adb block_codec.adb"
 if command -v gnatprove >/dev/null 2>&1; then
     RUN=gnatprove
 elif command -v alr >/dev/null 2>&1; then

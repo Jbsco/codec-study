@@ -44,7 +44,7 @@ A decoder reads the header's CRC, then each group's. A group whose sync word, fi
 
 ## Cost
 
-Framing, measured at level 4 on the 40 files against the previous layout, which kept one index and one block table at the head of the stream: 116,233 bytes more over 7,755 groups, 15.0 bytes per group, 0.28 percent of the coded corpus. Of the 15 bytes, 11 are the group's fixed fields, 2 its CRC, and the rest the tree bits padded to a byte per group instead of once per stream, plus 12 bytes per seek point. The cost falls on short and small files: the 8 kHz pink noise gains 304 bytes, the 192 kHz vinyl 12,819, and the silent file goes from 1,548 bytes to 4,584, because its 216 groups each carry a frame that the stream coded in 7 bytes before. Framing is the price of a stream that can be read from the middle, written without knowing its length, and resynchronized after damage; a format for archives that are always read whole would keep the index at the head.
+Framing, measured at level 4 on the 40 files before the adaptive binary code, against the previous layout, which kept one index and one block table at the head of the stream: 116,233 bytes more over 7,755 groups, 15.0 bytes per group, 0.28 percent of the coded corpus. Of the 15 bytes, 11 are the group's fixed fields, 2 its CRC, and the rest the tree bits padded to a byte per group instead of once per stream, plus 12 bytes per seek point. The cost falls on short and small files: the 8 kHz pink noise gains 304 bytes, the 192 kHz vinyl 12,819, and the silent file goes from 1,548 bytes to 4,584, because its 216 groups each carry a frame that the stream coded in 7 bytes before. Framing is the price of a stream that can be read from the middle, written without knowing its length, and resynchronized after damage; a format for archives that are always read whole would keep the index at the head.
 
 Seeking costs the decoder at most one segment: 10 s of audio at the default seek interval, 108 groups at 44.1 kHz, decoded and discarded before the frame asked for. With every group a segment the decoder skips to the group itself, reading each skipped group's header, and decodes one group: a seek to frame 100000 of the 8 kHz speech file skipped 4 groups from the nearest seek point and decoded 1.
 
@@ -54,9 +54,9 @@ Segments, measured by `segments.sh` at level 4 on the 40 files, where a block ma
 
 | Segment | Bytes | Against one segment |
 |---|---|---|
-| one segment, no seek table (`--seek-every 0`) | 42,320,414 | |
-| a seek point every 10 s, the default | 42,323,212 | +2,798, 0.007 percent |
-| a seek point every 1 s | 42,397,880 | +77,466, 0.18 percent |
-| every group a segment (`--independent`) | 43,138,198 | +817,784, 1.93 percent |
+| one segment, no seek table (`--seek-every 0`) | 41,963,961 | |
+| a seek point every 10 s, the default | 41,966,578 | +2,617, 0.006 percent |
+| a seek point every 1 s | 42,037,486 | +73,525, 0.18 percent |
+| every group a segment (`--independent`) | 42,731,273 | +767,312, 1.83 percent |
 
-A seek point every 10 s costs nothing worth measuring, because few blocks reach more than 16,384 samples back and fewer start a segment. Every group its own segment costs 1.9 percent, which is what the history buys: the delay predictor's reach into earlier samples and the adaptive stage's warm-up on them, both of which the first blocks of every segment lose. A stream for random access or for links that drop data chooses between these by how much it must be able to lose at once.
+A seek point every 10 s costs nothing worth measuring, because few blocks reach more than 16,384 samples back and fewer start a segment. Every group its own segment costs 1.8 percent, which is what the history buys: the delay predictor's reach into earlier samples and the adaptive stage's warm-up on them, both of which the first blocks of every segment lose. A stream for random access or for links that drop data chooses between these by how much it must be able to lose at once.

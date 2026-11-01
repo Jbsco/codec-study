@@ -3,7 +3,7 @@
 Lossless audio coders built on canonical Huffman codes, tested on generated signals and on public-domain and CC0 recordings. The work has two parts:
 
 - **An experiment** in Ada that compares Huffman coding of raw samples, of differences, and of a tiered scheme in which the first sample of each group forms the next, coarser tier, against FLAC-style fixed predictors with Rice codes.
-- **A block codec** that combines what the experiment showed with techniques from embedded and audio coders: constant blocks, removal of low bits that every sample shares, a delay to an exact repeat within a block or in the samples before it, tiers as one predictor among others, linear prediction of order 1 to 32 chosen per block, run-length Huffman codes, stereo decorrelation, and block lengths from 512 to 4096 frames chosen per region. It is written three times, in Ada with a SPARK decoder, in Haskell, and as Haskell around the SPARK library, and all three write the same bytes.
+- **A block codec** that combines what the experiment showed with techniques from embedded and audio coders: constant blocks, removal of low bits that every sample shares, a delay to an exact repeat within a block or in the samples before it, tiers as one predictor among others, linear prediction of order 1 to 32 chosen per block, run-length Huffman and adaptive binary codes, stereo decorrelation, and block lengths from 512 to 4096 frames chosen per region. It is written three times, in Ada with a SPARK decoder, in Haskell, and as Haskell around the SPARK library, and all three write the same bytes.
 
 Every coded stream is decoded again and compared sample for sample.
 
@@ -53,11 +53,12 @@ A block is 1 to 4096 samples of one signal. Fields are most significant bit firs
   - 5: a delay. Either a `0` and a 12-bit distance to the first exact repeat of the first 32 samples within the block, where samples before that distance take first differences, or a `1` and a 15-bit distance back into the 16,384 samples before the block, which the shared low bits scale down. Only a block of the second kind needs earlier samples to decode.
   - 6: tiers of pairs, the final tier then each tier's offsets from coarse to fine. Each pair's second sample is stored as its offset from the mean of the first samples of its pair and the next.
   - 7: linear prediction. The order less one in 5 bits, the coefficient precision less one in 4 bits and the coefficient shift in 5 bits, then the coefficients in two's complement, then a flag. With the flag clear, the first samples, as many as the order, are second differences in a Rice code of their own, and each later sample is predicted as the sum of coefficient times earlier sample, shifted right by the coefficient shift. With the flag set, an adaptive stage follows: a tap count code in 2 bits (16, 32, 64 or 256 taps) and a warm-up code in 2 bits (0, 256, 1024 or 4096 samples). Every sample of the block is then predicted by the coefficients across the block's start, from the samples before it, and a sign-sign LMS filter over those residuals predicts each residual from the last taps residuals, its 16-bit weights moving by 2 toward the sign of the error times the sign of each input, the prediction shifted right by 14. The filter is trained first on the residuals of the warm-up samples before the block, with the block's own coefficients. Only a block with the flag set needs earlier samples to decode.
-- Then 1 bit naming the residual code:
+- Then a flag naming the residual code, 0 for Rice, 10 for run-length Huffman, 11 for the adaptive binary code:
   - Rice: a 6-bit parameter K, then each zigzag value shifted right by K in unary and its low K bits.
   - Run-length Huffman, after JPEG's AC coefficient symbols: each symbol is a run of up to 15 zeros and the bit length of the next value, with one symbol for sixteen zeros and one for the end of the block. The table is the number of symbols in 11 bits, then each symbol as an Elias gamma code of its step from the one before, with its code length in 5 bits. Codes are canonical, as in RFC 1951. A value's code is followed by its sign and the bits below its leading one.
+  - Adaptive binary code: a 6-bit first parameter K, then the bytes of a binary range coder. Each zigzag value's quotient by 2^K is coded in unary and the top bit of its remainder with a probability that adapts, one per context of K (capped at 23) and the position in the unary part (capped at 7, one more slot for the remainder bit), and the remaining K - 1 bits with none. Probabilities start at one half in 4096ths and move toward each coded bit by a 32nd of the distance. After each value K becomes the bit length of a running mean of the values, with a window of 16. The coder is LZMA's: a 32-bit range, a 33-bit low with the carry held in a cache byte, five bytes flushed at the end, and the decoder reads exactly the bytes the encoder wrote.
 
-The encoder computes the exact size of every predictor and code and writes the shortest, the first on a tie. For linear prediction it weights the block with a window whose first and last quarters rise as a smoothstep, runs the Levinson-Durbin recursion to order 32, and picks the order with the least Rice cost at 15-bit precision. It then picks the precision, from 5 to 15 bits, and the residual code. Each coefficient is rounded with the rounding error of the ones before it carried forward. Ada and Haskell perform the same floating-point operations in the same order, so they choose the same coefficients.
+The encoder computes the exact size of every predictor and code and writes the shortest, the first on a tie; the adaptive binary code is tried last, on the residuals the search chose, and kept when it is shorter than the chosen Rice or run-length code. For linear prediction it weights the block with a window whose first and last quarters rise as a smoothstep, runs the Levinson-Durbin recursion to order 32, and picks the order with the least Rice cost at 15-bit precision. It then picks the precision, from 5 to 15 bits, and the residual code. Each coefficient is rounded with the rounding error of the ones before it carried forward. Ada and Haskell perform the same floating-point operations in the same order, so they choose the same coefficients.
 
 The stream starts with a header: the magic `BLKC`, a version, a flags byte, the sample rate and the frame count in 32 bits, the channel count, depth and a float flag in 8 bits each, for float input a mode and a scale per channel, a counted list of metadata blocks (a type, a 24-bit length and the bytes: tags as length-prefixed `key=value` strings, and a seek table of 32-bit first frames and 64-bit byte offsets), and a CRC-16 of all that. Then come the groups of 4096 frames, each a sync word, a 24-bit byte length, its first frame, its frame count, its split tree, a 16-bit byte length and a CRC-16 per block, a CRC-16 of the group so far, and the blocks. The split tree is in pre-order, padded to a byte. A node halves down to 512 frames and carries a split bit when its second half starts before the group's last frame. Each leaf carries a 2-bit stereo mode per pair of channels: left and right, left and side, side and right, or mid and side. Channels pair up in order, an odd last channel is coded alone, and two channels in different float modes stay left and right. The mid is the mean of the two channels rounded down, and the side, left minus right, is coded one bit wider. The encoder codes every node of the tree, and keeps a node whole unless its halves cost fewer bits, tree bits and block lengths included. Blocks read earlier samples only within their segment, from one seek point to the next, or within their own group when the flags byte says every group is a segment, so a decoder can start at any seek point and a damaged group loses at most the rest of its segment. `docs/container.md` has the layout and what each part costs.
 
@@ -122,7 +123,7 @@ Tables, parameters and headers are included, and every stream decodes back to th
 - On its own, the tiered scheme as first described (groups of 16, offsets from the group's first sample) costs 1.5 to 7.9 bits more than plain first differences on every recording. Offsets grow with the distance from the group start, and each coarser tier holds samples further apart in time, whose differences cost nearly as much as raw samples.
 - Linear prediction wins most blocks of every recording. The block codec is smaller than every tool on the piano, at 3.68 against 3.79 for `flac -8`, on the electronic track, at 18.58 against 18.60 for WavPack `-hh -x4`, and on the 192 kHz vinyl rip, at 5.80 against 6.24. On the other seven recordings it is 0.01 to 0.08 bits above the best audio codec. WavPack `-hh -x4` adapts its prediction sample by sample, where the block codec fixes one predictor per block; that seems the likely source of the remaining gap.
 - Stereo modes take 1.11 bits off the electronic track and 0.19 off speech, which codes mid and side in 314 of its 319 blocks. Split blocks take 0.28 bits off 8 kHz speech, where 131 of the 200 blocks are 512 frames, and 0.98 off the float sine.
-- The adaptive stage of level 5 takes the piano from 3.69 to 3.55 bits per sample, the chord from 1.78 to 1.68, the sweep from 1.87 to 1.67, the electronic track from 18.59 to 18.46 and the orchestra from 13.85 to 13.71, 7.124 to 7.094 over the corpus. The encoder keeps the stage only where it saves at least one bit per 64 samples, because the decoder pays the taps on every sample of a block that carries it: pink noise then carries it in 2 of 216 blocks instead of 115 and decodes in 0.4 s instead of 17 s. Where it is kept the decoder's work is real: the 192 kHz vinyl decodes in 148 s in Ada against 0.54 s at level 4, and the whole corpus in 539 s against 2.3 s. Haskell decodes the corpus at level 5 in 36 s on 16 threads, since only blocks that train on earlier samples wait for them.
+- The adaptive stage of level 5 takes the piano from 3.69 to 3.55 bits per sample, the chord from 1.78 to 1.68, the sweep from 1.87 to 1.67, the electronic track from 18.59 to 18.46 and the orchestra from 13.85 to 13.71, 7.058 to 7.045 over the corpus with the adaptive binary code. The encoder keeps the stage only where it saves at least one bit per 64 samples, because the decoder pays the taps on every sample of a block that carries it: pink noise then carries it in 2 of 216 blocks instead of 115 and decodes in 0.4 s instead of 17 s. Where it is kept the decoder's work is real: the 192 kHz vinyl decodes in 209 s in Ada against 0.94 s at level 4, and the whole corpus in 684 s against 5.5 s. Haskell decodes the corpus at level 5 in 38 s on 16 threads, since only blocks that train on earlier samples wait for them.
 - The block codec is the best of all methods on dither, at 1.75, and on white noise, at 15.03.
 
 ### What each part adds
@@ -143,26 +144,26 @@ The encoder searches at six levels, and every level writes the same format, so o
 
 | Level | Search | Mean bits per sample | Coded corpus | Of PCM | Encode, Ada, 1 thread | Decode, Ada | Encode, Haskell, 16 threads | Decode, Haskell |
 |---|---|---|---|---|---|---|---|---|
-| 0 | 4096-frame blocks; polynomial, delay and tiers; left and right | 7.550 | 47.49 MB | 40.3% | 5.4 s | 1.80 s | 0.60 s | 0.45 s |
-| 1 | and 1 estimated order of linear prediction at 15 bits; stereo mode estimated | 7.211 | 42.87 MB | 36.4% | 9.9 s | 2.57 s | 1.13 s | 0.65 s |
-| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048 | 7.176 | 42.70 MB | 36.3% | 24.6 s | 2.54 s | 3.94 s | 0.69 s |
-| 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded | 7.142 | 42.40 MB | 36.0% | 70.4 s | 2.50 s | 13.74 s | 0.65 s |
-| 4 | and every order and precision 5 to 15; blocks down to 512 | 7.124 | 42.32 MB | 35.9% | 159.7 s | 2.31 s | 38.98 s | 0.54 s |
-| 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.094 | 41.99 MB | 35.6% | 1775.5 s | 538.89 s | 836.12 s | 36.42 s |
+| 0 | 4096-frame blocks; polynomial, delay and tiers; left and right | 7.490 | 47.09 MB | 40.0% | 9.0 s | 5.00 s | 0.97 s | 1.55 s |
+| 1 | and 1 estimated order of linear prediction at 15 bits; stereo mode estimated | 7.149 | 42.52 MB | 36.1% | 13.0 s | 5.35 s | 1.45 s | 1.54 s |
+| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048 | 7.117 | 42.36 MB | 36.0% | 32.7 s | 5.54 s | 8.21 s | 1.99 s |
+| 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded | 7.085 | 42.08 MB | 35.7% | 86.6 s | 5.24 s | 15.68 s | 1.59 s |
+| 4 | and every order and precision 5 to 15; blocks down to 512 | 7.058 | 41.97 MB | 35.6% | 191.8 s | 5.47 s | 68.20 s | 1.96 s |
+| 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.045 | 41.71 MB | 35.4% | 1803.5 s | 683.94 s | 921.78 s | 38.18 s |
 
-Level 1 encodes the corpus 16 times faster than level 4 in Ada, 9.9 s against 159.7 s, for 1.3% more bytes; the one estimated order of linear prediction keeps most of its gain. Level 3 comes within 0.2% of level 4 in 44% of its time. Decoding takes 2 to 3 s in Ada at levels 0 to 4. Level 5 takes 0.4% off level 4 and multiplies the decoder's time by about 230 in Ada and 70 in Haskell, where only the blocks that train on earlier samples wait for one another; it is the level for storage that is read seldom.
+Level 1 encodes the corpus 15 times faster than level 4 in Ada, 13.0 s against 191.8 s, for 1.3% more bytes; the one estimated order of linear prediction keeps most of its gain. Level 3 comes within 0.3% of level 4 in 45% of its time. Decoding takes 5 to 6 s in Ada at levels 0 to 4, 2.3 s before the adaptive binary code, which the decoder pays for at every level since the encoder takes it wherever it is shorter. Level 5 takes 0.2% off level 4 and multiplies the decoder's time by about 125 in Ada and 20 in Haskell, where only the blocks that train on earlier samples wait for one another; it is the level for storage that is read seldom.
 
 ### Side information
 
-Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side information takes 1.6% of all bits, 0.4% of it the framing of the groups, which `docs/container.md` measures against the previous layout. Coding the LPC coefficients in Rice or Exp-Golomb codes, with a parameter per block, would save 0.02% of all bits, and loses on speech, where the parameter costs more than it saves. Coding the LPC warm-up from the samples before the block, at the block's residual rate, would save 0.26%, and 0.36% on the recordings.
+Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side information takes 1.5% of all bits, 0.4% of it the framing of the groups, which `docs/container.md` measures against the previous layout. Coding the LPC coefficients in Rice or Exp-Golomb codes, with a parameter per block, would save 0.02% of all bits, and loses on speech, where the parameter costs more than it saves. Coding the LPC warm-up from the samples before the block, at the block's residual rate, would save 0.26%, and 0.36% on the recordings.
 
 | Files | Headers | LPC coefficients | LPC warm-up | Code tables | Framing | Residuals |
 |---|---|---|---|---|---|---|
-| Generated signals | 0.15% | 0.29% | 0.27% | 0.55% | 1.03% | 97.72% |
-| Sample-rate sweep | 0.08% | 0.03% | 0.07% | 0.11% | 0.55% | 99.17% |
-| Bit-depth sweep | 0.06% | 0.01% | 0.05% | 0.17% | 0.39% | 99.31% |
-| Recordings | 0.07% | 0.65% | 0.78% | 0.05% | 0.24% | 98.20% |
-| All 40 files | 0.08% | 0.46% | 0.56% | 0.13% | 0.39% | 98.38% |
+| Generated signals | 0.16% | 0.30% | 0.28% | 0.22% | 1.05% | 97.99% |
+| Sample-rate sweep | 0.09% | 0.03% | 0.07% | 0.04% | 0.56% | 99.20% |
+| Bit-depth sweep | 0.06% | 0.01% | 0.06% | 0.10% | 0.39% | 99.38% |
+| Recordings | 0.07% | 0.64% | 0.77% | 0.02% | 0.24% | 98.26% |
+| All 40 files | 0.08% | 0.46% | 0.55% | 0.05% | 0.39% | 98.46% |
 
 ### Three implementations of the block codec
 
@@ -170,17 +171,17 @@ Times for the whole corpus, 44,883,000 samples, on an AMD Ryzen 7 7700X with 8 c
 
 | Implementation | Threads | Encode | Decode |
 |---|---|---|---|
-| Ada and SPARK (`codec_main`, assertions on) | 1 | 161.89 s | 2.70 s |
-| Haskell | 1 | 232.82 s | 1.86 s |
-| Haskell | 4 | 64.03 s | 0.84 s |
-| Haskell | 8 | 42.15 s | 0.63 s |
-| Haskell | 16 | 40.18 s | 0.61 s |
-| Haskell + SPARK library | 1 | 156.17 s | 1.64 s |
-| Haskell + SPARK library | 4 | 45.23 s | 0.76 s |
-| Haskell + SPARK library | 8 | 31.25 s | 0.65 s |
-| Haskell + SPARK library | 16 | 27.07 s | 0.63 s |
+| Ada and SPARK (`codec_main`, assertions on) | 1 | 179.33 s | 5.03 s |
+| Haskell | 1 | 247.58 s | 7.66 s |
+| Haskell | 4 | 69.26 s | 2.40 s |
+| Haskell | 8 | 42.95 s | 1.57 s |
+| Haskell | 16 | 41.05 s | 1.49 s |
+| Haskell + SPARK library | 1 | 175.21 s | 3.09 s |
+| Haskell + SPARK library | 4 | 51.45 s | 1.23 s |
+| Haskell + SPARK library | 8 | 34.17 s | 0.96 s |
+| Haskell + SPARK library | 16 | 29.80 s | 0.87 s |
 
-These are level 4 times, with the per-block CRCs. The encoder codes every node of each group's split tree, up to 15 blocks per group for each of up to four signals, and tries every predictor, 32 orders of linear prediction and 11 coefficient precisions on each block. Before linear prediction, back-references, stereo modes and split blocks, the Ada encoder took 11.26 s and decoding 1.46 s. The Rice parameter search starts from the bit length of the mean code value and walks to the least cost, which the convexity of the cost allows; it finds the same parameter as a walk from zero, and took that encoder from 11.26 s to 9.48 s. Decoding stays near 2 s: only blocks that reach back before themselves wait for earlier samples, and Haskell decodes all other blocks in parallel first. The residual pass of linear prediction runs over a reversed copy of the coefficients with forward strides, and the Rice cost search over zigzag values computed once; this took the Ada encode from 260.02 s to 167.90 s and the Haskell + SPARK build at 16 threads from 49.95 s to 27.65 s, with the same bytes. The pure Haskell time at 16 threads was 59.56 s in one run and 40.57 s in the next, with nothing else on the machine in the second, while the Ada time moved by 0.3 s. The table holds the run after the groups were framed.
+These are level 4 times, with the per-block CRCs. The encoder codes every node of each group's split tree, up to 15 blocks per group for each of up to four signals, and tries every predictor, 32 orders of linear prediction and 11 coefficient precisions on each block. Before linear prediction, back-references, stereo modes and split blocks, the Ada encoder took 11.26 s and decoding 1.46 s. The Rice parameter search starts from the bit length of the mean code value and walks to the least cost, which the convexity of the cost allows; it finds the same parameter as a walk from zero, and took that encoder from 11.26 s to 9.48 s. Decoding stays near 2 s: only blocks that reach back before themselves wait for earlier samples, and Haskell decodes all other blocks in parallel first. The residual pass of linear prediction runs over a reversed copy of the coefficients with forward strides, and the Rice cost search over zigzag values computed once; this took the Ada encode from 260.02 s to 167.90 s and the Haskell + SPARK build at 16 threads from 49.95 s to 27.65 s, with the same bytes. The pure Haskell time at 16 threads was 59.56 s in one run and 40.57 s in the next, with nothing else on the machine in the second, while the Ada time moved by 0.3 s. The table holds the run with the adaptive binary code, which costs the Ada encoder 11% and the Ada decoder 2.3 s (2.70 s to 5.03 s): a range decoder step per modeled bit against a count of leading zeros per value.
 
 The Haskell side uses unboxed vectors, whose loops fuse without intermediate arrays; strict, unpacked writer state; `countLeadingZeros` for unary and bit-length codes; and decoding from a 32-bit peek instead of bit by bit. Ada and Haskell compute the linear prediction analysis with the same 64-bit floating-point operations in the same order. Parallelism comes from sparks over pure functions, so the output cannot depend on scheduling. The executables run with `-N -A4m`; a 4 MB allocation area measured faster than 64 MB. `bench.sh` produces the table.
 
@@ -200,19 +201,21 @@ The Haskell side uses unboxed vectors, whose loops fuse without intermediate arr
 
 | This work | Bytes |
 |---|---|
-| Block decoder with the CRC, Cortex-M4 Thumb-2, `-Os`, run-time checks on | 8,064 code, 506 read-only data |
-| Block decoder with the CRC, Cortex-M4 Thumb-2, `-Os -gnatp` (checks the proof makes redundant) | 6,074 code, 446 read-only data |
-| Block encoder, Cortex-M4 Thumb-2, `-Os -gnatp` | 6,916 code, and libgcc's software double precision |
+| Block decoder with the CRC and the adaptive code, Cortex-M4 Thumb-2, `-Os`, run-time checks on | 10,048 code |
+| The same, `-Os -gnatp` (checks the proof makes redundant) | 7,668 code |
+| Block decoder before the adaptive code, measured the same way, `-Os -gnatp` | 6,316 code (8,396 with checks on) |
+| Block encoder with the adaptive code, Cortex-M4 Thumb-2, `-Os -gnatp` | 11,328 code, and libgcc's software double precision |
+| Read-only data of the five units, `-Os -gnatp` | 521 (637 with checks on) |
 | `libblockcodec.so`, x86-64, stripped, Ada runtime included | 251,304 |
 | `codec_main`, x86-64, stripped, needs only libc | 675,368 |
 | `huffman-audio`, Haskell, x86-64, stripped, needs libgmp | 6,026,288 |
 | `huffman-audio-hybrid`, x86-64, stripped, needs `libblockcodec.so` and libgmp | 5,977,440 |
 
-The tool rows hold encoders, container handling and command-line front ends as well as decoders. The decoder rows cover `Block_Codec.Decode` with its Rice, run-length and linear prediction readers and the adaptive stage, `Canonical_Decoding.Decode`, `Checksums` and the bit reader, built with GNAT 16.1 for `arm-eabi` and the `light-cortex-m4` runtime. Before linear prediction the decoder was 3,370 bytes with checks off; linear prediction added about 1.1 KB, the adaptive stage and the CRC about 1.6 KB. The encoder's linear prediction analysis works in 64-bit floating point, which the Cortex-M4's single-precision FPU leaves to libgcc. The block rows leave out the stream layer of split trees and stereo modes in `codec_main.adb`. `sizes.sh` produces the tool table.
+The tool rows hold encoders, container handling and command-line front ends as well as decoders. The decoder rows cover `Block_Codec.Decode` with its Rice, run-length and linear prediction readers and the adaptive stage, `Canonical_Decoding.Decode`, `Checksums` and the bit reader, built with GNAT 16.1 for `arm-eabi` and the `light-cortex-m4` runtime, each unit with `-ffunction-sections` and the sections summed by subprogram role, so the encoder's subprograms in the same unit stay out of the decoder rows. Before linear prediction the decoder was 3,370 bytes with checks off; linear prediction added about 1.1 KB, the adaptive stage and the CRC about 1.6 KB, and the adaptive binary code 1.35 KB: its range decoder, the reader and the logarithm. The encoder's linear prediction analysis works in 64-bit floating point, which the Cortex-M4's single-precision FPU leaves to libgcc. The block rows leave out the stream layer of split trees and stereo modes in `codec_main.adb`. `sizes.sh` produces the tool table.
 
 ### Proof
 
-gnatprove 15.1 at level 2 proves the block decoder, `Canonical_Decoding`, `Checksums` and `Bit_Streams` free of run-time errors for any input content, given the preconditions on the buffer bounds and the range of the earlier samples: 517 checks, 55 by flow analysis and 462 by the provers (370 run-time checks, 32 assertions, 60 contracts), none unproved. The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample, and of 256 products of a 16-bit weight and a 38-bit residual, from the loop invariants alone. The encoder is outside SPARK.
+gnatprove 15.1 at level 2 proves the block decoder, `Canonical_Decoding`, `Checksums`, `Range_Coding` and `Bit_Streams` free of run-time errors for any input content, given the preconditions on the buffer bounds and the range of the earlier samples: 629 checks, 73 by flow analysis (55 initializations, 18 terminations) and 556 by the provers (425 run-time checks, 51 assertions, 79 contracts, 1 termination), none unproved. The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample, and of 256 products of a 16-bit weight and a 38-bit residual, from the loop invariants alone; the range decoder's product of a 20-bit step and a 12-bit probability is bounded by a chain of assertions in signed arithmetic. The encoder is outside SPARK.
 
 ## Hardware notes
 

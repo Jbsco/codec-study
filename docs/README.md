@@ -14,5 +14,5 @@ One page per aspect of the block codec, each with the method, its measured effec
 | [integrity.md](integrity.md) | CRC-16 per block, per group and of the header, what damage it finds, finding the next group again | 0.003 bits per sample |
 | [container.md](container.md) | the header, metadata, framed groups, seek points and segments; what framing and seeking cost | 15 bytes per group, 0.28 percent at level 4 |
 | [float.md](float.md) | float samples as integers or as ordered bit patterns | float orchestra costs what the integer file costs |
-| [decoder-cost.md](decoder-cost.md) | code size, memory, operations per sample, proof, parallel decoding | decoder 4.4 KB on a Cortex-M4; 517 proved checks |
+| [decoder-cost.md](decoder-cost.md) | code size, memory, operations per sample, proof, parallel decoding | decoder 7.7 KB on a Cortex-M4; 629 proved checks |
 | [learned-decisions.md](learned-decisions.md) | a gate network for an encoder decision, and why a rule won | the split decision is 4.9 percent of roots; a 2-bit spread rule matches the network |

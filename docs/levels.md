@@ -19,13 +19,14 @@ Two estimates replace exhaustive search at the lower levels. The order estimate 
 
 | Level | Mean bits per sample | Coded corpus | Encode, Ada, 1 thread | Encode, Haskell, 16 threads | Decode, Ada |
 |---|---|---|---|---|---|
-| 0 | 7.519 | 47.35 MB | 4.9 s | 0.59 s | 1.61 s |
-| 1 | 7.180 | 42.73 MB | 10.7 s | 1.16 s | 2.08 s |
-| 2 | 7.145 | 42.56 MB | 31.0 s | 4.61 s | 2.08 s |
-| 3 | 7.111 | 42.26 MB | 99.8 s | 19.68 s | 2.08 s |
-| 4 | 7.095 | 42.18 MB | 243.5 s | 52.75 s | 2.00 s |
+| 0 | 7.490 | 47.09 MB | 9.0 s | 0.97 s | 5.00 s |
+| 1 | 7.149 | 42.52 MB | 13.0 s | 1.45 s | 5.35 s |
+| 2 | 7.117 | 42.36 MB | 32.7 s | 8.21 s | 5.54 s |
+| 3 | 7.085 | 42.08 MB | 86.6 s | 15.68 s | 5.24 s |
+| 4 | 7.058 | 41.97 MB | 191.8 s | 68.20 s | 5.47 s |
+| 5 | 7.045 | 41.71 MB | 1803.5 s | 921.78 s | 683.94 s |
 
-Level 1 encodes the corpus 23 times faster than level 4 for 1.3 percent more bytes; the one estimated order keeps most of linear prediction's gain. Level 3 comes within 0.2 percent of level 4 in 41 percent of its time. Decoding costs about the same at every level from 1 up, because the decoder does one predictor's work per block however the encoder found it. These numbers predate the CRCs and the level-5 flag bit, which add 0.003 and about 0.01 bits per sample at level 4.
+Level 1 encodes the corpus 15 times faster than level 4 for 1.3 percent more bytes; the one estimated order keeps most of linear prediction's gain. Level 3 comes within 0.3 percent of level 4 in 45 percent of its time. Decoding costs about the same at every level from 0 to 4, 5 to 6 s with the adaptive binary code against 2.3 s before it, because the decoder does one predictor's work per block however the encoder found it; level 5 is the exception, since its adaptive stage runs in the decoder too. These numbers are from the run with the container and the adaptive binary code, from `results/levels.txt`.
 
 Where the encoder's time goes, from a profile of the first linear-prediction encoder on the 48 kHz speech file: the residual pass per candidate order took 53 percent, the Rice parameter search 14 percent, the run-length symbol pass 4 percent. Two fixes with no change to the stream, a bit-length by halving instead of a 64-step loop and a floor shift by logical shifts, took a quarter off the encode time.
 
