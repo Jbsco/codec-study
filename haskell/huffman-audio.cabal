@@ -2,7 +2,7 @@ cabal-version: 3.0
 name:          huffman-audio
 version:       0.1.0.0
 synopsis:      Parallel lossless audio coders built on Rice and canonical Huffman codes
-license:       NONE
+license:       MIT
 build-type:    Simple
 
 common common-options

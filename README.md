@@ -246,3 +246,7 @@ The hybrid executable finds the SPARK library through `LD_LIBRARY_PATH=ada/lib`,
 - ITU-T T.81 (JPEG), section F.1.2.2: run-length and size symbols for AC coefficients.
 - CCSDS 121.0-B-3, Lossless Data Compression, 2020.
 - D. A. Huffman, "A Method for the Construction of Minimum-Redundancy Codes", Proceedings of the IRE 40(9), 1952.
+
+## License
+
+Code, documentation and corpus are licensed separately: code under MIT, documentation and `results/` tables under CC BY 4.0, generated test signals under CC0 1.0, and recording excerpts under their sources' public-domain or CC0 status, listed in the corpus table above. `LICENSE.md` states this with its reasoning, and `LICENSES/` contains the texts.
