@@ -8,7 +8,7 @@ Every block ends in one of three codes for its residuals, chosen by exact bit co
 - Run-length Huffman codes, after JPEG's AC coefficient coding (ITU-T T.81, F.1.2.2): each symbol is a run of up to 15 zeros and the next value's bit length, with a symbol for sixteen zeros and one for end of block. Codes are canonical (RFC 1951, 3.2.2), so the table is the symbol list and a 5-bit length per symbol. A value's sign and its bits below the leading one follow the code.
 - Adaptive binary code: each zigzag value's quotient by 2^K in unary and its remainder's top bit go through a binary range coder, LZMA's, each bit with a 12-bit probability that moves toward the coded bit by a 32nd of the distance. One probability per context of K and position in the unary part; remaining K - 1 bits cost one bit each. K starts from a 6-bit field and then follows the bit length of a running mean with a window of 16.
 
-The adaptive model restarts at every block, so blocks still decode on their own and in parallel. The encoder runs this code on residuals the search chose and keeps it when shorter than the chosen Rice or run-length code. The decoder reads exactly the bytes the encoder wrote.
+The adaptive model restarts at every block, so blocks still decode on their own and in parallel. The encoder runs this code on residuals the search chose, at levels 2 and up, and keeps it when shorter than the chosen Rice or run-length code; levels 0 and 1 leave it out, so their streams decode at the prefix codes' speed. The decoder reads exactly the bytes the encoder wrote.
 
 ## Measured effect
 

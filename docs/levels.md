@@ -2,13 +2,13 @@
 
 ## Method
 
-The encoder searches at six levels, and every level writes the same format, so one decoder reads them all. A level sets how deep it splits, how it picks a stereo mode, how many linear prediction orders it codes in full, its lowest coefficient precision, and whether it tries the adaptive stage.
+The encoder searches at six levels, and every level writes the same format, so one decoder reads them all. A level sets how deep it splits, how it picks a stereo mode, how many linear prediction orders it codes in full, its lowest coefficient precision, whether it tries the adaptive binary code, and whether it tries the adaptive stage.
 
 | Level | Search |
 |---|---|
 | 0 | 4096-frame blocks; polynomial, delay and tiers; left and right |
 | 1 | and 1 estimated order of linear prediction at 15 bits; stereo mode estimated |
-| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048 |
+| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048; the adaptive binary code |
 | 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded |
 | 4 | and every order and precision 5 to 15; blocks down to 512 |
 | 5 | and the adaptive stage, every tap count and warm-up |
@@ -17,20 +17,20 @@ Two estimates replace exhaustive search at the lower levels. The order estimate 
 
 ## Measured
 
-Whole corpus, single runs on an AMD Ryzen 7 7700X:
+Whole corpus, single runs on an AMD Ryzen 7 7700X that was also running a game server and a browser; the Ada level-4 time matched an idle run within 2 percent:
 
 | Level | Mean bits per sample | Coded corpus | Encode, Ada, 1 thread | Encode, Haskell, 16 threads | Decode, Ada |
 |---|---|---|---|---|---|
-| 0 | 7.490 | 47.09 MB | 9.0 s | 0.97 s | 5.00 s |
-| 1 | 7.149 | 42.52 MB | 13.0 s | 1.45 s | 5.35 s |
-| 2 | 7.117 | 42.36 MB | 32.7 s | 8.21 s | 5.54 s |
-| 3 | 7.085 | 42.08 MB | 86.6 s | 15.68 s | 5.24 s |
-| 4 | 7.058 | 41.97 MB | 191.8 s | 68.20 s | 5.47 s |
-| 5 | 7.045 | 41.71 MB | 1803.5 s | 921.78 s | 683.94 s |
+| 0 | 7.550 | 47.49 MB | 5.7 s | 0.73 s | 1.80 s |
+| 1 | 7.211 | 42.87 MB | 10.2 s | 1.29 s | 2.57 s |
+| 2 | 7.117 | 42.36 MB | 32.2 s | 5.52 s | 5.40 s |
+| 3 | 7.085 | 42.08 MB | 90.2 s | 18.77 s | 5.39 s |
+| 4 | 7.058 | 41.97 MB | 189.7 s | 50.16 s | 5.19 s |
+| 5 | 7.045 | 41.71 MB | 1853.0 s | 928.86 s | 683.89 s |
 
-Level 1 encodes the corpus 15 times faster than level 4 for 1.3 percent more bytes; one estimated order keeps most of linear prediction's gain. Level 3 comes within 0.3 percent of level 4 in 45 percent of its time.
+Level 1 encodes the corpus 19 times faster than level 4 for 2.2 percent more bytes; one estimated order keeps most of linear prediction's gain. Level 3 comes within 0.3 percent of level 4 in 48 percent of its time.
 
-Decoding costs about the same at levels 0 to 4, 5 to 6 s with the adaptive binary code against 2.3 s before it, because a decoder does one predictor's work per block however the encoder found it. Level 5 is the exception, since its adaptive stage runs in the decoder too. These numbers come from the run with container and adaptive binary code, in `results/levels.txt`.
+Decoding costs 1.8 and 2.6 s at levels 0 and 1, which leave the adaptive binary code out, and 5.2 to 5.4 s from level 2, where the encoder takes that code wherever it is shorter and the decoder runs a range decoder step per modeled bit. Otherwise a decoder does one predictor's work per block however the encoder found it; level 5 adds its adaptive stage on top. These numbers come from the run with the adaptive binary code left to levels 2 and up, in `results/levels.txt`.
 
 Where encoder time goes, from a profile of the first linear-prediction encoder on the 48 kHz speech file: residual pass per candidate order 53 percent, Rice parameter search 14 percent, run-length symbol pass 4 percent. Two fixes with no change to the stream, a bit length by halving instead of a 64-step loop and a floor shift by logical shifts, took a quarter off encode time.
 

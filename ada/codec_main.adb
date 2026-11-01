@@ -268,14 +268,15 @@ procedure Codec_Main is
 
    --  The search at each level: the deepest tree level the encoder tries, how it picks a stereo mode (0 left and
    --  right only, 1 by an estimate from second differences, 2 by coding all four signals), and its linear
-   --  prediction effort, and whether it tries the adaptive stage. Every level writes the same format.
+   --  prediction effort, whether it tries the adaptive stage and whether it tries the adaptive binary code. Every level
+   --  writes the same format.
    type Level_Setting is record
       Deepest, Stereo_Search : Natural;
       Effort : Effort_Type;
    end record;
    Levels : constant array (0 .. 5) of Level_Setting :=
-     [(0, 0, (0, 15, False)), (0, 1, (1, 15, False)), (1, 1, (2, 12, False)), (2, 2, (4, 9, False)), (3, 2, (32, 5, False)),
-      (3, 2, (32, 5, True))];
+     [(0, 0, (0, 15, False, False)), (0, 1, (1, 15, False, False)), (1, 1, (2, 12, False, True)), (2, 2, (4, 9, False, True)),
+      (3, 2, (32, 5, False, True)), (3, 2, (32, 5, True, True))];
 
    --  The base-2 logarithm of a positive X within 3e-6, as in the block encoder.
    function Log2 (X : Long_Float) return Long_Float is

@@ -51,7 +51,7 @@ Generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the express
 A block codes 1 to 4096 samples of one signal, as one constant value or as a predictor and a residual code. Shared low bits are removed first. `docs/format.md` lists every field.
 
 - Predictors: polynomial order 0 to 4; a delay to an exact repeat of the block's first 32 samples, within the block or in the 16,384 samples before it; tiers of pairs; linear prediction of order 1 to 32 at a coefficient precision of 5 to 15 bits, with an adaptive sign-sign LMS stage after it at level 5.
-- Residual codes: Rice; run-length Huffman after JPEG's AC symbols, with a canonical code table per block; an adaptive binary code through LZMA's range coder, with a probability per context.
+- Residual codes: Rice; run-length Huffman after JPEG's AC symbols, with a canonical code table per block; an adaptive binary code through LZMA's range coder, with a probability per context, tried from level 2 up.
 - Encoder: computes the exact size of every predictor and code and writes the shortest. Linear prediction analysis runs Levinson-Durbin to order 32 over a windowed block with the same floating-point operations in Ada and Haskell, so both choose the same coefficients.
 
 A stream is a header and groups of 4096 frames. The header contains the magic `BLKC`, format fields, metadata with tags and a seek table, and a CRC-16. Each group is framed by a sync word, its byte length, its first frame, a split tree with a stereo mode per channel pair, a byte length and a CRC-16 per block, and a CRC-16 over that framing.
@@ -145,18 +145,18 @@ Two estimates replace exhaustive search at the low levels: the order whose Levin
 
 | Level | Search | Mean bits per sample | Coded corpus | Of PCM | Encode, Ada, 1 thread | Decode, Ada | Encode, Haskell, 16 threads | Decode, Haskell |
 |---|---|---|---|---|---|---|---|---|
-| 0 | 4096-frame blocks; polynomial, delay and tiers; left and right | 7.490 | 47.09 MB | 40.0% | 9.0 s | 5.00 s | 0.97 s | 1.55 s |
-| 1 | and 1 estimated order of linear prediction at 15 bits; stereo mode estimated | 7.149 | 42.52 MB | 36.1% | 13.0 s | 5.35 s | 1.45 s | 1.54 s |
-| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048 | 7.117 | 42.36 MB | 36.0% | 32.7 s | 5.54 s | 8.21 s | 1.99 s |
-| 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded | 7.085 | 42.08 MB | 35.7% | 86.6 s | 5.24 s | 15.68 s | 1.59 s |
-| 4 | and every order and precision 5 to 15; blocks down to 512 | 7.058 | 41.97 MB | 35.6% | 191.8 s | 5.47 s | 68.20 s | 1.96 s |
-| 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.045 | 41.71 MB | 35.4% | 1803.5 s | 683.94 s | 921.78 s | 38.18 s |
+| 0 | 4096-frame blocks; polynomial, delay and tiers; left and right | 7.550 | 47.49 MB | 40.3% | 5.7 s | 1.80 s | 0.73 s | 0.45 s |
+| 1 | and 1 estimated order of linear prediction at 15 bits; stereo mode estimated | 7.211 | 42.87 MB | 36.4% | 10.2 s | 2.57 s | 1.29 s | 0.66 s |
+| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048; the adaptive binary code | 7.117 | 42.36 MB | 36.0% | 32.2 s | 5.40 s | 5.52 s | 1.84 s |
+| 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded | 7.085 | 42.08 MB | 35.7% | 90.2 s | 5.39 s | 18.77 s | 1.74 s |
+| 4 | and every order and precision 5 to 15; blocks down to 512 | 7.058 | 41.97 MB | 35.6% | 189.7 s | 5.19 s | 50.16 s | 1.76 s |
+| 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.045 | 41.71 MB | 35.4% | 1853.0 s | 683.89 s | 928.86 s | 38.31 s |
 
-Level 1 encodes the corpus 15 times faster than level 4 in Ada, 13.0 s against 191.8 s, for 1.3% more bytes. Level 3 comes within 0.3% of level 4 in 45% of its time.
+Level 1 encodes the corpus 19 times faster than level 4 in Ada, 10.2 s against 189.7 s, for 2.2% more bytes. Level 3 comes within 0.3% of level 4 in 48% of its time.
 
-Decoding takes 5 to 6 s in Ada at levels 0 to 4, 2.3 s before the adaptive binary code, which the decoder pays for at every level since the encoder takes it wherever it is shorter. Level 5 takes 0.6% of the bytes off level 4 and multiplies the decoder's time by about 125 in Ada and 20 in Haskell, where only blocks that train on earlier samples wait for one another.
+Levels 0 and 1 leave the adaptive binary code out, so their streams decode in 1.8 and 2.6 s in Ada. From level 2 the encoder takes it wherever it is shorter, and the decoder pays 5.2 to 5.4 s for the corpus, a range decoder step per modeled bit. Level 5 takes 0.6% of the bytes off level 4 and multiplies the decoder's time by about 130 in Ada and 22 in Haskell, where only blocks that train on earlier samples wait for one another.
 
-Times are single runs on an AMD Ryzen 7 7700X. `levels.sh` produces the table and `results/levels.txt`, every file at every level, and checks that Ada and Haskell write the same bytes.
+Times are single runs on an AMD Ryzen 7 7700X that was also running a game server and a browser; the Ada level-4 time matched an idle run within 2%. `levels.sh` produces the table and `results/levels.txt`, every file at every level, and checks that Ada and Haskell write the same bytes.
 
 ### Side information
 
