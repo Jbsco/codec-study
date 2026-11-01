@@ -1,5 +1,6 @@
 with Interfaces; use Interfaces;
 with Canonical_Decoding;
+with Range_Coding;
 
 package body Block_Codec with SPARK_Mode is
 
@@ -19,6 +20,13 @@ package body Block_Codec with SPARK_Mode is
    Sixteen_Zeros : constant := 15 * 64;
    Match_Length : constant := 32;
    Longest_Code : constant := 31;
+   Adaptive_Window : constant := 4;
+
+   --  The adaptive binary code's contexts: the current Rice parameter, capped, and the position in the unary
+   --  quotient, capped at 7, with slot 8 for the top bit of the remainder.
+   subtype Context_K is Natural range 0 .. 23;
+   subtype Context_J is Natural range 0 .. 8;
+   type Context_Probabilities is array (Context_K, Context_J) of Range_Coding.Probability;
 
    subtype Width_Bits is Positive range 1 .. 33;
    subtype Sample is Long_Long_Integer range -(2**36) .. 2**36;
@@ -81,6 +89,20 @@ package body Block_Codec with SPARK_Mode is
    function Magnitude (V : Long_Long_Integer) return Unsigned_64 is
      (if V >= 0 then Unsigned_64 (V) else Unsigned_64 (-(V + 1)) + 1)
      with Pre => In_Range (V, 40);
+
+   --  The floor of the base-2 logarithm of V, 0 for V of 0 or 1.
+   function Log_Floor (V : Unsigned_64) return Natural with Post => Log_Floor'Result <= 63 is
+      T : Unsigned_64 := V;
+      B : Natural := 0;
+   begin
+      while T > 1 loop
+         pragma Loop_Invariant (B <= 63 and then T = Shift_Right (V, B));
+         pragma Loop_Variant (Decreases => T);
+         T := Shift_Right (T, 1);
+         B := B + 1;
+      end loop;
+      return B;
+   end Log_Floor;
 
    function Bit_Length (U : Unsigned_64) return Natural with SPARK_Mode => Off is
       Steps : constant array (1 .. 6) of Natural := [32, 16, 8, 4, 2, 1];
@@ -273,6 +295,51 @@ package body Block_Codec with SPARK_Mode is
          end;
       end loop;
    end Put_Rice;
+
+   --  Residuals in the adaptive binary code: an initial Rice parameter in 6 bits, then each value's quotient
+   --  by 2**K in unary and the top bit of its remainder through the range coder with a probability per context,
+   --  and the rest of the remainder direct; K follows a running mean of the values. Stops once Pos passes
+   --  Limit, since the caller only wants to know whether this code is shorter.
+   procedure Put_Adaptive (R : Sample_Buffer; K0 : Natural; Width : Width_Bits; Limit : Natural; Output : in out Byte_Array;
+                           Pos : in out Natural)
+     with SPARK_Mode => Off
+   is
+      E : Range_Coding.Encoder;
+      P : Context_Probabilities := [others => [others => Range_Coding.Half]];
+      K : Natural := Natural'Min (K0, Width + 5);
+      S : Unsigned_64 := Shift_Left (Shift_Left (1, K), Adaptive_Window);
+   begin
+      Put (Output, Pos, Unsigned_64 (K), 6);
+      for V of R loop
+         declare
+            U : constant Unsigned_64 := Zigzag (V);
+            Q : constant Unsigned_64 := Shift_Right (U, K);
+            CK : constant Context_K := Natural'Min (K, Context_K'Last);
+            J : Unsigned_64 := 0;
+         begin
+            while J < Q loop
+               Range_Coding.Encode_Bit (E, P (CK, Natural (Unsigned_64'Min (J, 7))), True, Output, Pos);
+               J := J + 1;
+               if Pos > Limit then
+                  return;
+               end if;
+            end loop;
+            Range_Coding.Encode_Bit (E, P (CK, Natural (Unsigned_64'Min (Q, 7))), False, Output, Pos);
+            if K > 0 then
+               Range_Coding.Encode_Bit (E, P (CK, 8), (Shift_Right (U, K - 1) and 1) = 1, Output, Pos);
+               for B in reverse 0 .. K - 2 loop
+                  Range_Coding.Encode_Direct (E, (Shift_Right (U, B) and 1) = 1, Output, Pos);
+               end loop;
+            end if;
+            if Pos > Limit then
+               return;
+            end if;
+            S := S + U - Shift_Right (S, Adaptive_Window);
+            K := Natural'Min (Log_Floor (Shift_Right (S, Adaptive_Window) + 1), Width + 5);
+         end;
+      end loop;
+      Range_Coding.Flush (E, Output, Pos);
+   end Put_Adaptive;
 
    --  Elias gamma code of N, at least one: the bit length of N less one in zeros, then N.
    function Gamma_Length (N : Positive) return Natural is (2 * Bit_Length (Unsigned_64 (N)) - 1)
@@ -727,8 +794,8 @@ package body Block_Codec with SPARK_Mode is
                      Bits := Head + 6 + Cr;
                      Choice := (Best_Order, Precision, Shift, Kr, Kw, True, Q, False, 0, 0);
                   end if;
-                  if Head + Run < Bits then
-                     Bits := Head + Run;
+                  if Head + 1 + Run < Bits then
+                     Bits := Head + 1 + Run;
                      Choice := (Best_Order, Precision, Shift, Kr, Kw, False, Q, False, 0, 0);
                   end if;
                end;
@@ -768,8 +835,8 @@ package body Block_Codec with SPARK_Mode is
                               Bits := Head + 6 + Ce;
                               Choice := (Best_Order, Choice.Precision, Choice.Shift, Ke, 0, True, Choice.Q, True, Tap_Code, Warm_Code);
                            end if;
-                           if Head + Run + Margin < Bits + (if Choice.Lms then Margin else 0) then
-                              Bits := Head + Run;
+                           if Head + 1 + Run + Margin < Bits + (if Choice.Lms then Margin else 0) then
+                              Bits := Head + 1 + Run;
                               Choice := (Best_Order, Choice.Precision, Choice.Shift, Ke, 0, False, Choice.Q, True, Tap_Code, Warm_Code);
                            end if;
                         end;
@@ -800,8 +867,43 @@ package body Block_Codec with SPARK_Mode is
             Back : constant Natural := Find_Back (X, History);
             From_History : Boolean := False;
             Best_Bits, Lpc_Bits : Unsigned_64 := Unsigned_64'Last;
-            Best_Predictor, Best_Coder, Best_K : Natural := 0;
+            Best_Predictor, Best_Coder : Natural := 0;
             Lpc : Lpc_Choice;
+
+            --  The residuals in the chosen code, Rice or run-length, unless the adaptive code is shorter, flag
+            --  included: 0 for Rice, 10 for run-length, 11 for the adaptive code.
+            procedure Put_Residuals (R : Sample_Buffer; Rice : Boolean) is
+               K : Natural;
+               Rice_Bits, Chosen : Unsigned_64;
+               Scratch : Byte_Array (0 .. Bound (N) + 8);
+               Scratch_Pos : Natural := 0;
+            begin
+               Rice_Cost (R, K, Rice_Bits);
+               Chosen := (if Rice then 1 + 6 + Rice_Bits else 2 + Run_Cost (R));
+               Put_Adaptive (R, K, Depth - Shift, Natural (Unsigned_64'Min (Chosen, 2**30)), Scratch, Scratch_Pos);
+               if 2 + Unsigned_64 (Scratch_Pos) < Chosen then
+                  Put (Output, Pos, 3, 2);
+                  declare
+                     From : Natural := 0;
+                     Field : Unsigned_64;
+                  begin
+                     while From < Scratch_Pos loop
+                        declare
+                           Step : constant Natural := Natural'Min (64, Scratch_Pos - From);
+                        begin
+                           Get (Scratch, From, Field, Step);
+                           Put (Output, Pos, Field, Step);
+                        end;
+                     end loop;
+                  end;
+               elsif Rice then
+                  Put (Output, Pos, 0, 1);
+                  Put_Rice (R, K, Output, Pos);
+               else
+                  Put (Output, Pos, 2, 2);
+                  Put_Run (R, Output, Pos);
+               end if;
+            end Put_Residuals;
          begin
             for V of X loop
                Common := Common or Unsigned_64'Mod (V);
@@ -827,10 +929,9 @@ package body Block_Codec with SPARK_Mode is
                         Best_Bits := Header + 6 + Rice;
                         Best_Predictor := Predictor;
                         Best_Coder := 0;
-                        Best_K := K;
                      end if;
-                     if Header + Run < Best_Bits then
-                        Best_Bits := Header + Run;
+                     if Header + 1 + Run < Best_Bits then
+                        Best_Bits := Header + 1 + Run;
                         Best_Predictor := Predictor;
                         Best_Coder := 1;
                      end if;
@@ -849,11 +950,10 @@ package body Block_Codec with SPARK_Mode is
                      Best_Bits := 26 + 6 + Rice;
                      Best_Predictor := Delay_Predictor;
                      Best_Coder := 0;
-                     Best_K := K;
                      From_History := True;
                   end if;
-                  if 26 + Run < Best_Bits then
-                     Best_Bits := 26 + Run;
+                  if 26 + 1 + Run < Best_Bits then
+                     Best_Bits := 26 + 1 + Run;
                      Best_Predictor := Delay_Predictor;
                      Best_Coder := 1;
                      From_History := True;
@@ -892,12 +992,7 @@ package body Block_Codec with SPARK_Mode is
                      Lms_Pass (Seeded (Seeded'Last - N + 1 - Warm_Up .. Seeded'Last), Seeded'Last - N + 1, Tap_Choices (Lpc.Tap_Code),
                                Depth - Shift, R (0 .. N - 1), Fits);
                   end;
-                  Put (Output, Pos, (if Lpc.Rice then 0 else 1), 1);
-                  if Lpc.Rice then
-                     Put_Rice (R (0 .. N - 1), Lpc.K, Output, Pos);
-                  else
-                     Put_Run (R (0 .. N - 1), Output, Pos);
-                  end if;
+                  Put_Residuals (R (0 .. N - 1), Lpc.Rice);
                else
                   declare
                      Warm : Sample_Buffer (0 .. Lpc.Order - 1);
@@ -906,12 +1001,7 @@ package body Block_Codec with SPARK_Mode is
                      Lpc_Residuals (Y, Lpc.Q, Lpc.Order, Lpc.Shift, Depth - Shift, Warm, R (0 .. N - Lpc.Order - 1), Fits);
                      Put_Rice (Warm, Lpc.Warm_K, Output, Pos);
                   end;
-                  Put (Output, Pos, (if Lpc.Rice then 0 else 1), 1);
-                  if Lpc.Rice then
-                     Put_Rice (R (0 .. N - Lpc.Order - 1), Lpc.K, Output, Pos);
-                  else
-                     Put_Run (R (0 .. N - Lpc.Order - 1), Output, Pos);
-                  end if;
+                  Put_Residuals (R (0 .. N - Lpc.Order - 1), Lpc.Rice);
                end if;
             else
                Put (Output, Pos, Unsigned_64 (Best_Predictor), 3);
@@ -923,17 +1013,12 @@ package body Block_Codec with SPARK_Mode is
                      Put (Output, Pos, Unsigned_64 (Delay_Length), 12);
                   end if;
                end if;
-               Put (Output, Pos, Unsigned_64 (Best_Coder), 1);
                if From_History then
                   Back_Residuals (Y, History, Back, Shift, R);
                else
                   Residuals (Y, Best_Predictor, Delay_Length, R);
                end if;
-               if Best_Coder = 0 then
-                  Put_Rice (R, Best_K, Output, Pos);
-               else
-                  Put_Run (R, Output, Pos);
-               end if;
+               Put_Residuals (R, Best_Coder = 0);
             end if;
          end;
       end if;
@@ -1002,6 +1087,92 @@ package body Block_Codec with SPARK_Mode is
       end loop;
       Status := Success;
    end Get_Rice;
+
+   --  Residuals in the adaptive binary code, the mirror of Put_Adaptive: the first Rice parameter in 6 bits,
+   --  then each value's quotient in unary and its remainder's top bit through the range coder, the rest direct.
+   procedure Get_Adaptive (Input : Byte_Array; Pos : in out Natural; Width : Width_Bits; R : in out Residual_Buffer;
+                           Status : out Status_Type)
+     with Pre => Valid_Buffer (Input) and then Pos <= Input'Length * 8,
+       Post => Pos <= Input'Length * 8
+   is
+      Total : constant Natural := Input'Length * 8;
+      D : Range_Coding.Decoder;
+      P : Context_Probabilities := [others => [others => Range_Coding.Half]];
+      Field : Unsigned_64;
+      K : Natural;
+      S : Unsigned_64;
+      Ok, Bit : Boolean;
+   begin
+      Status := Truncated_Input;
+      if Total - Pos < 6 then
+         return;
+      end if;
+      Get (Input, Pos, Field, 6);
+      if Field > Unsigned_64 (Width) + 5 then
+         Status := Bad_Data;
+         return;
+      end if;
+      K := Natural (Field);
+      S := Shift_Left (Shift_Left (1, K), Adaptive_Window);
+      Range_Coding.Start (D, Input, Pos, Ok);
+      if not Ok then
+         return;
+      end if;
+      for I in R'Range loop
+         pragma Loop_Invariant (Pos <= Total and then K <= Width + 5 and then D.Span >= Range_Coding.Top);
+         declare
+            Q : Unsigned_64 := 0;
+            U : Unsigned_64;
+            CK : constant Context_K := Natural'Min (K, Context_K'Last);
+         begin
+            loop
+               pragma Loop_Invariant (Pos <= Total and then Q <= 2**40 and then D.Span >= Range_Coding.Top);
+               Range_Coding.Decode_Bit (D, P (CK, (if Q < 7 then Natural (Q) else 7)), Input, Pos, Bit, Ok);
+               if not Ok then
+                  return;
+               end if;
+               exit when not Bit;
+               if Q = 2**40 then
+                  Status := Bad_Data;
+                  return;
+               end if;
+               Q := Q + 1;
+            end loop;
+            if Q >= 2**(Width + 5 - K) then
+               Status := Bad_Data;
+               return;
+            end if;
+            U := Shift_Left (Q, K);
+            if K > 0 then
+               Range_Coding.Decode_Bit (D, P (CK, 8), Input, Pos, Bit, Ok);
+               if not Ok then
+                  return;
+               end if;
+               if Bit then
+                  U := U or Shift_Left (1, K - 1);
+               end if;
+               for B in reverse 0 .. K - 2 loop
+                  pragma Loop_Invariant (Pos <= Total and then D.Span >= Range_Coding.Top);
+                  Range_Coding.Decode_Direct (D, Input, Pos, Bit, Ok);
+                  if not Ok then
+                     return;
+                  end if;
+                  if Bit then
+                     U := U or Shift_Left (1, B);
+                  end if;
+               end loop;
+            end if;
+            if U >= 2**(Width + 5) then
+               Status := Bad_Data;
+               return;
+            end if;
+            R (I) := (if U mod 2 = 0 then Long_Long_Integer (U / 2) else -Long_Long_Integer (U / 2) - 1);
+            S := S + U - Shift_Right (S, Adaptive_Window);
+            K := Natural'Min (Log_Floor (Shift_Right (S, Adaptive_Window) + 1), Width + 5);
+         end;
+      end loop;
+      Status := Success;
+   end Get_Adaptive;
 
    procedure Get_Run (Input : Byte_Array; Pos : in out Natural; Width : Width_Bits; R : in out Residual_Buffer; Status : out Status_Type)
      with Pre => Valid_Buffer (Input) and then Pos <= Input'Length * 8 and then R'First = 0 and then R'Length in Block_Length
@@ -1236,7 +1407,15 @@ package body Block_Codec with SPARK_Mode is
          if Field = 0 then
             Get_Rice (Input, Pos, Width, R, Status);
          else
-            Get_Run (Input, Pos, Width, R, Status);
+            if Total - Pos < 1 then
+               return;
+            end if;
+            Get (Input, Pos, Field, 1);
+            if Field = 0 then
+               Get_Run (Input, Pos, Width, R, Status);
+            else
+               Get_Adaptive (Input, Pos, Width, R, Status);
+            end if;
          end if;
          if Status /= Success then
             return;
@@ -1388,7 +1567,15 @@ package body Block_Codec with SPARK_Mode is
          if Field = 0 then
             Get_Rice (Input, Pos, Width, R, Status);
          else
-            Get_Run (Input, Pos, Width, R, Status);
+            if Total - Pos < 1 then
+               return;
+            end if;
+            Get (Input, Pos, Field, 1);
+            if Field = 0 then
+               Get_Run (Input, Pos, Width, R, Status);
+            else
+               Get_Adaptive (Input, Pos, Width, R, Status);
+            end if;
          end if;
       end if;
       if Status /= Success then

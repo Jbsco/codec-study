@@ -121,7 +121,7 @@ procedure Codec_Main is
       Real_Text.Put (Value, Fore => 4, Aft => Aft, Exp => 0);
    end Put_Real;
 
-   type Kind_Counts is array (0 .. 11) of Natural;
+   type Kind_Counts is array (0 .. 12) of Natural;
 
    --  Bits of the coded blocks by role, and two estimates for LPC blocks: the coefficients in the better of Rice
    --  and Exp-Golomb codes with a per-block parameter, and the warm-up coded at the block's residual rate.
@@ -138,8 +138,8 @@ procedure Codec_Main is
       return L;
    end Bits_Of_Length;
 
-   --  Count the coding of the Size-byte block at byte Offset: constant, predictor 0 to 7, then Rice or run-length
-   --  codes, and add its bits by role to Side.
+   --  Count the coding of the Size-byte block at byte Offset: constant, predictor 0 to 7, then Rice, run-length or
+   --  adaptive codes, and add its bits by role to Side.
    procedure Count_Kind (Stream : Byte_Array; Offset, Size, Samples : Natural; Kinds : in out Kind_Counts; Side : in out Side_Counts) is
       Kind_Pos : Natural := Offset * 8;
       Field : Unsigned_64;
@@ -211,9 +211,13 @@ procedure Codec_Main is
          end;
       end if;
       Get (Stream, Kind_Pos, Field, 1);
-      Kinds (9 + Natural (Field)) := Kinds (9 + Natural (Field)) + 1;
+      if Field = 1 then
+         Get (Stream, Kind_Pos, Field, 1);
+         Field := Field + 1;
+      end if;
+      Kinds (9 + Natural (Field) + (if Field = 2 then 1 else 0)) := Kinds (9 + Natural (Field) + (if Field = 2 then 1 else 0)) + 1;
       Table_At := Kind_Pos;
-      if Field = 0 then
+      if Field = 0 or else Field = 2 then
          Kind_Pos := Kind_Pos + 6;
       else
          declare
@@ -1043,7 +1047,7 @@ begin
             Put (Kinds (K)'Image);
          end loop;
          Put_Line (", delay" & Kinds (6)'Image & ", tiers" & Kinds (7)'Image & ", LPC" & Kinds (8)'Image & "; Rice" & Kinds (9)'Image
-                   & ", run-length" & Kinds (10)'Image & "; adaptive stage" & Kinds (11)'Image
+                   & ", run-length" & Kinds (10)'Image & ", adaptive" & Kinds (12)'Image & "; adaptive stage" & Kinds (11)'Image
                    & (if Input.Is_Float then "; float as " & (if Mode (1) = 1 then "integers / 2**" & Scale (1)'Image else "ordered bits") else ""));
          Put_Line ("    bits: headers" & Side.Headers'Image & ", LPC coefficients" & Side.Coefficients'Image & ", LPC warm-up" & Side.Warm_Up'Image
                    & ", code tables" & Side.Tables'Image & ", residuals" & Side.Residuals'Image & ", framing"

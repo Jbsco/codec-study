@@ -30,6 +30,7 @@ library
     BlockCodec
     Checksum
     Blocks
+    RangeCoder
     Coding
     Parallel
     Report

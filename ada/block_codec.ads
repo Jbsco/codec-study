@@ -2,8 +2,9 @@
 --  low bits that every sample shares are removed: polynomial orders 0 to 4, the distance back to an exact repeat
 --  within the block or in the samples before it, tiers of pairs, or linear prediction of order 1 to 32 with
 --  quantized coefficients, with an optional adaptive stage after it that is trained on the samples before the
---  block. The residuals take Rice codes or run-length Huffman codes, and the encoder writes whichever
---  combination is shortest. A block that repeats or trains on the samples before it needs them to decode.
+--  block. The residuals take Rice codes, run-length Huffman codes or an adaptive binary code, and the encoder
+--  writes whichever combination is shortest. A block that repeats or trains on the samples before it needs them
+--  to decode.
 with Bit_Streams; use Bit_Streams;
 
 package Block_Codec with SPARK_Mode is

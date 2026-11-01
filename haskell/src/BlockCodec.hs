@@ -2,7 +2,7 @@
 -- holds a constant, or the residuals of one predictor after the low bits every sample shares are removed:
 -- polynomial orders 0 to 4, the distance back to an exact repeat within the block or in the samples before it,
 -- tiers of pairs, or linear prediction of order 1 to 32 with quantized coefficients. The residuals take Rice
--- codes or run-length Huffman codes, and the encoder writes whichever combination is shortest.
+-- codes, run-length Huffman codes or the adaptive binary code, and the encoder writes whichever is shortest.
 module BlockCodec (Effort (..), maxBlock, maxHistory, bound, log2', encodeBlock, decodeBlock, usesHistory) where
 
 import Control.Monad (foldM, forM_, when)
@@ -16,6 +16,7 @@ import qualified Data.Vector.Unboxed.Mutable as UM
 import Data.Word (Word32, Word64, Word8)
 
 import Bits
+import RangeCoder
 
 maxBlock, maxHistory :: Int
 maxBlock = 4096
@@ -276,6 +277,69 @@ putRice buf w0 k r = do
               w'' <- put buf w' 1 1
               putLong buf w'' u k) w1 r
 
+-- | The window of the adaptive code's running mean, as a shift.
+adaptiveWindow :: Int
+adaptiveWindow = 4
+
+logFloor :: Word64 -> Int
+logFloor v = if v <= 1 then 0 else 63 - countLeadingZeros v
+
+-- | Residuals in the adaptive binary code (ada: Put_Adaptive): the first Rice parameter in 6 bits, then each
+-- value's quotient in unary and the top bit of its remainder through the range coder with a probability per
+-- (parameter, position) context, the rest of the remainder direct; the parameter follows a running mean. The
+-- bytes hold the bits written, whose count is returned; coding stops once it passes the limit.
+adaptiveCode :: Int -> Int -> Int -> U.Vector Int -> (S.Vector Word8, Int)
+adaptiveCode k0 width limit r = runST $ do
+  buf <- SM.new (bound n + 9)
+  probs <- UM.replicate (24 * 9) half
+  let kStart = min k0 (width + 5)
+      ctx ck j = ck * 9 + j
+      bitsOf (W bytes _ pending) = 8 * bytes + pending
+      go !i !w !e !k !s
+        | i == n = flush buf w e
+        | bitsOf w > limit = pure w
+        | otherwise = do
+            let u = zigzag (U.unsafeIndex r i)
+                q = u `unsafeShiftR` k
+                ck = min k 23
+                unary !w' !e' !j
+                  | j >= q || bitsOf w' > limit = pure (w', e')
+                  | otherwise = encodeBit buf w' e' probs (ctx ck (fromIntegral (min j 7))) True >>= \(w'', e'') -> unary w'' e'' (j + 1)
+                direct !w' !e' !b
+                  | b < 0 = pure (w', e')
+                  | otherwise = encodeDirect buf w' e' (testBit u b) >>= \(w'', e'') -> direct w'' e'' (b - 1)
+            (w1, e1) <- unary w e 0
+            if bitsOf w1 > limit then pure w1 else do
+              (w2, e2) <- encodeBit buf w1 e1 probs (ctx ck (fromIntegral (min q 7))) False
+              (w3, e3) <- if k > 0
+                then encodeBit buf w2 e2 probs (ctx ck 8) (testBit u (k - 1)) >>= \(wa, ea) -> direct wa ea (k - 2)
+                else pure (w2, e2)
+              let s' = s + u - (s `unsafeShiftR` adaptiveWindow)
+              go (i + 1) w3 e3 (min (logFloor ((s' `unsafeShiftR` adaptiveWindow) + 1)) (width + 5)) s'
+  w0 <- put buf start (fromIntegral kStart) 6
+  w <- go 0 w0 encStart kStart ((1 `unsafeShiftL` kStart) `unsafeShiftL` adaptiveWindow)
+  let bits = bitsOf w
+  len <- finish buf w
+  bytes <- S.unsafeFreeze (SM.take len buf)
+  pure (S.force bytes, bits)
+  where
+    n = U.length r
+
+-- | The residuals in the chosen code, Rice or run-length, unless the adaptive code is shorter, flag included:
+-- 0 for Rice, 10 for run-length, 11 for the adaptive code.
+putResiduals :: Buffer s -> W -> Int -> Bool -> U.Vector Int -> ST s W
+putResiduals buf w width rice r
+  | 2 + fromIntegral bits < chosen = put buf w 3 2 >>= \w' -> copy w' 0
+  | rice = put buf w 0 1 >>= \w' -> putRice buf w' k r
+  | otherwise = put buf w 2 2 >>= \w' -> putRun buf w' r
+  where
+    (k, riceBits) = riceCost r
+    chosen = if rice then 1 + 6 + riceBits else 2 + runCost r
+    (bytes, bits) = adaptiveCode k width (fromIntegral (min chosen (2 ^ (30 :: Int)))) r
+    copy !w' !at
+      | at >= bits = pure w'
+      | otherwise = let step = min 32 (bits - at) in put buf w' (getBits bytes at step) step >>= \w'' -> copy w'' (at + step)
+
 putRun :: Buffer s -> W -> U.Vector Int -> ST s W
 putRun buf w0 r = do
   w1 <- put buf w0 (fromIntegral (length used)) 11
@@ -403,7 +467,7 @@ bestLpc effort lowBits width history y
       , U.all (\v -> v > negate limit && v < limit) e
       , let (ke, ce) = riceCost e
             front = 24 + fromIntegral (lPrecision chosen0 * lOrder chosen0) + 1 + 4
-      , (bits, rice) <- [(front + 6 + ce, True), (front + runCost e, False)]
+      , (bits, rice) <- [(front + 6 + ce, True), (front + 1 + runCost e, False)]
       ]
     analysis = lpcAnalysis y
     sets = map fst analysis
@@ -430,11 +494,11 @@ bestLpc effort lowBits width history y
       , let (kw, cw) = riceCost warm
             (k, cr) = riceCost r
             front = 24 + fromIntegral (precision * bestOrder) + 1 + 6 + cw
-      , (bits, rice) <- [(front + 6 + cr, True), (front + runCost r, False)]
+      , (bits, rice) <- [(front + 6 + cr, True), (front + 1 + runCost r, False)]
       ]
 
-putLpc :: Buffer s -> W -> Lpc -> ST s W
-putLpc buf w0 l = do
+putLpc :: Buffer s -> W -> Int -> Lpc -> ST s W
+putLpc buf w0 width l = do
   w1 <- put buf w0 (fromIntegral lpcPredictor) 3
   w2 <- put buf w1 (fromIntegral (lOrder l - 1)) 5
   w3 <- put buf w2 (fromIntegral (lPrecision l - 1)) 4
@@ -443,8 +507,7 @@ putLpc buf w0 l = do
   w6 <- if lLms l
     then put buf w5 1 1 >>= \a -> put buf a (fromIntegral (lTapCode l)) 2 >>= \b -> put buf b (fromIntegral (lWarmCode l)) 2
     else put buf w5 0 1 >>= \a -> putRice buf a (lWarmK l) (lWarm l)
-  w7 <- put buf w6 (if lRice l then 0 else 1) 1
-  if lRice l then putRice buf w7 (lK l) (lR l) else putRun buf w7 (lR l)
+  putResiduals buf w6 width (lRice l) (lR l)
 
 -- | Code one block, given the samples just before it, the latest last.
 encodeBlock :: Effort -> Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8
@@ -456,15 +519,13 @@ encodeBlock effort depth history x = runST $ do
       w1 <- put buf start 1 1
       w2 <- put buf w1 (fromIntegral lowZeros) 5
       case lpc of
-        Just (lpcBits, l) | lpcBits < bestBits -> putLpc buf w2 l
+        Just (lpcBits, l) | lpcBits < bestBits -> putLpc buf w2 (depth - lowZeros) l
         _ -> do
           w3 <- put buf w2 (fromIntegral (if bestPredictor == backDelay then delayPredictor else bestPredictor)) 3
           w4 <- if bestPredictor == delayPredictor then put buf w3 0 1 >>= \w' -> put buf w' (fromIntegral delay) 12
                 else if bestPredictor == backDelay then put buf w3 1 1 >>= \w' -> put buf w' (fromIntegral back) 15
                 else pure w3
-          w5 <- put buf w4 (if bestRice then 0 else 1) 1
-          let r = candidateResiduals bestPredictor
-          if bestRice then putRice buf w5 bestK r else putRun buf w5 r
+          putResiduals buf w4 (depth - lowZeros) bestRice (candidateResiduals bestPredictor)
   bytes <- finish buf w
   S.force . S.take bytes <$> S.unsafeFreeze buf
   where
@@ -476,15 +537,15 @@ encodeBlock effort depth history x = runST $ do
     back = findBack history x
     candidateResiduals p = if p == backDelay then backResiduals back lowZeros history y else residuals p delay y
     candidates =
-      [ (bits, p, rice, k)
+      [ (bits, p, rice)
       | p <- [0 .. tierPredictor] ++ [backDelay | back > 0], p /= delayPredictor || delay > 0
       , let r = candidateResiduals p
             header = if p == delayPredictor then 23 else if p == backDelay then 26 else 10
-            (k, riceBits) = riceCost r
-      , (bits, rice) <- [(header + 6 + riceBits, True), (header + runCost r, False)]
+            (_, riceBits) = riceCost r
+      , (bits, rice) <- [(header + 6 + riceBits, True), (header + 1 + runCost r, False)]
       ]
-    (bestBits, bestPredictor, bestRice, bestK) = foldl1 (\a b -> if first4 b < first4 a then b else a) candidates
-    first4 (b, _, _, _) = b
+    (bestBits, bestPredictor, bestRice) = foldl1 (\a b -> if first3 b < first3 a then b else a) candidates
+    first3 (b, _, _) = b
 
 ---------------------------------------------------------------------------------------------------------------
 -- Decoder
@@ -505,6 +566,46 @@ getRiceR v p0 n = runST $ do
   p <- go 0 (p0 + 6)
   xs <- U.unsafeFreeze out
   pure (xs, p)
+
+-- | Residuals in the adaptive binary code from bit p0 (ada: Get_Adaptive).
+getAdaptiveR :: S.Vector Word8 -> Int -> Int -> Int -> (U.Vector Int, Int)
+getAdaptiveR v width p0 n = runST $ do
+  out <- UM.new n
+  probs <- UM.replicate (24 * 9) half
+  let k0 = min (fromIntegral (getBits v p0 6)) (width + 5)
+      (d0, p1) = decStart v (p0 + 6)
+      ctx ck j = ck * 9 + j
+      go !i !d !p !k !s
+        | i == n = pure p
+        | otherwise = do
+            let ck = min k 23
+                unary !d' !p' !q = do
+                  (one, d'', p'') <- decodeBit v d' p' probs (ctx ck (fromIntegral (min q 7)))
+                  if one then unary d'' p'' (q + 1) else pure (q, d'', p'')
+                direct !d' !p' !u !b
+                  | b < 0 = (u, d', p')
+                  | otherwise = let (one, d'', p'') = decodeDirect v d' p' in direct d'' p'' (if one then u .|. bit64 b else u) (b - 1)
+            (q, d1, pa) <- unary d p (0 :: Word64)
+            (u, d2, pb) <- if k > 0
+              then do
+                (topBit, d', p') <- decodeBit v d1 pa probs (ctx ck 8)
+                let u0 = (q `unsafeShiftL` k) .|. (if topBit then bit64 (k - 1) else 0)
+                pure (direct d' p' u0 (k - 2))
+              else pure (q, d1, pa)
+            UM.unsafeWrite out i (unzigzag u)
+            let s' = s + u - (s `unsafeShiftR` adaptiveWindow)
+            go (i + 1) d2 pb (min (logFloor ((s' `unsafeShiftR` adaptiveWindow) + 1)) (width + 5)) s'
+      bit64 b = 1 `unsafeShiftL` b :: Word64
+  p <- go 0 d0 p1 k0 ((1 `unsafeShiftL` k0) `unsafeShiftL` adaptiveWindow)
+  xs <- U.unsafeFreeze out
+  pure (xs, p)
+
+-- | The residuals from the flag at bit p: 0 Rice, 10 run-length, 11 the adaptive code.
+getResidualsR :: S.Vector Word8 -> Int -> Int -> Int -> (U.Vector Int, Int)
+getResidualsR v width p n
+  | getBits v p 1 == 0 = getRiceR v (p + 1) n
+  | getBits v (p + 1) 1 == 0 = getRunR v (p + 2) n
+  | otherwise = getAdaptiveR v width (p + 2) n
 
 -- | Read gamma codes and lengths, then decode symbols through each length's first code.
 getRunR :: S.Vector Word8 -> Int -> Int -> (U.Vector Int, Int)
@@ -601,8 +702,8 @@ untier r = go (U.take (last lens) r) (U.length r - sum gs) (reverse (init lens))
 
 -- | An LPC block from its order field at bit P0: the coefficients, the ramp of the first samples, then the rest.
 -- | An LPC block from its order field at bit p0, given the scaled samples before the block for its adaptive stage.
-decodeLpc :: U.Vector Int -> S.Vector Word8 -> Int -> Int -> U.Vector Int
-decodeLpc before v p0 n
+decodeLpc :: U.Vector Int -> S.Vector Word8 -> Int -> Int -> Int -> U.Vector Int
+decodeLpc before v width p0 n
   | lms = U.drop (U.length seededAll - n) rebuilt
   | otherwise = U.create $ do
       y <- UM.new n
@@ -626,7 +727,7 @@ decodeLpc before v p0 n
     warmUp = warmUpChoices !! fromIntegral (getBits v (flagAt + 3) 2)
     (warm, pc) = if lms then (U.empty, flagAt + 5) else getRiceR v (flagAt + 1) order
     first = if lms then 0 else order
-    r = fst ((if getBits v pc 1 == 0 then getRiceR else getRunR) v (pc + 1) (n - first))
+    r = fst (getResidualsR v width pc (n - first))
     -- With the stage: the LPC residuals of the warm-up samples train it, then each block residual is the coded
     -- error plus the stage's prediction, and the sample is that residual plus the LPC prediction.
     used = U.drop (U.length before - warmUp - order) before
@@ -677,7 +778,7 @@ decodeBlock depth history n v
   | getBits v 0 1 == 0 =
       let u = fromIntegral (getLong v 1 depth) :: Int
       in U.replicate n (if u >= bit (depth - 1) then u - bit depth else u)
-  | predictor == lpcPredictor = U.map (`unsafeShiftL` lowZeros) (decodeLpc (U.map (`shiftR` lowZeros) history) v 9 n)
+  | predictor == lpcPredictor = U.map (`unsafeShiftL` lowZeros) (decodeLpc (U.map (`shiftR` lowZeros) history) v (depth - lowZeros) 9 n)
   | otherwise = U.map (`unsafeShiftL` lowZeros) (rebuild predictor delay before r)
   where
     lowZeros = fromIntegral (getBits v 1 5)
@@ -690,4 +791,4 @@ decodeBlock depth history n v
     before
       | fromHistory = Just (\k -> U.unsafeIndex history (U.length history + k) `shiftR` lowZeros)
       | otherwise = Nothing
-    r = fst ((if getBits v p0 1 == 0 then getRiceR else getRunR) v (p0 + 1) n)
+    r = fst (getResidualsR v (depth - lowZeros) p0 n)
