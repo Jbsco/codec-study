@@ -10,11 +10,11 @@ Over the corpus 7.17 to 7.14 bits per sample; on the ten recordings 10.55 to 10.
 
 ## More than two channels
 
-`multichannel.sh` merges the orchestra and the room recordings, both 48 kHz, 24-bit and 20 s, into one four-channel file and codes it at level 4: 6,547,640 bytes with the pairs, 6,557,847 with every channel alone (`--no-pairs`), 0.16 percent apart, and 2,379 bytes less than the two stereo streams together, which carry two headers and two sets of group framing. On these two recordings the stereo modes gain little, so the pairs gain little; the electronic track would gain its 1.1 bits per sample as a pair wherever it sat among the channels. Pairs by position suit layouts whose related channels are adjacent, such as left and right and the two surrounds of a 5.1 mix, and a center and a low-frequency channel pair harmlessly, since the mode left and right is always available. No real multichannel recording in the public domain was at hand, so the file is constructed and says nothing about the correlation of real surround channels.
+`multichannel.sh` merges the orchestra and the room recordings, both 48 kHz, 24-bit and 20 s, into one four-channel file and codes it at level 4: 6,525,980 bytes with the pairs, 6,534,159 with every channel alone (`--no-pairs`), 0.13 percent apart, and 3,072 bytes less than the two stereo streams together, which carry two headers and two sets of group framing. On these two recordings the stereo modes gain little, so the pairs gain little; the electronic track would gain its 1.1 bits per sample as a pair wherever it sat among the channels. Pairs by position suit layouts whose related channels are adjacent, such as left and right and the two surrounds of a 5.1 mix, and a center and a low-frequency channel pair harmlessly, since the mode left and right is always available. No real multichannel recording in the public domain was at hand, so the file is constructed and says nothing about the correlation of real surround channels.
 
 ## Cost
 
-Two additions per frame in the decoder. The encoder at level 3 and above codes four signals per node instead of two for every coupled pair: the four-channel file took 19.47 s against 9.78 s with the channels alone.
+Two additions per frame in the decoder. The encoder at level 3 and above codes four signals per node instead of two for every coupled pair: the four-channel file took 26.38 s against 12.65 s with the channels alone.
 
 ## Beyond audio
 
