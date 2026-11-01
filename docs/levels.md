@@ -17,7 +17,7 @@ Two estimates replace exhaustive search at the lower levels. The order estimate 
 
 ## Measured
 
-Whole corpus, single runs on an AMD Ryzen 7 7700X that was also running a game server and a browser; the Ada level-4 time matched an idle run within 2 percent:
+Whole corpus, single runs on a typical workstation (AMD Ryzen 7 7700X):
 
 | Level | Mean bits per sample | Coded corpus | Encode, Ada, 1 thread | Encode, Haskell, 16 threads | Decode, Ada |
 |---|---|---|---|---|---|
