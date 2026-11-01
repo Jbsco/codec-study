@@ -116,7 +116,7 @@ Level 4, with tables, parameters and headers included; every stream decodes back
 
 - Silence costs 1 bit per sample under any Huffman or Rice code, because a prefix code spends at least one bit on every symbol. Constant blocks bring it to 0.01.
 - Exact repeats: 1 kHz waveforms and sines at every rate and depth cost 0.02 to 0.11 bits per sample through the delay into earlier samples. General-purpose compressors stay smaller by 0.01 on the sine, triangle and sawtooth, and by 0.11 and 0.03 on the square wave and the impulse train.
-- `rec_piano` holds 16-bit audio in 24-bit samples. With shared low bits removed and linear prediction it costs 3.68, against 3.79 for `flac -8` and 12.22 for fixed predictors with Rice codes, which keep the low bits.
+- `rec_piano` contains 16-bit audio in 24-bit samples. With shared low bits removed and linear prediction it costs 3.68, against 3.79 for `flac -8` and 12.22 for fixed predictors with Rice codes, which keep the low bits.
 - `rec_orchestra_f32` converts exactly to integers over 2^23 and costs what the integer file costs, 13.85. The float sine does not convert; its bit patterns repeat, and the delay takes it to 0.33, against 9.44 for WavPack, the only audio codec here that accepts float.
 - Pink noise splits its blocks between tiers and linear prediction at every rate and integer depth, 12.99 bits against 13.08 for fixed predictors. Pink noise has the same spectral slope at every time scale and each tier predicts at one scale, which seems the likely reason.
 - Tiers alone, as first described, cost 1.5 to 7.9 bits more than first differences on every recording. Offsets grow with distance from the group start, and coarser tiers hold samples further apart in time.

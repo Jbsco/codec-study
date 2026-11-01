@@ -42,7 +42,7 @@ else
 fi
 
 echo "== 4/4  Prose"
-if python3 tools/prose_check.py README.md docs/format.md; then
+if python3 tools/prose_check.py README.md docs/*.md; then
     echo "  clean"
 else
     FAIL=1
