@@ -33,6 +33,7 @@ package Block_Codec with SPARK_Mode is
       Lpc_Orders : Natural range 0 .. 32 := 32;
       Precision_From : Positive range 5 .. 15 := 5;
       Adaptive : Boolean := False;
+      Adaptive_Code : Boolean := True;
    end record;
 
    --  History holds the samples just before X, the latest last.

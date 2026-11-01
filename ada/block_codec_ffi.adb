@@ -4,7 +4,7 @@ with Block_Codec; use Block_Codec;
 package body Block_Codec_FFI is
 
    function Encode (Samples : System.Address; Count : int; History : System.Address; History_Count, Depth : int;
-                    Lpc_Orders, Precision_From, Adaptive : int; Output : System.Address; Capacity : int) return int is
+                    Lpc_Orders, Precision_From, Adaptive, Adaptive_Code : int; Output : System.Address; Capacity : int) return int is
    begin
       if Count not in 1 .. Max_Block or else History_Count not in 0 .. Max_History or else Depth not in 8 .. 33
         or else Lpc_Orders not in 0 .. 32 or else Precision_From not in 5 .. 15 or else Capacity < int (Bound (Positive (Count)))
@@ -20,7 +20,7 @@ package body Block_Codec_FFI is
          if (for some V of X => not In_Range (V, Positive (Depth))) or else (for some V of H => not In_Range (V, Positive (Depth))) then
             return -1;
          end if;
-         Block_Codec.Encode (X, H, Positive (Depth), (Natural (Lpc_Orders), Positive (Precision_From), Adaptive /= 0), O, Bytes);
+         Block_Codec.Encode (X, H, Positive (Depth), (Natural (Lpc_Orders), Positive (Precision_From), Adaptive /= 0, Adaptive_Code /= 0), O, Bytes);
          return int (Bytes);
       end;
    end Encode;

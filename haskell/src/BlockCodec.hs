@@ -327,9 +327,9 @@ adaptiveCode k0 width limit r = runST $ do
 
 -- | The residuals in the chosen code, Rice or run-length, unless the adaptive code is shorter, flag included:
 -- 0 for Rice, 10 for run-length, 11 for the adaptive code.
-putResiduals :: Buffer s -> W -> Int -> Bool -> U.Vector Int -> ST s W
-putResiduals buf w width rice r
-  | 2 + fromIntegral bits < chosen = put buf w 3 2 >>= \w' -> copy w' 0
+putResiduals :: Buffer s -> W -> Bool -> Int -> Bool -> U.Vector Int -> ST s W
+putResiduals buf w tryAdaptive width rice r
+  | tryAdaptive, 2 + fromIntegral bits < chosen = put buf w 3 2 >>= \w' -> copy w' 0
   | rice = put buf w 0 1 >>= \w' -> putRice buf w' k r
   | otherwise = put buf w 2 2 >>= \w' -> putRun buf w' r
   where
@@ -368,7 +368,7 @@ putRun buf w0 r = do
 -- | How far the encoder searches: how many orders of linear prediction it codes in full, ranked by the bits their
 -- prediction error implies (0 for none, 32 for all), and the lowest coefficient precision it tries. Every setting
 -- writes the same format.
-data Effort = Effort { effortOrders :: !Int, effortPrecisionFrom :: !Int, effortAdaptive :: !Bool }
+data Effort = Effort { effortOrders :: !Int, effortPrecisionFrom :: !Int, effortAdaptive :: !Bool, effortAdaptiveCode :: !Bool }
 
 -- | The base-2 logarithm of a positive X within 3e-6: its exponent, and a polynomial in its fraction.
 log2' :: Double -> Double
@@ -497,8 +497,8 @@ bestLpc effort lowBits width history y
       , (bits, rice) <- [(front + 6 + cr, True), (front + 1 + runCost r, False)]
       ]
 
-putLpc :: Buffer s -> W -> Int -> Lpc -> ST s W
-putLpc buf w0 width l = do
+putLpc :: Buffer s -> W -> Bool -> Int -> Lpc -> ST s W
+putLpc buf w0 tryAdaptive width l = do
   w1 <- put buf w0 (fromIntegral lpcPredictor) 3
   w2 <- put buf w1 (fromIntegral (lOrder l - 1)) 5
   w3 <- put buf w2 (fromIntegral (lPrecision l - 1)) 4
@@ -507,7 +507,7 @@ putLpc buf w0 width l = do
   w6 <- if lLms l
     then put buf w5 1 1 >>= \a -> put buf a (fromIntegral (lTapCode l)) 2 >>= \b -> put buf b (fromIntegral (lWarmCode l)) 2
     else put buf w5 0 1 >>= \a -> putRice buf a (lWarmK l) (lWarm l)
-  putResiduals buf w6 width (lRice l) (lR l)
+  putResiduals buf w6 tryAdaptive width (lRice l) (lR l)
 
 -- | Code one block, given the samples just before it, the latest last.
 encodeBlock :: Effort -> Int -> U.Vector Int -> U.Vector Int -> S.Vector Word8
@@ -519,13 +519,13 @@ encodeBlock effort depth history x = runST $ do
       w1 <- put buf start 1 1
       w2 <- put buf w1 (fromIntegral lowZeros) 5
       case lpc of
-        Just (lpcBits, l) | lpcBits < bestBits -> putLpc buf w2 (depth - lowZeros) l
+        Just (lpcBits, l) | lpcBits < bestBits -> putLpc buf w2 (effortAdaptiveCode effort) (depth - lowZeros) l
         _ -> do
           w3 <- put buf w2 (fromIntegral (if bestPredictor == backDelay then delayPredictor else bestPredictor)) 3
           w4 <- if bestPredictor == delayPredictor then put buf w3 0 1 >>= \w' -> put buf w' (fromIntegral delay) 12
                 else if bestPredictor == backDelay then put buf w3 1 1 >>= \w' -> put buf w' (fromIntegral back) 15
                 else pure w3
-          putResiduals buf w4 (depth - lowZeros) bestRice (candidateResiduals bestPredictor)
+          putResiduals buf w4 (effortAdaptiveCode effort) (depth - lowZeros) bestRice (candidateResiduals bestPredictor)
   bytes <- finish buf w
   S.force . S.take bytes <$> S.unsafeFreeze buf
   where

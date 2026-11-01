@@ -880,8 +880,10 @@ package body Block_Codec with SPARK_Mode is
             begin
                Rice_Cost (R, K, Rice_Bits);
                Chosen := (if Rice then 1 + 6 + Rice_Bits else 2 + Run_Cost (R));
-               Put_Adaptive (R, K, Depth - Shift, Natural (Unsigned_64'Min (Chosen, 2**30)), Scratch, Scratch_Pos);
-               if 2 + Unsigned_64 (Scratch_Pos) < Chosen then
+               if Effort.Adaptive_Code then
+                  Put_Adaptive (R, K, Depth - Shift, Natural (Unsigned_64'Min (Chosen, 2**30)), Scratch, Scratch_Pos);
+               end if;
+               if Effort.Adaptive_Code and then 2 + Unsigned_64 (Scratch_Pos) < Chosen then
                   Put (Output, Pos, 3, 2);
                   declare
                      From : Natural := 0;
