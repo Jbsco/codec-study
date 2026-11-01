@@ -4,6 +4,7 @@ One page per aspect of the block codec, each with the method, its measured effec
 
 | Page | Topic | Effect on the corpus |
 |---|---|---|
+| [format.md](format.md) | every field of a block: predictors, residual codes, the encoder's choice | the format every level writes |
 | [entropy-coding.md](entropy-coding.md) | Rice codes, run-length Huffman codes, the prefix-code floor, the parameter search | base of every block; silence 1.00 to 0.01 bits per sample with constant blocks |
 | [prediction.md](prediction.md) | polynomial, tiered, linear (per-block order) and adaptive prediction | 7.98 to 7.60 bits per sample from linear prediction alone |
 | [repetition.md](repetition.md) | exact repeats within a block and in earlier samples, shared low bits, constant blocks | periodic signals 1.2 to 4.2 bits per sample down to 0.02 to 0.11 |
