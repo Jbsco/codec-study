@@ -1,35 +1,38 @@
 # Huffman coding of PCM audio
 
-Lossless audio coders built on canonical Huffman codes, tested on generated signals and on public-domain and CC0 recordings. The work has two parts:
+Lossless audio coders built on canonical Huffman codes, measured on generated signals and on public-domain and CC0 recordings. The work has two parts:
 
-- **An experiment** in Ada that compares Huffman coding of raw samples, of differences, and of a tiered scheme in which the first sample of each group forms the next, coarser tier, against FLAC-style fixed predictors with Rice codes.
-- **A block codec** that combines what the experiment showed with techniques from embedded and audio coders: constant blocks, removal of low bits that every sample shares, a delay to an exact repeat within a block or in the samples before it, tiers as one predictor among others, linear prediction of order 1 to 32 chosen per block, run-length Huffman and adaptive binary codes, stereo decorrelation, and block lengths from 512 to 4096 frames chosen per region. It is written three times, in Ada with a SPARK decoder, in Haskell, and as Haskell around the SPARK library, and all three write the same bytes.
+- **Experiment** in Ada: Huffman coding of raw samples, of differences, and of a tiered scheme in which the first sample of each group forms the next, coarser tier, against FLAC-style fixed predictors with Rice codes.
+- **Block codec** that adds techniques from embedded and audio coders: constant blocks, shared low bits removed, exact repeats found within a block or before it, tiers as one predictor among others, linear prediction of order 1 to 32 chosen per block, run-length Huffman and adaptive binary codes, stereo decorrelation, and block lengths from 512 to 4096 frames chosen per region. It is written three times, in Ada with a SPARK decoder, in Haskell, and as Haskell around the SPARK library, and all three write the same bytes.
 
 Every coded stream is decoded again and compared sample for sample.
 
 ## Files
 
-- `ada/block_codec.ads`, `.adb`: the block codec. The decoder is SPARK, with no heap and no exceptions; malformed input returns `Truncated_Input` or `Bad_Data`. The encoder uses no heap and no shared state, and its linear prediction analysis uses 64-bit floating point.
-- `ada/canonical_decoding.ads`, `.adb`, `ada/bit_streams.ads`, `.adb`, `ada/checksums.ads`, `.adb`: canonical Huffman decoding, bit access and the CRC-16, in SPARK. `ada/checksums_test.adb` tests the CRC, and `ada/corrupt_test.adb` walks a written stream and checks its framing and every CRC against flipped bits.
-- `ada/codec_main.adb`: the stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/block_codec_ffi.ads`, `.adb` and `ada/codec_lib.gpr` build the block codec as a C library, `ada/lib/libblockcodec.so`.
-- `ada/audio_huffman.adb`, with `huffman_codes`, `predictors`, `residual_coders` and `wav_files`: the experiment.
-- `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`: the block codec, its stream and the CRC-16 in Haskell, with groups coded in parallel. `haskell/hybrid/`: the same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
-- `corpus/`: the test files, `make_corpus.sh`, which builds them, and `SHA256SUMS`.
-- `run.sh`, `compare.sh`, `bench.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: run every coder, the common lossless tools, the timing, the encoder levels, the segment lengths, a four-channel file, and the tables. Their output is in `results/`.
-- `docs/`: one page per compression topic, with the method, its measured effect on this corpus, its decoder cost and where it applies beyond audio.
+- `ada/block_codec.ads`, `.adb`: block codec. SPARK decoder with no heap and no exceptions; malformed input returns `Truncated_Input` or `Bad_Data`. Encoder with no heap and no shared state; linear prediction analysis in 64-bit floating point.
+- `ada/canonical_decoding`, `bit_streams`, `checksums`, `range_coding`: canonical Huffman decoding, bit access, CRC-16 and the binary range coder, in SPARK. `ada/checksums_test.adb` tests the CRC; `ada/corrupt_test.adb` walks a written stream and checks its framing and every CRC against flipped bits.
+- `ada/codec_main.adb`: stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/block_codec_ffi` and `ada/codec_lib.gpr`: block codec as a C library, `ada/lib/libblockcodec.so`.
+- `ada/audio_huffman.adb` with `huffman_codes`, `predictors`, `residual_coders` and `wav_files`: experiment coders.
+- `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
+- `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
+- `run.sh`, `compare.sh`, `bench.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
+- `docs/`: one page per compression topic with method, measured effect, decoder cost and where it applies beyond audio; `docs/format.md` lists every field of a block.
 
 ## Corpus
 
-40 files, 44,883,000 samples, 630 s. Integer files are stored as FLAC and float files as WAV; no file exceeds 8 MB.
+40 files, 44,883,000 samples, 630 s. Integer files are FLAC, float files WAV, none over 8 MB.
 
 | Group | Files | Content |
 |---|---|---|
-| Generated, 16-bit 44.1 kHz mono, 20 s | `signal_*` | silence; dither (white noise of about ±2 LSB); white, pink and brown noise at -6 dBFS; 1 kHz sine, square, triangle and sawtooth at -6 dBFS; a 10 Hz impulse train; a 20 Hz to 20 kHz log sweep; an FM tone, 440 Hz carrier, 110 Hz modulator, index 3; an A major chord |
-| Sample rates, 16-bit mono, 10 s | `rate_*` | the sine and the pink noise at 8, 16, 96 and 192 kHz |
-| Bit depths, 44.1 kHz mono, 10 s | `depth_*` | the sine and the pink noise at 8, 24 and 32-bit integer and 32-bit float, and the sine at 12 bits in a 16-bit container |
-| Recordings, 20 s, native format | `rec_*` | piano, orchestra, electronic, room noise, speech, 96 kHz piano, 192 kHz vinyl, and derived files listed below |
+| Generated, 16-bit 44.1 kHz mono, 20 s | `signal_*` | silence; dither (white noise of about ±2 LSB); white, pink and brown noise at -6 dBFS; 1 kHz sine, square, triangle and sawtooth at -6 dBFS; 10 Hz impulse train; 20 Hz to 20 kHz log sweep; FM tone, 440 Hz carrier, 110 Hz modulator, index 3; A major chord |
+| Sample rates, 16-bit mono, 10 s | `rate_*` | sine and pink noise at 8, 16, 96 and 192 kHz |
+| Bit depths, 44.1 kHz mono, 10 s | `depth_*` | sine and pink noise at 8, 24 and 32-bit integer and 32-bit float; sine at 12 bits in a 16-bit container |
+| Recordings, 20 s, native format | `rec_*` | piano, orchestra, electronic, room noise, speech, 96 kHz piano, 192 kHz vinyl, and derived files |
 
-The generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the expressions in `make_corpus.sh`, for example `0.5*sin(2*PI*440*t+3*sin(2*PI*110*t))` for the FM tone.
+Generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the expressions in `make_corpus.sh`, for example `0.5*sin(2*PI*440*t+3*sin(2*PI*110*t))` for the FM tone. `rec_speech_16k` (16-bit mono) and `rec_speech_8k` (8-bit mono) are `rec_speech` resampled by ffmpeg, and `rec_orchestra_f32` is `rec_orchestra` as 32-bit float. Full downloads go to `corpus/source/`, which git ignores.
+
+<details>
+<summary><b>Recording sources</b> (7 files)</summary>
 
 | File | Recording | Source | License | Format |
 |---|---|---|---|---|
@@ -41,36 +44,30 @@ The generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the exp
 | `rec_piano_96k` | "Somewhere in Time", front right microphone, 0:10 to 0:30 | [Internet Archive](https://archive.org/details/PCMD1_piano_1119013_Somewhere_In_Time_front_right_120127_9624) | CC0 1.0 | 24-bit 96 kHz |
 | `rec_vinyl_192k` | Sangam, "You Forget This", vinyl rip, 0:20 to 0:40 | [Internet Archive](https://archive.org/details/you-forget-this) | CC0 1.0 | 24-bit 192 kHz |
 
-`rec_speech_16k` (16-bit mono) and `rec_speech_8k` (8-bit mono) are `rec_speech` resampled by ffmpeg. `rec_orchestra_f32` is `rec_orchestra` as 32-bit float. The full downloads go to `corpus/source/`, which git ignores; the speech, 96 kHz and 192 kHz files are fetched only as far as the segment needs.
+</details>
 
 ## Block codec
 
-A block is 1 to 4096 samples of one signal. Fields are most significant bit first, and each block ends on a byte boundary.
+A block codes 1 to 4096 samples of one signal, as one constant value or as a predictor and a residual code. Shared low bits are removed first. `docs/format.md` lists every field.
 
-- `0` then the value in the sample width: a constant block.
-- `1`, then 5 bits of low bits shared by every sample, which are removed, then 3 bits naming the predictor:
-  - 0 to 4: polynomial order, lower orders for the first samples of the block.
-  - 5: a delay. Either a `0` and a 12-bit distance to the first exact repeat of the first 32 samples within the block, where samples before that distance take first differences, or a `1` and a 15-bit distance back into the 16,384 samples before the block, which the shared low bits scale down. Only a block of the second kind needs earlier samples to decode.
-  - 6: tiers of pairs, the final tier then each tier's offsets from coarse to fine. Each pair's second sample is stored as its offset from the mean of the first samples of its pair and the next.
-  - 7: linear prediction. The order less one in 5 bits, the coefficient precision less one in 4 bits and the coefficient shift in 5 bits, then the coefficients in two's complement, then a flag. With the flag clear, the first samples, as many as the order, are second differences in a Rice code of their own, and each later sample is predicted as the sum of coefficient times earlier sample, shifted right by the coefficient shift. With the flag set, an adaptive stage follows: a tap count code in 2 bits (16, 32, 64 or 256 taps) and a warm-up code in 2 bits (0, 256, 1024 or 4096 samples). Every sample of the block is then predicted by the coefficients across the block's start, from the samples before it, and a sign-sign LMS filter over those residuals predicts each residual from the last taps residuals, its 16-bit weights moving by 2 toward the sign of the error times the sign of each input, the prediction shifted right by 14. The filter is trained first on the residuals of the warm-up samples before the block, with the block's own coefficients. Only a block with the flag set needs earlier samples to decode.
-- Then a flag naming the residual code, 0 for Rice, 10 for run-length Huffman, 11 for the adaptive binary code:
-  - Rice: a 6-bit parameter K, then each zigzag value shifted right by K in unary and its low K bits.
-  - Run-length Huffman, after JPEG's AC coefficient symbols: each symbol is a run of up to 15 zeros and the bit length of the next value, with one symbol for sixteen zeros and one for the end of the block. The table is the number of symbols in 11 bits, then each symbol as an Elias gamma code of its step from the one before, with its code length in 5 bits. Codes are canonical, as in RFC 1951. A value's code is followed by its sign and the bits below its leading one.
-  - Adaptive binary code: a 6-bit first parameter K, then the bytes of a binary range coder. Each zigzag value's quotient by 2^K is coded in unary and the top bit of its remainder with a probability that adapts, one per context of K (capped at 23) and the position in the unary part (capped at 7, one more slot for the remainder bit), and the remaining K - 1 bits with none. Probabilities start at one half in 4096ths and move toward each coded bit by a 32nd of the distance. After each value K becomes the bit length of a running mean of the values, with a window of 16. The coder is LZMA's: a 32-bit range, a 33-bit low with the carry held in a cache byte, five bytes flushed at the end, and the decoder reads exactly the bytes the encoder wrote.
+- Predictors: polynomial order 0 to 4; a delay to an exact repeat of the block's first 32 samples, within the block or in the 16,384 samples before it; tiers of pairs; linear prediction of order 1 to 32 at a coefficient precision of 5 to 15 bits, with an adaptive sign-sign LMS stage after it at level 5.
+- Residual codes: Rice; run-length Huffman after JPEG's AC symbols, with a canonical code table per block; an adaptive binary code through LZMA's range coder, with a probability per context.
+- Encoder: computes the exact size of every predictor and code and writes the shortest. Linear prediction analysis runs Levinson-Durbin to order 32 over a windowed block with the same floating-point operations in Ada and Haskell, so both choose the same coefficients.
 
-The encoder computes the exact size of every predictor and code and writes the shortest, the first on a tie; the adaptive binary code is tried last, on the residuals the search chose, and kept when it is shorter than the chosen Rice or run-length code. For linear prediction it weights the block with a window whose first and last quarters rise as a smoothstep, runs the Levinson-Durbin recursion to order 32, and picks the order with the least Rice cost at 15-bit precision. It then picks the precision, from 5 to 15 bits, and the residual code. Each coefficient is rounded with the rounding error of the ones before it carried forward. Ada and Haskell perform the same floating-point operations in the same order, so they choose the same coefficients.
+A stream is a header and groups of 4096 frames. The header contains the magic `BLKC`, format fields, metadata with tags and a seek table, and a CRC-16. Each group is framed by a sync word, its byte length, its first frame, a split tree with a stereo mode per channel pair, a byte length and a CRC-16 per block, and a CRC-16 over that framing.
 
-The stream starts with a header: the magic `BLKC`, a version, a flags byte, the sample rate and the frame count in 32 bits, the channel count, depth and a float flag in 8 bits each, for float input a mode and a scale per channel, a counted list of metadata blocks (a type, a 24-bit length and the bytes: tags as length-prefixed `key=value` strings, and a seek table of 32-bit first frames and 64-bit byte offsets), and a CRC-16 of all that. Then come the groups of 4096 frames, each a sync word, a 24-bit byte length, its first frame, its frame count, its split tree, a 16-bit byte length and a CRC-16 per block, a CRC-16 of the group so far, and the blocks. The split tree is in pre-order, padded to a byte. A node halves down to 512 frames and carries a split bit when its second half starts before the group's last frame. Each leaf carries a 2-bit stereo mode per pair of channels: left and right, left and side, side and right, or mid and side. Channels pair up in order, an odd last channel is coded alone, and two channels in different float modes stay left and right. The mid is the mean of the two channels rounded down, and the side, left minus right, is coded one bit wider. The encoder codes every node of the tree, and keeps a node whole unless its halves cost fewer bits, tree bits and block lengths included. Blocks read earlier samples only within their segment, from one seek point to the next, or within their own group when the flags byte says every group is a segment, so a decoder can start at any seek point and a damaged group loses at most the rest of its segment. `docs/container.md` has the layout and what each part costs.
+Blocks read earlier samples only within their segment, so a decoder can start at any seek point and a damaged group costs at most the rest of its segment. `docs/container.md` and `docs/integrity.md` have the layout, its cost and the damage tests.
 
-The CRC is CRC-16/CCITT-FALSE: polynomial 0x1021, most significant bit first, initial value 0xFFFF, no reflection and no final exclusive or; the check value of "123456789" is 0x29B1. It is computed over bytes and knows nothing of audio. A decoder checks each block's CRC before decoding it, so one damaged block is found and reported by position and the others still decode. The two CRCs per block cost 0.003 bits per sample over the corpus (7.095 to 7.098 at level 4, measured before the groups were framed). `checksums_test` checks the check value, the bitwise form against the table form on 4096 pseudo-random bytes, and the effect of one flipped bit; `corrupt_test` flips one bit in a written stream's header and one in a block and checks which CRC fails.
-
-Float input becomes integers first. When every sample equals an integer over one power of two up to 2^31, those integers are coded (mode 1). This is the case for float made from 24-bit audio. Otherwise the float bit patterns are coded through an order-keeping map (mode 2).
+Float input becomes integers: exact integers over one power of two when every sample allows it (mode 1), as float made from 24-bit audio does, and otherwise float bit patterns through an order-keeping map (mode 2). `docs/float.md` measures both.
 
 ## Results
 
 ### Bits per sample
 
-Tables, parameters and headers are included, and every stream decodes back to the input. "Best general-purpose" is the best of `gzip`, `bzip2`, `xz`, `zstd`, `lz4` and `brotli` in 10 modes. "Best audio codec" is the best of FLAC (`-0`, `-5`, `-8`), WavPack (four modes), and ALAC and TTA through ffmpeg. The tiers and "Fixed, Rice" columns are the Ada experiment. Every method on every file is in `results/tables.md`.
+Level 4, with tables, parameters and headers included; every stream decodes back to its input. "Best general-purpose" is the best of `gzip`, `bzip2`, `xz`, `zstd`, `lz4` and `brotli` over 10 modes. "Best audio codec" is the best of FLAC (`-0`, `-5`, `-8`), WavPack (four modes), and ALAC and TTA through ffmpeg. Tiers and "Fixed, Rice" columns are the Ada experiment. Every method on every file is in `results/tables.md`.
+
+<details>
+<summary><b>Every file</b> (40 rows)</summary>
 
 | File | PCM | Best general-purpose | Best audio codec | Tiers, 16 from start | Tiers, pairs, mean | Fixed, Rice | Block codec | Block codec choices |
 |---|---|---|---|---|---|---|---|---|
@@ -115,20 +112,22 @@ Tables, parameters and headers are included, and every stream decodes back to th
 | rec_room | 24 48k stereo | 17.54 (`xz -6`) | 13.37 (`wavpack -hh -x4`) | 16.93 | 14.63 | 13.95 | 13.41 | LPC 550 |
 | rec_vinyl_192k | 24 192k stereo | 18.30 (`xz -6`) | 6.24 (`wavpack -hh -x4`) | 17.96 | 12.36 | 9.04 | 5.80 | LPC 1876 |
 
-- Silence costs 1 bit per sample with any Huffman or Rice code, because a prefix code spends at least one bit on every symbol. Constant blocks bring it to 0.01.
-- The 1 kHz waveforms and the sines at every rate and depth repeat exactly. The delay that reaches into the 16,384 samples before a block takes them to 0.02 to 0.11 bits per sample. The FM tone repeats every 4410 samples, beyond one group, and costs 0.03, against 0.07 for `brotli -q 11`. General-purpose compressors stay smaller by 0.01 on the 1 kHz sine, triangle and sawtooth, and by 0.11 and 0.03 on the square wave and the impulse train.
-- `rec_piano` holds 16-bit audio in a 24-bit container, with 8 low bits zero in every sample, and the 96 kHz piano has 6. With the shared low bits removed and linear prediction, `rec_piano` costs 3.68, against 3.79 for `flac -8` and 12.22 for the fixed predictor with Rice codes, which keeps the low bits.
-- `rec_orchestra_f32` converts exactly to integers over 2^23, and costs what the integer file costs, 13.85. The float sine does not convert exactly; its float bit patterns repeat, and the delay into earlier samples takes it to 0.33, against 9.44 for WavPack, the only audio codec that accepts float, and 0.11 for `xz -6`.
-- Pink noise splits its blocks between tiers and linear prediction at every sample rate and integer depth, 111 and 105 of the 216 blocks of the 44.1 kHz file, at 12.99 bits against 13.08 for the fixed predictor with Rice codes. This is likely because pink noise has the same spectral slope at every time scale, and each tier predicts from samples at one scale. White noise picks order 0.
-- On its own, the tiered scheme as first described (groups of 16, offsets from the group's first sample) costs 1.5 to 7.9 bits more than plain first differences on every recording. Offsets grow with the distance from the group start, and each coarser tier holds samples further apart in time, whose differences cost nearly as much as raw samples.
-- Linear prediction wins most blocks of every recording. The block codec is smaller than every tool on the piano, at 3.68 against 3.79 for `flac -8`, on the electronic track, at 18.58 against 18.60 for WavPack `-hh -x4`, and on the 192 kHz vinyl rip, at 5.80 against 6.24. On the other seven recordings it is 0.01 to 0.08 bits above the best audio codec. WavPack `-hh -x4` adapts its prediction sample by sample, where the block codec fixes one predictor per block; that seems the likely source of the remaining gap.
-- Stereo modes take 1.11 bits off the electronic track and 0.19 off speech, which codes mid and side in 314 of its 319 blocks. Split blocks take 0.28 bits off 8 kHz speech, where 131 of the 200 blocks are 512 frames, and 0.98 off the float sine.
-- The adaptive stage of level 5 takes the piano from 3.69 to 3.55 bits per sample, the chord from 1.78 to 1.68, the sweep from 1.87 to 1.67, the electronic track from 18.59 to 18.46 and the orchestra from 13.85 to 13.71, 7.058 to 7.045 over the corpus with the adaptive binary code. The encoder keeps the stage only where it saves at least one bit per 64 samples, because the decoder pays the taps on every sample of a block that carries it: pink noise then carries it in 2 of 216 blocks instead of 115 and decodes in 0.4 s instead of 17 s. Where it is kept the decoder's work is real: the 192 kHz vinyl decodes in 209 s in Ada against 0.94 s at level 4, and the whole corpus in 684 s against 5.5 s. Haskell decodes the corpus at level 5 in 38 s on 16 threads, since only blocks that train on earlier samples wait for them.
-- The block codec is the best of all methods on dither, at 1.75, and on white noise, at 15.03.
+</details>
+
+- Silence costs 1 bit per sample under any Huffman or Rice code, because a prefix code spends at least one bit on every symbol. Constant blocks bring it to 0.01.
+- Exact repeats: 1 kHz waveforms and sines at every rate and depth cost 0.02 to 0.11 bits per sample through the delay into earlier samples. General-purpose compressors stay smaller by 0.01 on the sine, triangle and sawtooth, and by 0.11 and 0.03 on the square wave and the impulse train.
+- `rec_piano` holds 16-bit audio in 24-bit samples. With shared low bits removed and linear prediction it costs 3.68, against 3.79 for `flac -8` and 12.22 for fixed predictors with Rice codes, which keep the low bits.
+- `rec_orchestra_f32` converts exactly to integers over 2^23 and costs what the integer file costs, 13.85. The float sine does not convert; its bit patterns repeat, and the delay takes it to 0.33, against 9.44 for WavPack, the only audio codec here that accepts float.
+- Pink noise splits its blocks between tiers and linear prediction at every rate and integer depth, 12.99 bits against 13.08 for fixed predictors. Pink noise has the same spectral slope at every time scale and each tier predicts at one scale, which seems the likely reason.
+- Tiers alone, as first described, cost 1.5 to 7.9 bits more than first differences on every recording. Offsets grow with distance from the group start, and coarser tiers hold samples further apart in time.
+- Linear prediction wins most blocks of every recording. The block codec is smaller than every tool on the piano, the electronic track and the 192 kHz vinyl rip, and 0.01 to 0.08 bits above the best audio codec on the other seven. WavPack `-hh -x4` adapts its prediction sample by sample where the block codec fixes one predictor per block, which seems the likely source of that gap.
+- Stereo modes take 1.11 bits off the electronic track and 0.19 off speech. Split blocks take 0.28 bits off 8 kHz speech and 0.98 off the float sine.
+- Level 5's adaptive stage takes the piano from 3.69 to 3.55 bits per sample and the corpus from 7.058 to 7.045. It is kept only where it saves one bit per 64 samples, because the decoder pays its taps on every sample of such a block; the 192 kHz vinyl then decodes in 209 s in Ada against 0.94 s at level 4.
+- Dither and white noise are smallest under the block codec, 1.75 and 15.03 bits per sample.
 
 ### What each part adds
 
-Mean bits per sample over each group of files, measured on the whole corpus as each part joined the block codec in turn. The base holds constant blocks, shared low bits, polynomial orders 0 to 4, the delay within a block, tiers, and Rice and run-length codes, in blocks of 4096 samples with 32-bit byte lengths.
+Mean bits per sample over each group of files, measured on the whole corpus as each part joined the block codec. The base contains constant blocks, shared low bits, polynomial orders 0 to 4, the delay within a block, tiers, and Rice and run-length codes, in blocks of 4096 samples with 32-bit byte lengths.
 
 | Block codec | Generated signals | Sample-rate sweep | Bit-depth sweep | Recordings | All 40 files |
 |---|---|---|---|---|---|
@@ -140,7 +139,9 @@ Mean bits per sample over each group of files, measured on the whole corpus as e
 
 ### Levels
 
-The encoder searches at six levels, and every level writes the same format, so one decoder reads them all. `codec_main <file.wav> <level>`, `huffman-audio <file.wav> --block <level>` and `huffman-audio-hybrid <file.wav> <level>` take the level, 4 when left out. `codec_main` also takes `--stream <out.bin>` to write the stream, `--tag <key=value>`, `--seek-every <seconds>` (10 when left out, 0 for one segment), `--independent`, `--seek <frame>` to decode from that frame's seek point after the full decode, `--flip <group> <byte>` to damage one bit before decoding, and `--no-pairs`. The estimated order is the one whose Levinson-Durbin prediction error implies the fewest bits, 0.5 (n - p) log2(error) + 15p for order p over n samples. The estimated stereo mode is the pair whose summed absolute second differences have the least summed logarithm. Ada and Haskell compute the logarithm from the exponent and a fixed polynomial in the fraction, so they choose the same orders and modes. Times are single runs on the AMD Ryzen 7 7700X; `levels.sh` produces the table and `results/levels.txt`, which lists every file at every level, and checks that Ada and Haskell write the same bytes.
+The encoder searches at six levels, and every level writes the same format, so one decoder reads them all.
+
+Two estimates replace exhaustive search at the low levels: the order whose Levinson-Durbin prediction error implies the fewest bits, 0.5 (n - p) log2(error) + 15p for order p over n samples, and the stereo mode whose summed absolute second differences have the least summed logarithm. Ada and Haskell compute that logarithm from the exponent and a fixed polynomial in the fraction, so they choose the same orders and modes.
 
 | Level | Search | Mean bits per sample | Coded corpus | Of PCM | Encode, Ada, 1 thread | Decode, Ada | Encode, Haskell, 16 threads | Decode, Haskell |
 |---|---|---|---|---|---|---|---|---|
@@ -151,11 +152,15 @@ The encoder searches at six levels, and every level writes the same format, so o
 | 4 | and every order and precision 5 to 15; blocks down to 512 | 7.058 | 41.97 MB | 35.6% | 191.8 s | 5.47 s | 68.20 s | 1.96 s |
 | 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.045 | 41.71 MB | 35.4% | 1803.5 s | 683.94 s | 921.78 s | 38.18 s |
 
-Level 1 encodes the corpus 15 times faster than level 4 in Ada, 13.0 s against 191.8 s, for 1.3% more bytes; the one estimated order of linear prediction keeps most of its gain. Level 3 comes within 0.3% of level 4 in 45% of its time. Decoding takes 5 to 6 s in Ada at levels 0 to 4, 2.3 s before the adaptive binary code, which the decoder pays for at every level since the encoder takes it wherever it is shorter. Level 5 takes 0.2% off level 4 and multiplies the decoder's time by about 125 in Ada and 20 in Haskell, where only the blocks that train on earlier samples wait for one another; it is the level for storage that is read seldom.
+Level 1 encodes the corpus 15 times faster than level 4 in Ada, 13.0 s against 191.8 s, for 1.3% more bytes. Level 3 comes within 0.3% of level 4 in 45% of its time.
+
+Decoding takes 5 to 6 s in Ada at levels 0 to 4, 2.3 s before the adaptive binary code, which the decoder pays for at every level since the encoder takes it wherever it is shorter. Level 5 takes 0.6% of the bytes off level 4 and multiplies the decoder's time by about 125 in Ada and 20 in Haskell, where only blocks that train on earlier samples wait for one another.
+
+Times are single runs on an AMD Ryzen 7 7700X. `levels.sh` produces the table and `results/levels.txt`, every file at every level, and checks that Ada and Haskell write the same bytes.
 
 ### Side information
 
-Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side information takes 1.5% of all bits, 0.4% of it the framing of the groups, which `docs/container.md` measures against the previous layout. Coding the LPC coefficients in Rice or Exp-Golomb codes, with a parameter per block, would save 0.02% of all bits, and loses on speech, where the parameter costs more than it saves. Coding the LPC warm-up from the samples before the block, at the block's residual rate, would save 0.26%, and 0.36% on the recordings.
+Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side information takes 1.5% of all bits, 0.4% of it group framing, which `docs/container.md` measures against the previous layout. Coding LPC coefficients in Rice or Exp-Golomb codes, with a parameter per block, would save 0.02% of all bits and loses on speech. Coding the LPC warm-up from samples before the block, at the block's residual rate, would save 0.26%, and 0.36% on recordings.
 
 | Files | Headers | LPC coefficients | LPC warm-up | Code tables | Framing | Residuals |
 |---|---|---|---|---|---|---|
@@ -165,9 +170,12 @@ Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side
 | Recordings | 0.07% | 0.64% | 0.77% | 0.02% | 0.24% | 98.26% |
 | All 40 files | 0.08% | 0.46% | 0.55% | 0.05% | 0.39% | 98.46% |
 
-### Three implementations of the block codec
+### Timing
 
-Times for the whole corpus, 44,883,000 samples, on an AMD Ryzen 7 7700X with 8 cores and 16 threads. Each stream is hashed, and every implementation, at every core count, writes all 40 streams byte for byte the same as Ada.
+Whole corpus, 44,883,000 samples, at level 4 with per-block CRCs, on an AMD Ryzen 7 7700X with 8 cores and 16 threads. Each stream is hashed, and every implementation at every thread count writes all 40 streams byte for byte the same as Ada. `bench.sh` produces the table.
+
+<details>
+<summary><b>Encode and decode times by implementation and thread count</b> (9 rows)</summary>
 
 | Implementation | Threads | Encode | Decode |
 |---|---|---|---|
@@ -181,11 +189,20 @@ Times for the whole corpus, 44,883,000 samples, on an AMD Ryzen 7 7700X with 8 c
 | Haskell + SPARK library | 8 | 34.17 s | 0.96 s |
 | Haskell + SPARK library | 16 | 29.80 s | 0.87 s |
 
-These are level 4 times, with the per-block CRCs. The encoder codes every node of each group's split tree, up to 15 blocks per group for each of up to four signals, and tries every predictor, 32 orders of linear prediction and 11 coefficient precisions on each block. Before linear prediction, back-references, stereo modes and split blocks, the Ada encoder took 11.26 s and decoding 1.46 s. The Rice parameter search starts from the bit length of the mean code value and walks to the least cost, which the convexity of the cost allows; it finds the same parameter as a walk from zero, and took that encoder from 11.26 s to 9.48 s. Decoding stays near 2 s: only blocks that reach back before themselves wait for earlier samples, and Haskell decodes all other blocks in parallel first. The residual pass of linear prediction runs over a reversed copy of the coefficients with forward strides, and the Rice cost search over zigzag values computed once; this took the Ada encode from 260.02 s to 167.90 s and the Haskell + SPARK build at 16 threads from 49.95 s to 27.65 s, with the same bytes. The pure Haskell time at 16 threads was 59.56 s in one run and 40.57 s in the next, with nothing else on the machine in the second, while the Ada time moved by 0.3 s. The table holds the run with the adaptive binary code, which costs the Ada encoder 11% and the Ada decoder 2.3 s (2.70 s to 5.03 s): a range decoder step per modeled bit against a count of leading zeros per value.
+</details>
 
-The Haskell side uses unboxed vectors, whose loops fuse without intermediate arrays; strict, unpacked writer state; `countLeadingZeros` for unary and bit-length codes; and decoding from a 32-bit peek instead of bit by bit. Ada and Haskell compute the linear prediction analysis with the same 64-bit floating-point operations in the same order. Parallelism comes from sparks over pure functions, so the output cannot depend on scheduling. The executables run with `-N -A4m`; a 4 MB allocation area measured faster than 64 MB. `bench.sh` produces the table.
+The encoder codes every node of each group's split tree, up to 15 blocks per group per signal, and tries every predictor, 32 orders of linear prediction and 11 coefficient precisions on each block. The adaptive binary code costs the Ada encoder 11% and the Ada decoder 2.3 s (2.70 s to 5.03 s): a range decoder step per modeled bit against a count of leading zeros per value.
+
+Haskell decodes every block that does not reach back before itself in parallel. Pure Haskell times at 16 threads vary between runs, 59.56 s and 40.57 s in two runs of an earlier build, while Ada moved by 0.3 s.
+
+Haskell uses unboxed vectors whose loops fuse, strict unpacked writer state, `countLeadingZeros` for unary and bit-length codes, and decoding from a 32-bit peek. Parallelism comes from sparks over pure functions, so output cannot depend on scheduling. Executables run with `-N -A4m`; a 4 MB allocation area measured faster than 64 MB.
 
 ### Sizes
+
+Installed sizes of the tools compared, and this work's binaries. Decoder rows cover `Block_Codec.Decode`, `Canonical_Decoding.Decode`, `Checksums`, `Range_Coding` and the bit reader, built with GNAT 16.1 for `arm-eabi` and the `light-cortex-m4` runtime, each unit with `-ffunction-sections` and sections summed by subprogram role. Tool rows include encoders, containers and front ends. `docs/decoder-cost.md` has the method and what each part added; `sizes.sh` produces the tool table.
+
+<details>
+<summary><b>Tools</b> (9 rows)</summary>
 
 | Tool | Package | Installed size | Executable, bytes | Codec libraries, bytes |
 |---|---|---|---|---|
@@ -199,44 +216,62 @@ The Haskell side uses unboxed vectors, whose loops fuse without intermediate arr
 | wavpack | wavpack 5.9.0 | 918.18 KiB | 129,120 | 186,536 |
 | ffmpeg (ALAC, TTA) | ffmpeg 9.0.1 | 48.45 MiB | 428,296 | 25,467,352 |
 
-| This work | Bytes |
+</details>
+
+<details>
+<summary><b>This work</b> (9 rows)</summary>
+
+| Binary | Bytes |
 |---|---|
-| Block decoder with the CRC and the adaptive code, Cortex-M4 Thumb-2, `-Os`, run-time checks on | 10,048 code |
-| The same, `-Os -gnatp` (checks the proof makes redundant) | 7,668 code |
+| Block decoder with CRC and adaptive code, Cortex-M4 Thumb-2, `-Os`, run-time checks on | 10,048 code |
+| Same, `-Os -gnatp` (checks the proof makes redundant) | 7,668 code |
 | Block decoder before the adaptive code, measured the same way, `-Os -gnatp` | 6,316 code (8,396 with checks on) |
-| Block encoder with the adaptive code, Cortex-M4 Thumb-2, `-Os -gnatp` | 11,328 code, and libgcc's software double precision |
+| Block encoder with the adaptive code, Cortex-M4 Thumb-2, `-Os -gnatp` | 11,328 code, plus libgcc's software double precision |
 | Read-only data of the five units, `-Os -gnatp` | 521 (637 with checks on) |
 | `libblockcodec.so`, x86-64, stripped, Ada runtime included | 251,304 |
 | `codec_main`, x86-64, stripped, needs only libc | 675,368 |
 | `huffman-audio`, Haskell, x86-64, stripped, needs libgmp | 6,026,288 |
 | `huffman-audio-hybrid`, x86-64, stripped, needs `libblockcodec.so` and libgmp | 5,977,440 |
 
-The tool rows hold encoders, container handling and command-line front ends as well as decoders. The decoder rows cover `Block_Codec.Decode` with its Rice, run-length and linear prediction readers and the adaptive stage, `Canonical_Decoding.Decode`, `Checksums` and the bit reader, built with GNAT 16.1 for `arm-eabi` and the `light-cortex-m4` runtime, each unit with `-ffunction-sections` and the sections summed by subprogram role, so the encoder's subprograms in the same unit stay out of the decoder rows. Before linear prediction the decoder was 3,370 bytes with checks off; linear prediction added about 1.1 KB, the adaptive stage and the CRC about 1.6 KB, and the adaptive binary code 1.35 KB: its range decoder, the reader and the logarithm. The encoder's linear prediction analysis works in 64-bit floating point, which the Cortex-M4's single-precision FPU leaves to libgcc. The block rows leave out the stream layer of split trees and stereo modes in `codec_main.adb`. `sizes.sh` produces the tool table.
+</details>
 
 ### Proof
 
-gnatprove 15.1 at level 2 proves the block decoder, `Canonical_Decoding`, `Checksums`, `Range_Coding` and `Bit_Streams` free of run-time errors for any input content, given the preconditions on the buffer bounds and the range of the earlier samples: 629 checks, 73 by flow analysis (55 initializations, 18 terminations) and 556 by the provers (425 run-time checks, 51 assertions, 79 contracts, 1 termination), none unproved. The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample, and of 256 products of a 16-bit weight and a 38-bit residual, from the loop invariants alone; the range decoder's product of a 20-bit step and a 12-bit probability is bounded by a chain of assertions in signed arithmetic. The encoder is outside SPARK.
+gnatprove 15.1 at level 2 proves the block decoder, `Canonical_Decoding`, `Checksums`, `Range_Coding` and `Bit_Streams` free of run-time errors for any input content, given preconditions on buffer bounds and the range of earlier samples: 629 checks, none unproved.
+
+The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample, and of 256 products of a 16-bit weight and a 38-bit residual, from loop invariants alone. The range decoder's product of a 20-bit step and a 12-bit probability is bounded by a chain of assertions in signed arithmetic. The encoder is outside SPARK; `docs/decoder-cost.md` lists the checks by kind.
 
 ## Hardware notes
 
-- A block decodes with no table from an earlier block. Blocks that do not reach back before themselves can go to separate decoder lanes, given the byte lengths at the head of the stream. A block that reaches back needs the 16,384 samples of its signal before it, a window of 16,384 by 33 bits, about 528 Kbit, as an LZ77 decoder keeps its last output.
-- The decoder holds the residuals, the samples and a second tier buffer, 4096 64-bit words each, about 96 KB, plus the run-length table of up to 1024 symbols. Smaller blocks shrink this in proportion.
-- Canonical decoding keeps the first code and count of each length and no tree. It reads a bit per step, or compares the next 32 bits against the first code of each length in parallel to finish in one step.
-- The constant check, shared-low-bit removal and delay search are comparisons and shifts. Rice decoding is a count of leading zeros and a shift. The polynomial, delay and tier predictors need only additions and shifts. Linear prediction needs one multiply-accumulate per coefficient per sample: at order 32, a 192 kHz stereo stream needs 12.3 million per second (32 × 192,000 × 2).
+- Blocks decode with no table from an earlier block, so blocks that do not reach back before themselves can go to separate decoder lanes, given the byte lengths in the group table. A block that reaches back needs the 16,384 samples before it, a window of 16,384 by 33 bits, about 528 Kbit, as an LZ77 decoder keeps its last output.
+- Decoder state: residuals, samples and a tier buffer, 4096 64-bit words each, about 96 KB, plus a run-length table of up to 1024 symbols. Smaller blocks shrink this in proportion.
+- Canonical decoding keeps the first code and count of each length and no tree: one bit per step, or the next 32 bits compared against the first code of each length in parallel, in one step.
+- Constant check, shared-low-bit removal and delay search are comparisons and shifts; Rice decoding is a count of leading zeros and a shift; polynomial, delay and tier predictors need additions and shifts. Linear prediction needs one multiply-accumulate per coefficient per sample, 12.3 million per second for order 32 on 192 kHz stereo (32 × 192,000 × 2).
 - CCSDS 121.0-B-3 standardizes Rice coding of this kind for spacecraft data, with a zero-block option for long runs of zeros.
 
 ## Build and run
 
-GNAT 15.2 and gprbuild 25.0.1 (for example from the Alire toolchains) on the PATH, stack with the `lts-21.25` resolver, gnatprove 15.1, flac and ffmpeg:
+GNAT 15.2 and gprbuild 25.0.1 (for example from Alire's toolchains) on the PATH, stack with the `lts-21.25` resolver, gnatprove 15.1, flac and ffmpeg:
 
     corpus/make_corpus.sh          # rebuilds corpus/ from source (the committed files are the reference)
     ./run.sh                       # builds everything, runs every coder, writes results/
     ./compare.sh && ./bench.sh     # common lossless tools, and the timing of the three implementations
     ./levels.sh                    # every file at every encoder level, in Ada and Haskell
     ./tables.sh > results/tables.md
-    cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb checksums.adb block_codec.adb
+    cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb checksums.adb range_coding.adb block_codec.adb
 
-The hybrid executable finds the SPARK library through `LD_LIBRARY_PATH=ada/lib`, which `run.sh` and `bench.sh` set.
+`codec_main <file.wav> <level>`, `huffman-audio <file.wav> --block <level>` and `huffman-audio-hybrid <file.wav> <level>` take the level, 4 when left out. The hybrid executable finds the SPARK library through `LD_LIBRARY_PATH=ada/lib`, which `run.sh` and `bench.sh` set. `codec_main` also takes:
+
+| Option | Effect |
+|---|---|
+| `--stream <out.bin>` | write the stream to a file |
+| `--tag <key=value>` | add a metadata tag |
+| `--seek-every <seconds>` | seek point and segment length, 10 when left out, 0 for one segment |
+| `--independent` | make every group a segment |
+| `--seek <frame>` | decode again from that frame's seek point after the full decode |
+| `--flip <group> <byte>` | damage one bit before decoding |
+| `--no-pairs` | code every channel alone |
+| `--features <out.tsv>` | write each group's features and whether the search split its root |
 
 ## References
 
