@@ -7,7 +7,7 @@ Float samples become integers before any block is coded. When every sample in a 
 ## Measured
 
 - `rec_orchestra_f32`, the 24-bit orchestra as float, converts exactly to integers over 2^23 and costs what the integer file costs, 13.85 bits per sample. WavPack, the one audio codec in the comparison that accepts float, reaches 13.81.
-- The generated float sine does not convert exactly, because its values are not integers over one power of two. Its bit patterns repeat, and the delay to an exact repeat in earlier samples takes it to 0.33 bits per sample, against 9.44 for WavPack and 0.11 for `xz -6`.
+- `depth_sine_32f`, the generated float sine, does not convert exactly, because its values are not integers over one power of two. Its bit patterns repeat, and the delay to an exact repeat in earlier samples takes it to 0.33 bits per sample, against 9.44 for WavPack and 0.11 for `xz -6`.
 - Float pink noise, which neither converts nor repeats, costs 27.62 bits per sample as ordered bit patterns under polynomial order 1, against 25.63 for WavPack, which codes float by splitting the exponent and the mantissa.
 
 ## Beyond audio
