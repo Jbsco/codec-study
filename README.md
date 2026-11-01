@@ -156,7 +156,7 @@ Level 1 encodes the corpus 19 times faster than level 4 in Ada, 10.2 s against 1
 
 Levels 0 and 1 leave the adaptive binary code out, so their streams decode in 1.8 and 2.6 s in Ada. From level 2 the encoder takes it wherever it is shorter, and the decoder pays 5.2 to 5.4 s for the corpus, a range decoder step per modeled bit. Level 5 takes 0.6% of the bytes off level 4 and multiplies the decoder's time by about 130 in Ada and 22 in Haskell, where only blocks that train on earlier samples wait for one another.
 
-Times are single runs on an AMD Ryzen 7 7700X that was also running a game server and a browser; the Ada level-4 time matched an idle run within 2%. `levels.sh` produces the table and `results/levels.txt`, every file at every level, and checks that Ada and Haskell write the same bytes.
+Times are single runs on a typical workstation (AMD Ryzen 7 7700X). `levels.sh` produces the table and `results/levels.txt`, every file at every level, and checks that Ada and Haskell write the same bytes.
 
 ### Side information
 
