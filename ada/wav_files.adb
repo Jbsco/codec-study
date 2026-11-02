@@ -1,4 +1,5 @@
 with Ada.Directories;
+with Interfaces; use Interfaces;
 with Ada.Streams.Stream_IO;
 with Ada.Unchecked_Deallocation;
 
@@ -85,5 +86,95 @@ package body Wav_Files is
       end loop;
       raise Constraint_Error with Name & ": no data chunk";
    end Read;
+
+   procedure Write (Name : String; Channels, Rate, Depth : Positive; Is_Float : Boolean; Frames : Natural;
+                    Sample : not null access function (C : Positive; F : Natural) return Long_Long_Integer) is
+      Width : constant Positive := Depth / 8;
+      Data_Bytes : constant Long_Long_Integer := Long_Long_Integer (Frames) * Long_Long_Integer (Channels * Width);
+      Extensible : constant Boolean := Channels > 2 or else Depth > 16;
+      Format_Bytes : constant Positive := (if Extensible then 40 else 16);
+      Fact_Bytes : constant Natural := (if Is_Float then 12 else 0);
+      Riff_Bytes : constant Long_Long_Integer :=
+        4 + Long_Long_Integer (8 + Format_Bytes + Fact_Bytes) + 8 + Data_Bytes + Data_Bytes mod 2;
+      Mask : constant Long_Long_Integer := (case Channels is when 1 => 4, when 2 => 3, when others => 0);
+      Subformat_Tail : constant array (1 .. 8) of Long_Long_Integer := [16#80#, 0, 0, 16#AA#, 0, 16#38#, 16#9B#, 16#71#];
+      Buffer : Stream_Element_Array (0 .. 65535);
+      Fill : Stream_Element_Offset := 0;
+      File : Stream_IO.File_Type;
+
+      procedure Flush is
+      begin
+         Stream_IO.Write (File, Buffer (0 .. Fill - 1));
+         Fill := 0;
+      end Flush;
+
+      --  Append the low Count bytes of V, least significant first.
+      procedure Bytes (V : Long_Long_Integer; Count : Positive) is
+         U : Unsigned_64 := Unsigned_64'Mod (V);
+      begin
+         if Fill + Stream_Element_Offset (Count) > Buffer'Length then
+            Flush;
+         end if;
+         for Unused in 1 .. Count loop
+            Buffer (Fill) := Stream_Element (U and 255);
+            U := Shift_Right (U, 8);
+            Fill := Fill + 1;
+         end loop;
+      end Bytes;
+
+      procedure Id (Text : String) is
+      begin
+         for Ch of Text loop
+            Bytes (Character'Pos (Ch), 1);
+         end loop;
+      end Id;
+   begin
+      if Riff_Bytes > 2**32 - 1 then
+         raise Constraint_Error with Name & ": over 4 GB, too large for a WAV file";
+      end if;
+      Stream_IO.Create (File, Stream_IO.Out_File, Name);
+      Id ("RIFF");
+      Bytes (Riff_Bytes, 4);
+      Id ("WAVEfmt ");
+      Bytes (Long_Long_Integer (Format_Bytes), 4);
+      Bytes ((if Extensible then 16#FFFE# elsif Is_Float then 3 else 1), 2);
+      Bytes (Long_Long_Integer (Channels), 2);
+      Bytes (Long_Long_Integer (Rate), 4);
+      Bytes (Long_Long_Integer (Rate) * Long_Long_Integer (Channels * Width), 4);
+      Bytes (Long_Long_Integer (Channels * Width), 2);
+      Bytes (Long_Long_Integer (Depth), 2);
+      if Extensible then
+         Bytes (22, 2);
+         Bytes (Long_Long_Integer (Depth), 2);
+         Bytes (Mask, 4);
+         Bytes ((if Is_Float then 3 else 1), 4);
+         Bytes (16#0000#, 2);
+         Bytes (16#0010#, 2);
+         for B of Subformat_Tail loop
+            Bytes (B, 1);
+         end loop;
+      end if;
+      if Is_Float then
+         Id ("fact");
+         Bytes (4, 4);
+         Bytes (Long_Long_Integer (Frames), 4);
+      end if;
+      Id ("data");
+      Bytes (Data_Bytes, 4);
+      for F in 0 .. Frames - 1 loop
+         for C in 1 .. Channels loop
+            declare
+               V : constant Long_Long_Integer := Sample (C, F);
+            begin
+               Bytes ((if Is_Float then (if V >= 0 then V else 2**31 - 1 - V) elsif Width = 1 then V + 128 else V), Width);
+            end;
+         end loop;
+      end loop;
+      if Data_Bytes mod 2 = 1 then
+         Bytes (0, 1);
+      end if;
+      Flush;
+      Stream_IO.Close (File);
+   end Write;
 
 end Wav_Files;
