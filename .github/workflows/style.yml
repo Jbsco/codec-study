@@ -9,7 +9,7 @@ on:
 
 jobs:
   style:
-    runs-on: [self-hosted, linux]
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - name: Checkout

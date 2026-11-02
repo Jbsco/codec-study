@@ -260,7 +260,7 @@ GNAT 15.2 and gprbuild 25.0.1 (for example from Alire's toolchains) on the PATH,
     ./tables.sh > results/tables.md
     cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb checksums.adb range_coding.adb block_codec.adb
 
-`codec_main <file.wav> <level>`, `huffman-audio <file.wav> --block <level>` and `huffman-audio-hybrid <file.wav> <level>` take the level, 4 when left out. The hybrid executable finds the SPARK library through `LD_LIBRARY_PATH=ada/lib`, which `run.sh` and `bench.sh` set. `codec_main` also takes:
+`codec_main <file.wav> <level>`, `huffman-audio <file.wav> --block <level>` and `huffman-audio-hybrid <file.wav> <level>` take the level, 4 when left out. The hybrid executable finds the SPARK library through `LD_LIBRARY_PATH=ada/lib`, which `run.sh` and `bench.sh` set. `CONTRIBUTING.md` lists the gates and the branch and commit conventions. `codec_main` also takes:
 
 | Option | Effect |
 |---|---|
@@ -284,4 +284,4 @@ GNAT 15.2 and gprbuild 25.0.1 (for example from Alire's toolchains) on the PATH,
 
 ## License
 
-Code, documentation and corpus are licensed separately: code under MIT, documentation and `results/` tables under CC BY 4.0, generated test signals under CC0 1.0, and recording excerpts under their sources' public-domain or CC0 status, listed in the corpus table above. `LICENSE.md` states this with its reasoning, and `LICENSES/` contains the texts.
+Code, documentation and corpus are licensed separately: code under MIT, documentation and `results/` tables under CC BY 4.0, generated test signals under CC0 1.0, and recording excerpts under their sources' public-domain or CC0 status, listed in the corpus table above. `LICENSING.md` states this with its reasoning; `LICENSE` contains the MIT text and `LICENSES/` the other two.

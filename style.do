@@ -32,7 +32,7 @@ else
 fi
 
 echo "== 3/4  Tracked text"
-HITS=$(git grep -n -E '/home/[a-z]|/var/tmp/claude' -- ':!corpus/*.flac' ':!corpus/*.wav' ':!style.do' | head)
+HITS=$(git grep -n -E '/home/[a-z]|/var/tmp/' -- ':!corpus/*.flac' ':!corpus/*.wav' ':!style.do' | head)
 if [ -n "$HITS" ]; then
     echo "  local paths in tracked files:"
     printf '%s\n' "$HITS" | sed 's/^/    /'
@@ -42,7 +42,7 @@ else
 fi
 
 echo "== 4/4  Prose"
-if python3 tools/prose_check.py README.md docs/*.md; then
+if python3 tools/prose_check.py README.md CONTRIBUTING.md docs/*.md; then
     echo "  clean"
 else
     FAIL=1
