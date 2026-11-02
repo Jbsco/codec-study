@@ -1,18 +1,18 @@
 #!/bin/bash
-# Test gate: the CRC package against its check value and its bitwise form, a written stream's framing and CRCs
-# against flipped bits, a seek and a damaged group on one stream, the three implementations against one another
-# on a short file at every level, and on a four-channel file. Needs gprbuild and GNAT on the PATH (an Alire
-# toolchain), stack, flac and ffmpeg.
+# Test gate: the CRC package against its check value and its bitwise form, a written stream's framing and CRCs against
+# flipped bits, a seek and a damaged group on one stream, the stream decoder on whole, truncated and foreign files,
+# the three implementations against one another on a short file at every level, and on a four-channel file. Needs
+# gprbuild and GNAT on the PATH (an Alire toolchain), stack, flac and ffmpeg.
 exec >&2
 cd "$(dirname "$0")" || exit 1
 FAIL=0
 
-echo "== 1/4  Build"
+echo "== 1/5  Build"
 (cd ada && gprbuild -q -P huffman_audio.gpr && gprbuild -q -P codec_lib.gpr) || { echo "  Ada build failed"; exit 1; }
 (cd haskell && stack build 2>&1 | grep -E "rror" && exit 1; true) || { echo "  Haskell build failed"; exit 1; }
 echo "  built"
 
-echo "== 2/4  Checksums, framing, seek, damage"
+echo "== 2/5  Checksums, framing, seek, damage"
 ada/obj/checksums_test || FAIL=1
 mkdir -p build/wav
 flac -d -s -f -o build/wav/rec_speech_8k.wav corpus/rec_speech_8k.flac || exit 1
@@ -25,7 +25,26 @@ else
   echo "  seek or damage containment FAILED"; FAIL=1
 fi
 
-echo "== 3/4  Three implementations, every level"
+echo "== 3/5  Stream decoder"
+# Same audio from the decoded WAV as from the original, by ffmpeg's hash of the samples.
+same_audio() { [ "$(ffmpeg -v error -i "$1" -map 0:a -f md5 - 2>&1)" = "$(ffmpeg -v error -i "$2" -map 0:a -f md5 - 2>&1)" ]; }
+ada/obj/codec_main corpus/depth_pink_32f.wav 1 --stream build/pink_32f.bin > /dev/null || exit 1
+for s in speech_8k:build/wav/rec_speech_8k.wav pink_32f:corpus/depth_pink_32f.wav; do
+  name=${s%%:*}; wav=${s#*:}
+  if ada/obj/stream_decode "build/$name.bin" "build/${name}_decoded.wav" 2> /dev/null && same_audio "$wav" "build/${name}_decoded.wav"; then
+    echo "  $name: decoded from the stream alone, same audio"
+  else
+    echo "  $name: stream_decode FAILED"; FAIL=1
+  fi
+done
+head -c 60000 build/speech_8k.bin > build/truncated.bin
+ada/obj/stream_decode build/truncated.bin build/truncated.wav 2> /dev/null
+[ $? = 1 ] && echo "  truncated stream: damage status" || { echo "  truncated stream: wrong status"; FAIL=1; }
+head -c 3000 build/wav/rec_speech_8k.wav > build/not_a_stream.bin
+ada/obj/stream_decode build/not_a_stream.bin build/not_a_stream.wav 2> /dev/null
+[ $? = 2 ] && echo "  foreign file: refused" || { echo "  foreign file: wrong status"; FAIL=1; }
+
+echo "== 4/5  Three implementations, every level"
 hs=haskell/$(cd haskell && stack path --dist-dir)/build
 export LD_LIBRARY_PATH=$PWD/ada/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 for level in 0 1 2 3 4 5; do
@@ -44,7 +63,7 @@ $y")
   fi
 done
 
-echo "== 4/4  Four channels"
+echo "== 5/5  Four channels"
 ffmpeg -v error -y -i corpus/rec_orchestra.flac -i corpus/rec_room.flac -filter_complex "[0:a][1:a]amerge=inputs=2" \
   -c:a pcm_s24le build/four_48k.wav || exit 1
 a=$(ada/obj/codec_main build/four_48k.wav 1 | grep 'Block codec')
@@ -56,6 +75,12 @@ $y")
 ha=$(grep -oE 'hash [0-9a-f]+' <<< "$a"); hh=$(grep -oE 'hash [0-9a-f]+' <<< "$h"); hy=$(grep -oE 'hash [0-9a-f]+' <<< "$y")
 if [ "$ok" = 3 ] && [ "$ha" = "$hh" ] && [ "$ha" = "$hy" ]; then
   echo "  four channels, level 1: three round trips, one stream ($(awk '{print $6}' <<< "$a") bits per sample)"
+  ada/obj/codec_main build/four_48k.wav 1 --stream build/four_48k.bin > /dev/null
+  if ada/obj/stream_decode build/four_48k.bin build/four_decoded.wav 2> /dev/null && same_audio build/four_48k.wav build/four_decoded.wav; then
+    echo "  four channels: decoded from the stream alone, same audio"
+  else
+    echo "  four channels: stream_decode FAILED"; FAIL=1
+  fi
 else
   echo "  four channels: FAILED (round trips $ok, hashes $ha $hh $hy)"
   FAIL=1
