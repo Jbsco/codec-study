@@ -36,7 +36,7 @@ A flag names the code: `0` Rice, `10` run-length Huffman, `11` adaptive binary c
 
 ### Adaptive binary code
 
-Each zigzag value's quotient by 2^K is coded in unary, then its remainder's top bit, each bit with an adapting probability: one per context of K (capped at 23) and position in the unary part (capped at 7, one more slot for the remainder bit). Remaining K - 1 bits are coded direct. Probabilities start at one half in 4096ths and move toward each coded bit by a 32nd of the distance. After each value, K becomes the bit length of a running mean with a window of 16.
+Each zigzag value's quotient by 2^K is coded in unary, then its remainder's top bit, each bit with an adapting probability. There is one probability per context of K (capped at 23) and position in the unary part (capped at 7, one more slot for the remainder bit). Remaining K - 1 bits are coded direct. Probabilities start at one half in 4096ths and move toward each coded bit by a 32nd of the distance. After each value, K becomes the bit length of a running mean with a window of 16.
 
 The coder is LZMA's: a 32-bit range, a 33-bit low with its carry held in a cache byte, five bytes flushed at the end. The decoder reads exactly the bytes the encoder wrote, so a block's byte length stays exact.
 

@@ -40,7 +40,7 @@ A seek to frame F starts at the last seek point at or before F and decodes group
 
 ## Damage
 
-A decoder reads the header's CRC, then each group's. A group whose sync word, fields or CRC are wrong is skipped: the decoder scans forward for the next sync word whose group header passes its CRC, takes that group's first frame as the next frame it holds, and counts the frames between as lost. A block whose CRC fails is counted and decoded anyway.
+A decoder reads the header's CRC, then each group's. A group whose sync word, fields or CRC are wrong is skipped. The decoder scans forward for the next sync word whose group header passes its CRC, resumes at that group's first frame, and counts the frames between as lost. A block whose CRC fails is counted and decoded anyway.
 
 `codec_main <file> <level> --flip <group> <byte>` flips one bit of the written stream before decoding and reports what was lost. `corrupt_test <stream.bin>` checks the same on a written stream, with the group found again after a damaged length.
 
@@ -48,15 +48,15 @@ Within a segment, blocks after a lost group that read the lost samples decode to
 
 ## Cost
 
-Framing, measured at level 4 on the 40 files before the adaptive binary code, against the previous layout with one index and one block table at the head of the stream: 116,233 bytes more over 7,755 groups, 15.0 bytes per group, 0.28 percent of the coded corpus. Of the 15 bytes, 11 are the group's fixed fields, 2 its CRC, and the rest tree bits padded to a byte per group instead of once per stream, plus 12 bytes per seek point.
+Framing was measured at level 4 on the corpus before the adaptive binary code, against the previous layout with one index and one block table at the head of the stream. It added 116,233 bytes over 7,755 groups, 15.0 bytes per group, 0.28 percent of the coded corpus. Of the 15 bytes, 11 are the group's fixed fields, 2 its CRC, and the rest tree bits padded to a byte per group instead of once per stream, plus 12 bytes per seek point.
 
-The cost falls on short and small files: the 8 kHz pink noise gains 304 bytes, the 192 kHz vinyl 12,819, and the silent file goes from 1,548 bytes to 4,584, because its 216 groups each contain a frame the stream coded in 7 bytes before. Framing is the price of a stream that can be read from the middle, written without knowing its length, and resynchronized after damage. A format for archives that are always read whole would keep the index at the head.
+The cost falls on short and small files: the 8 kHz pink noise gains 304 bytes and the 192 kHz vinyl 12,819. The silent file goes from 1,548 bytes to 4,584, because its 216 groups each contain a frame the stream coded in 7 bytes before. Framing is the price of a stream that can be read from the middle, written without knowing its length, and resynchronized after damage. A format for archives that are always read whole would keep the index at the head.
 
 Seeking costs the decoder at most one segment: 10 s of audio at the default seek interval, 108 groups at 44.1 kHz, decoded and discarded before the frame asked for. With every group a segment the decoder skips to the group itself, reading each skipped group's header, and decodes one group. A seek to frame 100000 of the 8 kHz speech file skipped 4 groups from the nearest seek point and decoded 1.
 
 The decoder keeps one group's split tree and block table at a time, under 300 bytes for eight channels, where the previous layout held the whole index and table before decoding anything. The Haskell decoder still reads the whole stream into memory and decodes history-free blocks of every group in parallel.
 
-Segments, measured by `segments.sh` at level 4 on the 40 files, where a block may read earlier samples only within its segment:
+Segments, measured by `segments.sh` at level 4 on the corpus, where a block may read earlier samples only within its segment:
 
 | Segment | Bytes | Against one segment |
 |---|---|---|

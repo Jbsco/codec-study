@@ -12,7 +12,7 @@ Over the corpus 7.17 to 7.14 bits per sample; on the ten recordings 10.55 to 10.
 
 ## More than two channels
 
-`multichannel.sh` merges the orchestra and room recordings, both 48 kHz, 24-bit and 20 s, into one four-channel file and codes it at level 4: 6,525,980 bytes with pairs, 6,534,159 with every channel alone (`--no-pairs`), 0.13 percent apart, and 3,072 bytes less than the two stereo streams together, which contain two headers and two sets of group framing. On these two recordings the stereo modes gain little, so the pairs gain little; the electronic track would gain its 1.1 bits per sample as a pair wherever it sat among the channels.
+`multichannel.sh` merges the orchestra and room recordings, both 48 kHz, 24-bit and 20 s, into one four-channel file and codes it at level 4. The file codes to 6,525,980 bytes with pairs and 6,534,159 with every channel alone (`--no-pairs`), 0.13 percent apart. That is 3,072 bytes less than the two stereo streams together, which contain two headers and two sets of group framing. On these two recordings the stereo modes gain little, so the pairs gain little; the electronic track would gain its 1.1 bits per sample as a pair wherever it sat among the channels.
 
 Pairs by position suit layouts whose related channels are adjacent, such as left and right and the two surrounds of a 5.1 mix. A center and a low-frequency channel pair harmlessly, since left and right is always available. No real multichannel recording in the public domain was at hand, so the file is constructed and says nothing about the correlation of real surround channels.
 

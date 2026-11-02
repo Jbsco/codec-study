@@ -22,6 +22,6 @@ Constant check and shared-bit removal are comparisons and shifts. The repeat sea
 
 ## Beyond audio
 
-Exact repetition is where general-purpose compressors get most of their gain on structured binary data: compiled code repeats call sequences and prologues, tables repeat row layouts, padding repeats zeros. A back-reference scheme with byte granularity, many matches per block and a window of 4 KB to 64 KB (LZ77, LZSS, LZ4, the first stage of DEFLATE) is the right form there, and the one-match-per-block form of this codec is not.
+Exact repetition is where general-purpose compressors get most of their gain on structured binary data: compiled code repeats call sequences and prologues, tables repeat row layouts, padding repeats zeros. A back-reference scheme with byte granularity, many matches per block and a window of 4 KB to 64 KB is the right form there: LZ77, LZSS, LZ4, the first stage of DEFLATE. This codec's one match per block does not fit that data.
 
 Window size trades the same way in both: a larger window finds more matches at the cost of decoder memory, and the gain flattens quickly, about one point from 4 KB to 64 KB on machine code in our measurements.

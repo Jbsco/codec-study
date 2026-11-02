@@ -19,7 +19,7 @@ Original work only: block codec and experiment coders in three implementations, 
 
 Recording excerpts in `corpus/rec_*` are 20 s cuts of recordings their archives mark as public domain (Public Domain Mark 1.0) or dedicate under CC0 1.0. Cutting and converting to FLAC adds nothing to license, so this repository adds no terms and claims none. The README's corpus table names each source and its mark, and `corpus/make_corpus.sh` fetches them again. Standards and papers in the README's references keep their own terms.
 
-## Why the parts differ
+## Rationale
 
 Code is a component. The SPARK decoder and encoder can go into other tools, on other data, with or without this study. MIT is the simplest permissive license for that, and the Alire crate already declares it.
 

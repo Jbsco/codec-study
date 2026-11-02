@@ -30,7 +30,7 @@ Whole corpus, single runs on a typical workstation (AMD Ryzen 7 7700X):
 
 Level 1 encodes the corpus 19 times faster than level 4 for 2.2 percent more bytes; one estimated order keeps most of linear prediction's gain. Level 3 comes within 0.3 percent of level 4 in 48 percent of its time.
 
-Decoding costs 1.8 and 2.6 s at levels 0 and 1, which leave the adaptive binary code out, and 5.2 to 5.4 s from level 2, where the encoder takes that code wherever it is shorter and the decoder runs a range decoder step per modeled bit. Otherwise a decoder does one predictor's work per block however the encoder found it; level 5 adds its adaptive stage on top. These numbers come from the run with the adaptive binary code left to levels 2 and up, in `results/levels.txt`.
+Decoding costs 1.8 and 2.6 s at levels 0 and 1, which leave the adaptive binary code out. From level 2 it costs 5.2 to 5.4 s, since the encoder takes that code wherever it is shorter and the decoder runs a range decoder step per modeled bit. Otherwise a decoder does one predictor's work per block, no matter how the encoder found it. Level 5 adds its adaptive stage on top. These numbers come from the run with the adaptive binary code left to levels 2 and up, in `results/levels.txt`.
 
 Where encoder time goes, from a profile of the first linear-prediction encoder on the 48 kHz speech file: residual pass per candidate order 53 percent, Rice parameter search 14 percent, run-length symbol pass 4 percent. Two fixes with no change to the stream, a bit length by halving instead of a 64-step loop and a floor shift by logical shifts, took a quarter off encode time.
 

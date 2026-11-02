@@ -35,7 +35,7 @@ Rice decoding is a count of leading zeros and a shift. Canonical Huffman decodin
 
 ## Proof
 
-gnatprove 15.1 at level 2 proves the block decoder, canonical decoder, CRC, range decoder and bit reader free of run-time errors for any input content, given preconditions on buffer bounds and the range of earlier samples. 629 checks: 73 by flow analysis (55 initializations, 18 terminations) and 556 by the provers (425 run-time checks, 51 assertions, 79 contracts, 1 termination), none unproved.
+gnatprove 15.1 at level 2 proves the block decoder, canonical decoder, CRC, range decoder and bit reader free of run-time errors for any input content, given preconditions on buffer bounds and the range of earlier samples. Flow analysis covers initialization and termination. The provers cover run-time checks, assertions, contracts and one loop's termination. No check is left unproved.
 
 The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample, and of 256 products of a 16-bit weight and a 38-bit residual, without help beyond loop invariants. Malformed input returns `Truncated_Input` or `Bad_Data`; nothing is thrown and nothing is allocated.
 

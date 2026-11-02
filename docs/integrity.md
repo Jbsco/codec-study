@@ -12,9 +12,9 @@ Blocks later in the same segment that read lost samples decode to wrong values w
 
 ## Measured
 
-- Cost: 0.003 bits per sample over the corpus (7.095 to 7.098 at level 4) for the two bytes per block and two for the header; the group CRC is two of the 15 bytes per group that framing costs ([container.md](container.md)).
-- `checksums_test`: the check value, the bitwise form against the table form on every prefix of 4096 pseudo-random bytes, one flipped bit changing the result, and two ranges in sequence equalling the whole, 4099 of 4099 checks.
-- `corrupt_test` on a written stream: every CRC matches as written, groups are contiguous and end at the file's end, and every seek point names a group. A flipped bit in the header fails the header CRC. A flipped bit in group 0's length fails that group's CRC, and group 1 is found again by its sync word and CRC at its own offset. A flipped bit in block 0 fails block 0's CRC and leaves block 1's and group 0's matching. 12 of 12 checks on a 40-group mono stream.
+- Cost: 0.003 bits per sample over the corpus (7.095 to 7.098 at level 4) for two bytes per block and two for the header. The group CRC is two of the 15 bytes per group that framing costs ([container.md](container.md)).
+- `checksums_test`: the check value, the bitwise form against the table form on every prefix of 4096 pseudo-random bytes, one flipped bit changing the result, and two ranges in sequence equalling the whole, all passing.
+- `corrupt_test` on a written stream: every CRC matches as written, groups are contiguous and end at the file's end, and every seek point names a group. A flipped bit in the header fails the header CRC. A flipped bit in group 0's length fails that group's CRC, and group 1 is found again by its sync word and CRC at its own offset. A flipped bit in block 0 fails block 0's CRC and leaves block 1's and group 0's matching. Every check passes on a 40-group mono stream.
 - `codec_main rec_speech_8k.wav 1 --independent --flip 3 2` (a bit of group 3's length): 1 group failed, 4096 frames lost, 0 samples wrong outside them, and a seek to frame 100000 after the damage still matches. Without `--independent` the groups after it in the same 10 s segment read the lost samples and decode wrong until the next seek point.
 - Proof: the `Checksums` package proves at gnatprove level 2 with the decoder, no check unproved.
 

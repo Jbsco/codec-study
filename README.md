@@ -3,7 +3,7 @@
 Lossless audio coders built on canonical Huffman codes, measured on generated signals and on public-domain and CC0 recordings. The work has two parts:
 
 - **Experiment** in Ada: Huffman coding of raw samples, of differences, and of a tiered scheme in which the first sample of each group forms the next, coarser tier, against FLAC-style fixed predictors with Rice codes.
-- **Block codec** that adds techniques from embedded and audio coders: constant blocks, shared low bits removed, exact repeats found within a block or before it, tiers as one predictor among others, linear prediction of order 1 to 32 chosen per block, run-length Huffman and adaptive binary codes, stereo decorrelation, and block lengths from 512 to 4096 frames chosen per region. It is written three times, in Ada with a SPARK decoder, in Haskell, and as Haskell around the SPARK library, and all three write the same bytes.
+- **Block codec** that adds techniques from embedded and audio coders: constant blocks, shared low bits removed, exact repeats found within a block or before it, and tiers as one predictor among others. It chooses linear prediction of order 1 to 32 per block, codes residuals with Rice, run-length Huffman or adaptive binary codes, decorrelates stereo, and picks block lengths from 512 to 4096 frames per region. It is written three times, in Ada with a SPARK decoder, in Haskell, and as Haskell around the SPARK library, and all three write the same bytes.
 
 Every coded stream is decoded again and compared sample for sample.
 
@@ -20,7 +20,7 @@ Every coded stream is decoded again and compared sample for sample.
 
 ## Corpus
 
-40 files, 44,883,000 samples, 630 s. Integer files are FLAC, float files WAV, none over 8 MB.
+44,883,000 samples over 630 s. Integer files are FLAC, float files WAV, none over 8 MB.
 
 | Group | Files | Content |
 |---|---|---|
@@ -32,7 +32,7 @@ Every coded stream is decoded again and compared sample for sample.
 Generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the expressions in `make_corpus.sh`, for example `0.5*sin(2*PI*440*t+3*sin(2*PI*110*t))` for the FM tone. `rec_speech_16k` (16-bit mono) and `rec_speech_8k` (8-bit mono) are `rec_speech` resampled by ffmpeg, and `rec_orchestra_f32` is `rec_orchestra` as 32-bit float. Full downloads go to `corpus/source/`, which git ignores.
 
 <details>
-<summary><b>Recording sources</b> (7 files)</summary>
+<summary><b>Recording sources</b> (7 rows)</summary>
 
 | File | Recording | Source | License | Format |
 |---|---|---|---|---|
@@ -50,7 +50,7 @@ Generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the express
 
 A block codes 1 to 4096 samples of one signal, as one constant value or as a predictor and a residual code. Shared low bits are removed first. `docs/format.md` lists every field.
 
-- Predictors: polynomial order 0 to 4; a delay to an exact repeat of the block's first 32 samples, within the block or in the 16,384 samples before it; tiers of pairs; linear prediction of order 1 to 32 at a coefficient precision of 5 to 15 bits, with an adaptive sign-sign LMS stage after it at level 5.
+- Predictors: polynomial order 0 to 4, tiers of pairs, and a delay to an exact repeat of the block's first 32 samples, within the block or in the 16,384 samples before it. Linear prediction runs at order 1 to 32 and a coefficient precision of 5 to 15 bits, with an adaptive sign-sign LMS stage after it at level 5.
 - Residual codes: Rice; run-length Huffman after JPEG's AC symbols, with a canonical code table per block; an adaptive binary code through LZMA's range coder, with a probability per context, tried from level 2 up.
 - Encoder: computes the exact size of every predictor and code and writes the shortest. Linear prediction analysis runs Levinson-Durbin to order 32 over a windowed block with the same floating-point operations in Ada and Haskell, so both choose the same coefficients.
 
@@ -122,14 +122,14 @@ Level 4, with tables, parameters and headers included; every stream decodes back
 - Tiers alone, as first described, cost 1.5 to 7.9 bits more than first differences on every recording. Offsets grow with distance from the group start, and coarser tiers hold samples further apart in time.
 - Linear prediction wins most blocks of every recording. The block codec is smaller than every tool on the piano, the electronic track and the 192 kHz vinyl rip, and 0.01 to 0.08 bits above the best audio codec on the other seven. WavPack `-hh -x4` adapts its prediction sample by sample where the block codec fixes one predictor per block, which seems the likely source of that gap.
 - Stereo modes take 1.11 bits off the electronic track and 0.19 off speech. Split blocks take 0.28 bits off 8 kHz speech and 0.98 off the float sine.
-- Level 5's adaptive stage takes the piano from 3.69 to 3.55 bits per sample and the corpus from 7.058 to 7.045. It is kept only where it saves one bit per 64 samples, because the decoder pays its taps on every sample of such a block; the 192 kHz vinyl then decodes in 209 s in Ada against 0.94 s at level 4.
+- Level 5's adaptive stage takes the piano from 3.69 to 3.55 bits per sample and the corpus from 7.058 to 7.045. It is kept only where it saves one bit per 64 samples, because the decoder pays its taps on every sample of such a block. The 192 kHz vinyl then decodes in 209 s in Ada against 0.94 s at level 4.
 - Dither and white noise are smallest under the block codec, 1.75 and 15.03 bits per sample.
 
-### What each part adds
+### Gain per part
 
 Mean bits per sample over each group of files, measured on the whole corpus as each part joined the block codec. The base contains constant blocks, shared low bits, polynomial orders 0 to 4, the delay within a block, tiers, and Rice and run-length codes, in blocks of 4096 samples with 32-bit byte lengths.
 
-| Block codec | Generated signals | Sample-rate sweep | Bit-depth sweep | Recordings | All 40 files |
+| Block codec | Generated signals | Sample-rate sweep | Bit-depth sweep | Recordings | Whole corpus |
 |---|---|---|---|---|---|
 | Base | 4.48 | 6.62 | 10.51 | 11.36 | 7.98 |
 | and linear prediction | 3.95 | 6.62 | 10.45 | 10.55 | 7.60 |
@@ -141,7 +141,7 @@ Mean bits per sample over each group of files, measured on the whole corpus as e
 
 The encoder searches at six levels, and every level writes the same format, so one decoder reads them all.
 
-Two estimates replace exhaustive search at the low levels: the order whose Levinson-Durbin prediction error implies the fewest bits, 0.5 (n - p) log2(error) + 15p for order p over n samples, and the stereo mode whose summed absolute second differences have the least summed logarithm. Ada and Haskell compute that logarithm from the exponent and a fixed polynomial in the fraction, so they choose the same orders and modes.
+Two estimates replace exhaustive search at the low levels. The order estimate picks the order whose Levinson-Durbin prediction error implies the fewest bits, 0.5 (n - p) log2(error) + 15p for order p over n samples. The stereo estimate picks the mode whose summed absolute second differences have the least summed logarithm. Ada and Haskell compute that logarithm from the exponent and a fixed polynomial in the fraction, so they choose the same orders and modes.
 
 | Level | Search | Mean bits per sample | Coded corpus | Of PCM | Encode, Ada, 1 thread | Decode, Ada | Encode, Haskell, 16 threads | Decode, Haskell |
 |---|---|---|---|---|---|---|---|---|
@@ -168,7 +168,7 @@ Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side
 | Sample-rate sweep | 0.09% | 0.03% | 0.07% | 0.04% | 0.56% | 99.20% |
 | Bit-depth sweep | 0.06% | 0.01% | 0.06% | 0.10% | 0.39% | 99.38% |
 | Recordings | 0.07% | 0.64% | 0.77% | 0.02% | 0.24% | 98.26% |
-| All 40 files | 0.08% | 0.46% | 0.55% | 0.05% | 0.39% | 98.46% |
+| Whole corpus | 0.08% | 0.46% | 0.55% | 0.05% | 0.39% | 98.46% |
 
 ### Timing
 
@@ -237,9 +237,9 @@ Installed sizes of the tools compared, and this work's binaries. Decoder rows co
 
 ### Proof
 
-gnatprove 15.1 at level 2 proves the block decoder, `Canonical_Decoding`, `Checksums`, `Range_Coding` and `Bit_Streams` free of run-time errors for any input content, given preconditions on buffer bounds and the range of earlier samples: 629 checks, none unproved.
+gnatprove 15.1 at level 2 proves the block decoder, `Canonical_Decoding`, `Checksums`, `Range_Coding` and `Bit_Streams` free of run-time errors for any input content, given preconditions on buffer bounds and the range of earlier samples. Every check is proved.
 
-The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample, and of 256 products of a 16-bit weight and a 38-bit residual, from loop invariants alone. The range decoder's product of a 20-bit step and a 12-bit probability is bounded by a chain of assertions in signed arithmetic. The encoder is outside SPARK; `docs/decoder-cost.md` lists the checks by kind.
+The provers bound the sum of 32 products of a 16-bit coefficient and a 33-bit sample, and of 256 products of a 16-bit weight and a 38-bit residual, from loop invariants alone. The range decoder's product of a 20-bit step and a 12-bit probability is bounded by a chain of assertions in signed arithmetic. The encoder is outside SPARK. `docs/decoder-cost.md` lists the checks by kind.
 
 ## Hardware notes
 
