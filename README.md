@@ -284,4 +284,4 @@ GNAT 15.2 and gprbuild 25.0.1 (for example from Alire's toolchains) on the PATH,
 
 ## License
 
-Code, documentation and corpus are licensed separately: code under MIT, documentation and `results/` tables under CC BY 4.0, generated test signals under CC0 1.0, and recording excerpts under their sources' public-domain or CC0 status, listed in the corpus table above. `LICENSE.md` states this with its reasoning, and `LICENSES/` contains the texts.
+Code, documentation and corpus are licensed separately: code under MIT, documentation and `results/` tables under CC BY 4.0, generated test signals under CC0 1.0, and recording excerpts under their sources' public-domain or CC0 status, listed in the corpus table above. `LICENSING.md` states this with its reasoning; `LICENSE` contains the MIT text and `LICENSES/` the other two.
