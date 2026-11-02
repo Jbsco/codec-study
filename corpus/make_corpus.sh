@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 src=source
-work=$(mktemp -d)
+work=$(mktemp -d -p "${TMPDIR:-/var/tmp}")
 trap 'rm -rf "$work"' EXIT
 mkdir -p "$src"
 

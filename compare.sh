@@ -4,7 +4,7 @@
 # Status is ok, or unsupported when the tool rejects the format or does not restore it exactly.
 set -uo pipefail
 cd "$(dirname "$0")"
-work=$(mktemp -d)
+work=$(mktemp -d -p "${TMPDIR:-/var/tmp}")
 trap 'rm -rf "$work"' EXIT
 mkdir -p results
 out=results/compare.tsv
