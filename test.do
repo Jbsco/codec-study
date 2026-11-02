@@ -1,8 +1,9 @@
 #!/bin/bash
 # Test gate: the CRC package against its check value and its bitwise form, a written stream's framing and CRCs against
 # flipped bits, a seek and a damaged group on one stream, the stream decoder on whole, truncated and foreign files,
-# the three implementations against one another on a short file at every level, and on a four-channel file. Needs
-# gprbuild and GNAT on the PATH (an Alire toolchain), stack, flac and ffmpeg.
+# the audio MD5 against FLAC's and against a changed digest, the three implementations against one another on a short
+# file at every level, and on a four-channel file. Needs gprbuild and GNAT on the PATH (an Alire toolchain), stack,
+# flac with metaflac, ffmpeg and python3.
 exec >&2
 cd "$(dirname "$0")" || exit 1
 FAIL=0
@@ -31,12 +32,38 @@ same_audio() { [ "$(ffmpeg -v error -i "$1" -map 0:a -f md5 - 2>&1)" = "$(ffmpeg
 ada/obj/codec_main corpus/depth_pink_32f.wav 1 --stream build/pink_32f.bin > /dev/null || exit 1
 for s in speech_8k:build/wav/rec_speech_8k.wav pink_32f:corpus/depth_pink_32f.wav; do
   name=${s%%:*}; wav=${s#*:}
-  if ada/obj/stream_decode "build/$name.bin" "build/${name}_decoded.wav" 2> /dev/null && same_audio "$wav" "build/${name}_decoded.wav"; then
-    echo "  $name: decoded from the stream alone, same audio"
+  if ada/obj/stream_decode "build/$name.bin" "build/${name}_decoded.wav" 2>&1 | grep -q "audio MD5 matches" \
+     && same_audio "$wav" "build/${name}_decoded.wav"; then
+    echo "  $name: decoded from the stream alone, same audio, audio MD5 checked"
   else
     echo "  $name: stream_decode FAILED"; FAIL=1
   fi
 done
+ours=$(ada/obj/codec_main build/wav/rec_speech_8k.wav 0 | grep -oE 'audio MD5 [0-9a-f]+' | awk '{print $3}')
+[ "$ours" = "$(metaflac --show-md5sum corpus/rec_speech_8k.flac)" ] && echo "  audio MD5 equal to FLAC's" \
+  || { echo "  audio MD5 differs from FLAC's"; FAIL=1; }
+# One byte of the recorded MD5 changed and the header CRC recomputed: the decoder must report the audio as wrong.
+python3 -I - build/speech_8k.bin build/wrong_md5.bin <<'EOF'
+import sys
+b = bytearray(open(sys.argv[1], 'rb').read())
+def crc16(data):
+    r = 0xFFFF
+    for x in data:
+        r ^= x << 8
+        for _ in range(8):
+            r = ((r << 1) ^ 0x1021 if r & 0x8000 else r << 1) & 0xFFFF
+    return r
+pos = 42 + (2 * b[18] if b[21] == 1 else 0)
+count, pos = b[pos], pos + 1
+for _ in range(count):
+    pos += 4 + int.from_bytes(b[pos + 1:pos + 4], 'big')
+b[26] ^= 1
+b[pos:pos + 2] = crc16(b[:pos]).to_bytes(2, 'big')
+open(sys.argv[2], 'wb').write(b)
+EOF
+out=$(ada/obj/stream_decode build/wrong_md5.bin build/wrong_md5.wav 2>&1); st=$?
+[ $st = 1 ] && grep -q "AUDIO MD5 DIFFERS" <<< "$out" && echo "  changed audio MD5: reported" \
+  || { echo "  changed audio MD5: not reported"; FAIL=1; }
 head -c 60000 build/speech_8k.bin > build/truncated.bin
 ada/obj/stream_decode build/truncated.bin build/truncated.wav 2> /dev/null
 [ $? = 1 ] && echo "  truncated stream: damage status" || { echo "  truncated stream: wrong status"; FAIL=1; }

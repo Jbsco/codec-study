@@ -54,7 +54,7 @@ A block codes 1 to 4096 samples of one signal, as one constant value or as a pre
 - Residual codes: Rice; run-length Huffman after JPEG's AC symbols, with a canonical code table per block; an adaptive binary code through LZMA's range coder, with a probability per context, tried from level 2 up.
 - Encoder: computes the exact size of every predictor and code and writes the shortest. Linear prediction analysis runs Levinson-Durbin to order 32 over a windowed block with the same floating-point operations in Ada and Haskell, so both choose the same coefficients.
 
-A stream is a header and groups of 4096 frames. The header contains the magic `BLKC`, format fields, metadata with tags and a seek table, and a CRC-16. Each group is framed by a sync word, its byte length, its first frame, a split tree with a stereo mode per channel pair, a byte length and a CRC-16 per block, and a CRC-16 over that framing.
+A stream is a header and groups of 4096 frames. The header contains the magic `BLKC`, format fields, an MD5 of the input samples in FLAC's layout, metadata with tags and a seek table, and a CRC-16. Each group is framed by a sync word, its byte length, its first frame, a split tree with a stereo mode per channel pair, a byte length and a CRC-16 per block, and a CRC-16 over that framing.
 
 Blocks read earlier samples only within their segment, so a decoder can start at any seek point and a damaged group costs at most the rest of its segment. `docs/container.md` and `docs/integrity.md` have the layout, its cost and the damage tests.
 

@@ -9,7 +9,7 @@ package Stream_Format is
    type Sample_Array_Access is access Sample_Array;
 
    Magic : constant Byte_Array (0 .. 3) := [16#42#, 16#4C#, 16#4B#, 16#43#];
-   Version : constant := 1;
+   Version : constant := 2;
    Sync : constant := 16#B1C5#;
    Group_Head : constant := 11;
    Tag_Block : constant := 1;

@@ -3,6 +3,7 @@
 --  ends in a status, not an exception. A group whose framing fails is skipped, the next group is found again by
 --  its sync word, and the frames between are marked lost.
 with Ada.Strings.Unbounded;
+with Audio_Digest;
 with Bit_Streams; use Bit_Streams;
 with Block_Codec; use Block_Codec;
 with Stream_Format; use Stream_Format;
@@ -23,8 +24,10 @@ package Stream_Reading is
    type Header is record
       Ok : Boolean := False;
       Independent : Boolean := False;
-      Rate, Frames, Channels, Depth : Natural := 0;
+      Rate, Frames, Channels, Depth, Valid_Bits : Natural := 0;
       Is_Float : Boolean := False;
+      Channel_Mask : Long_Long_Integer := 0;
+      Audio_Md5 : Audio_Digest.Digest := Audio_Digest.Not_Recorded;
       Modes, Scales : Natural_List := [others => 0];
       Tag_Count : Natural := 0;
       Tags : Ada.Strings.Unbounded.Unbounded_String;
@@ -42,17 +45,28 @@ package Stream_Reading is
    procedure Read_Header (Stream : Byte_Array; H : out Header)
      with Pre => Stream'First = 0;
 
+   --  Sample F of channel C in the form Wav_Files reads it: the integer, or for float the order-keeping integer of
+   --  its bit pattern.
+   function Wav_Sample (H : Header; Output : Channel_Buffers; C : Positive; F : Natural) return Long_Long_Integer is
+     (if H.Is_Float and then H.Modes (C) = 1 then From_Integer (Output (C) (F), H.Scales (C)) else Output (C) (F));
+
+   --  The decoded audio against the MD5 the header records: not checked, none recorded, or the result.
+   type Audio_Check is (Not_Checked, Not_Recorded, Matches, Differs);
+
    --  What a full decode met: groups whose framing failed, blocks whose CRC failed, frames in no readable group,
-   --  whether every block decoded and used its whole length, and whether the groups covered every frame.
+   --  whether every block decoded and used its whole length, whether the groups covered every frame, and the
+   --  audio check.
    type Damage is record
       Bad_Groups, Bad_Crcs, Lost_Frames : Natural := 0;
       Blocks_Ok : Boolean := True;
       Complete : Boolean := False;
+      Audio : Audio_Check := Not_Checked;
    end record;
 
-   --  Decode every group into Output, H.Frames samples per channel; Lost marks the frames no group gave.
+   --  Decode every group into Output, H.Frames samples per channel; Lost marks the frames no group gave. With
+   --  Verify, the MD5 of the decoded audio is checked against the header's.
    procedure Decode_All (Stream : Byte_Array; H : Header; Output : out Channel_Buffers; Lost : out Boolean_Array_Access;
-                         D : out Damage)
+                         D : out Damage; Verify : Boolean := True)
      with Pre => Stream'First = 0 and then H.Ok;
 
    --  Decode from the seek point at or before frame Target until the group that holds it, into Buf. Floor is

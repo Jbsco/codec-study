@@ -138,12 +138,12 @@ begin
          Byte_IO.Read (File, Stream (I));
       end loop;
       Byte_IO.Close (File);
-      Expect (Size > 20 and then Stream (0 .. 3) = [16#42#, 16#4C#, 16#4B#, 16#43#] and then Stream (4) = 1, "the magic and the version");
-      Frames := Word (10, 4);
-      Channels := Natural (Stream (14));
+      Expect (Size > 45 and then Stream (0 .. 3) = [16#42#, 16#4C#, 16#4B#, 16#43#] and then Stream (4) = 2, "the magic and the version");
+      Frames := Word (14, 4);
+      Channels := Natural (Stream (18));
       Pairs := Natural'Min (Channels / 2, Max_Pairs);
-      Float := Stream (16) = 1;
-      Pos := 17 + (if Float then 2 * Channels else 0);
+      Float := Stream (21) = 1;
+      Pos := 42 + (if Float then 2 * Channels else 0);
       Meta := Natural (Stream (Pos));
       Pos := Pos + 1;
       for M in 1 .. Meta loop

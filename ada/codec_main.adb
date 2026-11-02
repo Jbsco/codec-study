@@ -11,6 +11,7 @@ with Ada.Direct_IO;
 with Ada.Real_Time;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
+with Audio_Digest;
 with Interfaces; use Interfaces;
 with Bit_Streams; use Bit_Streams;
 with Block_Codec; use Block_Codec;
@@ -349,6 +350,7 @@ begin
       Coupled : array (1 .. Pairs) of Boolean := [others => False];
       Trial : array (0 .. Top, 0 .. 2**Top - 1, 1 .. Signals) of Byte_Array_Access;
       Stream : Byte_Array_Access;
+      Audio_Md5 : Audio_Digest.Digest;
 
       --  The channel-pair mappings of Stream_Format for this stream's channel count.
       function Pair_Of (C : Positive) return Natural is (Stream_Format.Pair_Of (C, Pairs));
@@ -387,6 +389,9 @@ begin
       --  The input sample as the decoder must return it: the integer, or the float's integer scaled back.
       function Original (C : Positive; I : Natural) return Long_Long_Integer is
         (if Mode (C) = 1 then From_Integer (Input.Samples (C) (I), Scale (C)) else Input.Samples (C) (I));
+
+      --  The input sample as read, before float input becomes integers.
+      function Input_Sample (C : Positive; I : Natural) return Long_Long_Integer is (Input.Samples (C) (I));
    begin
       for I in 2 .. Ada.Command_Line.Argument_Count - 1 loop
          if Ada.Command_Line.Argument (I) = "--tag" then
@@ -394,9 +399,10 @@ begin
             Tag_Bytes := Tag_Bytes + 2 + Ada.Command_Line.Argument (I + 1)'Length;
          end if;
       end loop;
-      Header_Length := 17 + (if Input.Is_Float then 2 * Channels else 0) + 1 + (if Tag_Count > 0 then 4 + Tag_Bytes else 0)
+      Header_Length := 42 + (if Input.Is_Float then 2 * Channels else 0) + 1 + (if Tag_Count > 0 then 4 + Tag_Bytes else 0)
         + (if Entries > 0 then 4 + 12 * Entries else 0) + 2;
       Stream := new Byte_Array (0 .. Header_Length + Data'Length);
+      Audio_Md5 := Audio_Digest.Md5 (Channels, Frames, Input.Depth, Input.Valid_Bits, Input.Is_Float, Input_Sample'Access);
       if Input.Is_Float then
          for C in 1 .. Channels loop
             declare
@@ -608,10 +614,15 @@ begin
       Put (Stream.all, Pos, Version, 8);
       Put (Stream.all, Pos, Boolean'Pos (Independent), 8);
       Put (Stream.all, Pos, Unsigned_64 (Rate), 32);
-      Put (Stream.all, Pos, Unsigned_64 (Frames), 32);
+      Put (Stream.all, Pos, Unsigned_64 (Frames), 64);
       Put (Stream.all, Pos, Unsigned_64 (Channels), 8);
       Put (Stream.all, Pos, Unsigned_64 (Input.Depth), 8);
+      Put (Stream.all, Pos, Unsigned_64 (Input.Valid_Bits), 8);
       Put (Stream.all, Pos, Boolean'Pos (Input.Is_Float), 8);
+      Put (Stream.all, Pos, Unsigned_64 (Input.Channel_Mask), 32);
+      for B of Audio_Md5 loop
+         Put (Stream.all, Pos, Unsigned_64 (B), 8);
+      end loop;
       if Input.Is_Float then
          for C in 1 .. Channels loop
             Put (Stream.all, Pos, Unsigned_64 (Mode (C)), 8);
@@ -676,10 +687,11 @@ begin
       begin
          Stream_Reading.Read_Header (Stream (0 .. Length - 1), H);
          Same := Same and then H.Ok and then H.Rate = Rate and then H.Frames = Frames and then H.Channels = Channels
-           and then H.Depth = Input.Depth and then H.Is_Float = Input.Is_Float
+           and then H.Depth = Input.Depth and then H.Valid_Bits = Input.Valid_Bits and then H.Is_Float = Input.Is_Float
+           and then H.Channel_Mask = Input.Channel_Mask and then H.Audio_Md5 = Audio_Md5
            and then (for all C in 1 .. Channels => H.Modes (C) = Mode (C) and then H.Scales (C) = Scale (C));
          if H.Ok then
-            Stream_Reading.Decode_All (Stream (0 .. Length - 1), H, Output, Lost, D);
+            Stream_Reading.Decode_All (Stream (0 .. Length - 1), H, Output, Lost, D, Verify => False);
             for C in 1 .. Channels loop
                for I in 0 .. Frames - 1 loop
                   if not Lost (I) and then (if Mode (C) = 1 then From_Integer (Output (C) (I), Scale (C)) else Output (C) (I)) /= Original (C, I) then
@@ -733,7 +745,8 @@ begin
                    & Framing'Image & " bytes of group headers and tables, "
                    & (if Independent then "every group a segment" elsif Segment_Span = 0 then "one segment"
                       else "a segment every" & Segment_Span'Image & " groups") & "," & Natural'Image (H.Seeks'Length) & " seek points"
-                   & (if H.Tag_Count > 0 then "; tags " & Ada.Strings.Unbounded.To_String (H.Tags) else ""));
+                   & (if H.Tag_Count > 0 then "; tags " & Ada.Strings.Unbounded.To_String (H.Tags) else "")
+                   & "; audio MD5 " & Audio_Digest.Image (Audio_Md5));
          if D.Bad_Groups > 0 or else D.Bad_Crcs > 0 or else Wrong > 0 then
             Put_Line ("    damage:" & D.Bad_Groups'Image & " groups failed," & D.Bad_Crcs'Image & " block CRCs failed," & D.Lost_Frames'Image
                       & " frames lost," & Wrong'Image & " samples wrong outside them" & (if Wrong = 0 then "; damage contained" else ""));
