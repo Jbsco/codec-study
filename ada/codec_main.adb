@@ -16,6 +16,8 @@ with Bit_Streams; use Bit_Streams;
 with Block_Codec; use Block_Codec;
 with Checksums;
 with Huffman_Codes; use Huffman_Codes;
+with Stream_Format; use Stream_Format;
+with Stream_Reading;
 with Wav_Files;
 
 procedure Codec_Main is
@@ -23,13 +25,6 @@ procedure Codec_Main is
    use type Ada.Real_Time.Time;
 
    package Real_Text is new Float_IO (Long_Float);
-
-   type Byte_Array_Access is access Byte_Array;
-   type Sample_Array_Access is access Sample_Array;
-
-   --  Float bit patterns from the order-keeping integers of Wav_Files, and back.
-   function Bits_Of (V : Long_Long_Integer) return Long_Long_Integer is (if V >= 0 then V else 2**31 - 1 - V);
-   function Ordered (B : Long_Long_Integer) return Long_Long_Integer is (if B >= 2**31 then 2**31 - 1 - B else B);
 
    function Trailing_Zeros (F : Long_Long_Integer) return Natural is
       T : Natural := 0;
@@ -94,27 +89,6 @@ procedure Codec_Main is
       S := Natural (Fraction);
       Ok := True;
    end To_Integers;
-
-   function From_Integer (I : Long_Long_Integer; S : Natural) return Long_Long_Integer is
-   begin
-      if I = 0 then
-         return 0;
-      end if;
-      declare
-         A : constant Long_Long_Integer := abs I;
-         L : Natural := 0;
-      begin
-         while 2**L <= A loop
-            L := L + 1;
-         end loop;
-         declare
-            F : constant Long_Long_Integer := (if L <= 24 then A * 2**(24 - L) else A / 2**(L - 24));
-            E : constant Long_Long_Integer := Long_Long_Integer (L) - 1 - Long_Long_Integer (S) + 127;
-         begin
-            return Ordered ((if I < 0 then 2**31 else 0) + E * 2**23 + (F - 2**23));
-         end;
-      end;
-   end From_Integer;
 
    procedure Put_Real (Value : Long_Float; Aft : Natural := 2) is
    begin
@@ -255,16 +229,7 @@ procedure Codec_Main is
       end;
    end Count_Kind;
 
-   --  V divided by two, rounded down.
-   function Half_Down (V : Long_Long_Integer) return Long_Long_Integer is (if V >= 0 then V / 2 else -((1 - V) / 2));
-
-   --  The two signals each stereo mode codes: left and right, left and side, side and right, mid and side, where
-   --  signals 1 and 2 are the channels, 3 is the mid and 4 the side.
-   Mode_Signals : constant array (0 .. 3, 1 .. 2) of Positive := [[1, 2], [1, 4], [4, 2], [3, 4]];
    Mode_Names : constant array (0 .. 3) of String (1 .. 10) := ["left/right", "left/side ", "side/right", "mid/side  "];
-
-   --  Each group of 4096 frames splits into blocks of 4096, 2048, 1024 or 512 frames.
-   Top : constant := 3;
 
    --  The search at each level: the deepest tree level the encoder tries, how it picks a stereo mode (0 left and
    --  right only, 1 by an estimate from second differences, 2 by coding all four signals), and its linear
@@ -329,26 +294,6 @@ procedure Codec_Main is
       end if;
    end Write_Stream;
 
-   --  The stream: a header of the magic, version, flags, rate, frames, channels, depth, float flag and float
-   --  modes, a counted list of metadata blocks (type, 24-bit length, bytes) and a CRC-16; then the groups, each
-   --  a sync word, a 24-bit byte length, its first frame, its frame count, its split tree with a 2-bit stereo
-   --  mode per channel pair on each leaf, a 16-bit length and a CRC-16 per block, a CRC-16 of all that, and the
-   --  blocks. Blocks read earlier samples only within their segment: every group when the independent flag is
-   --  set, otherwise from one seek point to the next.
-   Magic : constant Byte_Array (0 .. 3) := [16#42#, 16#4C#, 16#4B#, 16#43#];
-   Version : constant := 1;
-   Sync : constant := 16#B1C5#;
-   Group_Head : constant := 11;
-   Tag_Block : constant := 1;
-   Seek_Block : constant := 2;
-   Max_Pairs : constant := Wav_Files.Max_Channels / 2;
-   type Mode_List is array (1 .. Max_Pairs) of Natural;
-   type Leaf is record
-      First, Count : Natural := 0;
-      Modes : Mode_List := [others => 0];
-   end record;
-   type Leaf_List is array (0 .. 2**Top - 1) of Leaf;
-   type Channel_Buffers is array (1 .. Wav_Files.Max_Channels) of Sample_Array_Access;
 
    Input : Wav_Files.Audio;
 begin
@@ -405,19 +350,11 @@ begin
       Trial : array (0 .. Top, 0 .. 2**Top - 1, 1 .. Signals) of Byte_Array_Access;
       Stream : Byte_Array_Access;
 
-      --  A node of a group's split tree is whole when it is a smallest block or its second half starts before
-      --  the frame Upto.
-      function Whole (First, Level, Upto : Natural) return Boolean is
-        (Level = Top or else First + Max_Block / 2**(Level + 1) < Upto);
-
-      --  The pair of channel C, 0 for a channel coded alone; signal S of pair P, 1 and 2 its channels, 3 its mid
-      --  and 4 its side; and the signal a mode's position K of pair P names.
-      function Pair_Of (C : Positive) return Natural is (if C <= 2 * Pairs then (C + 1) / 2 else 0);
-      function Pair_Signal (P, S : Positive) return Positive is
-        (case S is when 1 => 2 * P - 1, when 2 => 2 * P, when 3 => Channels + 2 * P - 1, when others => Channels + 2 * P);
-      function Signal_Of (P : Positive; M : Natural; K : Positive) return Positive is (Pair_Signal (P, Mode_Signals (M, K)));
-      function Coded_Signal (C : Positive; Modes : Mode_List) return Positive is
-        (if Pair_Of (C) = 0 then C else Signal_Of (Pair_Of (C), Modes (Pair_Of (C)), C - 2 * (Pair_Of (C) - 1)));
+      --  The channel-pair mappings of Stream_Format for this stream's channel count.
+      function Pair_Of (C : Positive) return Natural is (Stream_Format.Pair_Of (C, Pairs));
+      function Pair_Signal (P, S : Positive) return Positive is (Stream_Format.Pair_Signal (P, S, Channels));
+      function Signal_Of (P : Positive; M : Natural; K : Positive) return Positive is (Stream_Format.Signal_Of (P, M, K, Channels));
+      function Coded_Signal (C : Positive; Modes : Mode_List) return Positive is (Stream_Format.Coded_Signal (C, Modes, Channels));
 
       --  The first frame of the segment holding frame F: the group's own first frame when every group is a
       --  segment, else the last seek point at or before it.
@@ -726,303 +663,32 @@ begin
          end;
       end if;
 
-      --  Read the header, then every group in turn, finding the next group's sync word again after a damaged
-      --  one; then decode the groups of the frame "--seek" names from its seek point alone.
+      --  Read the stream back from its own bytes, compare every sample, then decode the groups of the frame
+      --  "--seek" names from its seek point alone.
       declare
          Decode_Start : constant Ada.Real_Time.Time := Ada.Real_Time.Clock;
-         Output, Got : Channel_Buffers;
-         Derived : constant Sample_Array_Access := new Sample_Array (0 .. Max_History - 1);
-         Status : Status_Type;
-         Used : Natural;
-         Bad_Crcs, Bad_Groups, Lost_Frames, Wrong, Seek_Count, Tags, First_Group : Natural := 0;
-         Lost : array (0 .. Frames - 1) of Boolean := [others => False];
-         Seek_Frames, Seek_Offsets : array (0 .. Entries) of Natural := [others => 0];
-         Independent_Flag, Decoded_Ok : Boolean := True;
-         Tag_Text : Ada.Strings.Unbounded.Unbounded_String;
+         H : Stream_Reading.Header;
+         Output : Stream_Reading.Channel_Buffers;
+         Lost : Stream_Reading.Boolean_Array_Access;
+         D : Stream_Reading.Damage;
+         Wrong : Natural := 0;
          Decoded : Ada.Real_Time.Time;
-
-         procedure Read_Header is
-            Field : Unsigned_64;
-            Count, Kind, Len : Natural;
-            Ok : Boolean := Stream (0 .. 3) = Magic;
-         begin
-            Pos := 32;
-            Get (Stream.all, Pos, Field, 8);
-            Ok := Ok and then Field = Version;
-            Get (Stream.all, Pos, Field, 8);
-            Independent_Flag := Field = 1;
-            Get (Stream.all, Pos, Field, 32);
-            Ok := Ok and then Field = Unsigned_64 (Rate);
-            Get (Stream.all, Pos, Field, 32);
-            Ok := Ok and then Field = Unsigned_64 (Frames);
-            Get (Stream.all, Pos, Field, 8);
-            Ok := Ok and then Field = Unsigned_64 (Channels);
-            Get (Stream.all, Pos, Field, 8);
-            Ok := Ok and then Field = Unsigned_64 (Input.Depth);
-            Get (Stream.all, Pos, Field, 8);
-            Ok := Ok and then Field = Boolean'Pos (Input.Is_Float);
-            if Input.Is_Float then
-               for C in 1 .. Channels loop
-                  Get (Stream.all, Pos, Field, 8);
-                  Ok := Ok and then Field = Unsigned_64 (Mode (C));
-                  Get (Stream.all, Pos, Field, 8);
-                  Ok := Ok and then Field = Unsigned_64 (Scale (C));
-               end loop;
-            end if;
-            Get (Stream.all, Pos, Field, 8);
-            Count := Natural (Field);
-            for B in 1 .. Count loop
-               Get (Stream.all, Pos, Field, 8);
-               Kind := Natural (Field);
-               Get (Stream.all, Pos, Field, 24);
-               Len := Natural (Field);
-               if Kind = Tag_Block then
-                  declare
-                     Q : Natural := Pos;
-                  begin
-                     while Q < Pos + 8 * Len loop
-                        Get (Stream.all, Q, Field, 16);
-                        Tags := Tags + 1;
-                        Ada.Strings.Unbounded.Append (Tag_Text, (if Tags > 1 then ", " else ""));
-                        for K in 1 .. Natural (Field) loop
-                           declare
-                              Ch : Unsigned_64;
-                           begin
-                              Get (Stream.all, Q, Ch, 8);
-                              Ada.Strings.Unbounded.Append (Tag_Text, Character'Val (Ch));
-                           end;
-                        end loop;
-                     end loop;
-                  end;
-               elsif Kind = Seek_Block then
-                  for E in 1 .. Len / 12 loop
-                     Get (Stream.all, Pos, Field, 32);
-                     Seek_Frames (Seek_Count) := Natural (Field);
-                     Get (Stream.all, Pos, Field, 64);
-                     Seek_Offsets (Seek_Count) := Natural (Field);
-                     Seek_Count := Seek_Count + 1;
-                  end loop;
-                  Pos := Pos - 96 * (Len / 12);
-               end if;
-               Pos := Pos + 8 * Len;
-            end loop;
-            Ok := Ok and then Checksums.Matches (Stream.all, Pos / 8, Checksums.Of_Bytes (Stream (0 .. Pos / 8 - 1)));
-            Pos := Pos + 16;
-            First_Group := Pos / 8;
-            Same := Same and then Ok;
-         end Read_Header;
-
-         --  The group header at Offset: its byte length, first frame, frame count, leaves and the position of
-         --  its block table. Ok when the sync word, the fields and the CRC are all right.
-         procedure Parse_Group (Offset : Natural; Group_Length, Group_First, Group_Count : out Natural; L : out Leaf_List;
-                                Leaf_Count, Table_At : out Natural; Ok : out Boolean) is
-            Field : Unsigned_64;
-            P : Natural := Offset * 8;
-
-            procedure Walk (First, Level : Natural) is
-            begin
-               if not Whole (First, Level, Group_First + Group_Count) then
-                  Walk (First, Level + 1);
-                  return;
-               end if;
-               if Level < Top then
-                  Get (Stream.all, P, Field, 1);
-                  if Field = 1 then
-                     Walk (First, Level + 1);
-                     Walk (First + Max_Block / 2**(Level + 1), Level + 1);
-                     return;
-                  end if;
-               end if;
-               L (Leaf_Count).First := First;
-               L (Leaf_Count).Count := Natural'Min (First + Max_Block / 2**Level, Group_First + Group_Count) - First;
-               for Pr in 1 .. Pairs loop
-                  Get (Stream.all, P, Field, 2);
-                  L (Leaf_Count).Modes (Pr) := Natural (Field);
-               end loop;
-               Leaf_Count := Leaf_Count + 1;
-            end Walk;
-         begin
-            Ok := False;
-            Leaf_Count := 0;
-            Table_At := 0;
-            Group_Length := 0;
-            Group_First := 0;
-            Group_Count := 0;
-            L := [others => (0, 0, [others => 0])];
-            if Offset + Group_Head + 2 > Length then
-               return;
-            end if;
-            Get (Stream.all, P, Field, 16);
-            if Field /= Sync then
-               return;
-            end if;
-            Get (Stream.all, P, Field, 24);
-            Group_Length := Natural (Field);
-            Get (Stream.all, P, Field, 32);
-            if Field > Unsigned_64 (Frames) then
-               return;
-            end if;
-            Group_First := Natural (Field);
-            Get (Stream.all, P, Field, 16);
-            Group_Count := Natural (Field);
-            if Group_Length < Group_Head + 2 or else Offset + Group_Length > Length or else Group_Count = 0
-              or else Group_Count > Max_Block or else Group_First + Group_Count > Frames
-            then
-               return;
-            end if;
-            Walk (Group_First, 0);
-            P := (P + 7) / 8 * 8;
-            Table_At := P / 8;
-            if Table_At + 4 * Leaf_Count * Channels + 2 > Offset + Group_Length then
-               return;
-            end if;
-            P := P + 32 * Leaf_Count * Channels;
-            Ok := Checksums.Matches (Stream.all, P / 8, Checksums.Of_Bytes (Stream (Offset .. P / 8 - 1)));
-         end Parse_Group;
-
-         --  Decode the group at Offset into Buf, reading earlier samples back to frame Floor at most. Ok when
-         --  the header was right and the blocks filled the group exactly; a block whose CRC fails is counted
-         --  and decoded anyway.
-         procedure Decode_Group (Offset : Natural; Buf : in out Channel_Buffers; Floor : Natural;
-                                 Group_Length, Group_First, Group_Count : out Natural; Ok : out Boolean) is
-            L : Leaf_List;
-            Leaf_Count, Table_At : Natural;
-            Field : Unsigned_64;
-         begin
-            Parse_Group (Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
-            if not Ok then
-               return;
-            end if;
-            declare
-               P : Natural := Table_At * 8;
-               Block_At : Natural := Table_At + 4 * Leaf_Count * Channels + 2;
-            begin
-               for I in 0 .. Leaf_Count - 1 loop
-                  declare
-                     First : constant Natural := L (I).First;
-                     Size_Of : constant Natural := L (I).Count;
-                     From : constant Natural := Natural'Max (Floor, First - Max_History);
-                  begin
-                     for C in 1 .. Channels loop
-                        declare
-                           S : constant Positive := Coded_Signal (C, L (I).Modes);
-                           Size : Natural;
-                        begin
-                           Get (Stream.all, P, Field, 16);
-                           Size := Natural (Field);
-                           if Block_At + Size > Offset + Group_Length then
-                              Ok := False;
-                              return;
-                           end if;
-                           if not Checksums.Matches (Stream.all, P / 8, Checksums.Of_Bytes (Stream (Block_At .. Block_At + Size - 1))) then
-                              Bad_Crcs := Bad_Crcs + 1;
-                           end if;
-                           P := P + 16;
-                           if S <= Channels then
-                              Decode (Stream (Block_At .. Block_At + Size - 1), Buf (S) (From .. First - 1), Signal_Depth (S),
-                                      Got (C) (0 .. Size_Of - 1), Used, Status);
-                           else
-                              declare
-                                 A : constant Positive := 2 * Pair_Of (C) - 1;
-                              begin
-                                 for K in From .. First - 1 loop
-                                    Derived (K - From) :=
-                                      (if S = Pair_Signal (Pair_Of (C), 3) then Half_Down (Buf (A) (K) + Buf (A + 1) (K))
-                                       else Buf (A) (K) - Buf (A + 1) (K));
-                                 end loop;
-                                 Decode (Stream (Block_At .. Block_At + Size - 1), Derived (0 .. First - From - 1), Signal_Depth (S),
-                                         Got (C) (0 .. Size_Of - 1), Used, Status);
-                              end;
-                           end if;
-                           Decoded_Ok := Decoded_Ok and then Status = Success and then Used = Size;
-                           Block_At := Block_At + Size;
-                        end;
-                     end loop;
-                     for K in 0 .. Size_Of - 1 loop
-                        for Pr in 1 .. Pairs loop
-                           declare
-                              A : constant Long_Long_Integer := Got (2 * Pr - 1) (K);
-                              B : constant Long_Long_Integer := Got (2 * Pr) (K);
-                              Sum : constant Long_Long_Integer := 2 * A + B mod 2;
-                           begin
-                              case L (I).Modes (Pr) is
-                                 when 0 => Buf (2 * Pr - 1) (First + K) := A; Buf (2 * Pr) (First + K) := B;
-                                 when 1 => Buf (2 * Pr - 1) (First + K) := A; Buf (2 * Pr) (First + K) := A - B;
-                                 when 2 => Buf (2 * Pr - 1) (First + K) := A + B; Buf (2 * Pr) (First + K) := B;
-                                 when others => Buf (2 * Pr - 1) (First + K) := (Sum + B) / 2; Buf (2 * Pr) (First + K) := (Sum - B) / 2;
-                              end case;
-                           end;
-                        end loop;
-                        for C in 2 * Pairs + 1 .. Channels loop
-                           Buf (C) (First + K) := Got (C) (K);
-                        end loop;
-                     end loop;
-                  end;
-               end loop;
-               Ok := Block_At = Offset + Group_Length;
-            end;
-         end Decode_Group;
-
-         --  The first offset at or after From that starts a group with a right header, or Length.
-         function Next_Sync (From : Natural) return Natural is
-            L : Leaf_List;
-            A, B, C, N, T : Natural;
-            Ok : Boolean;
-         begin
-            for P in From .. Length - Group_Head - 2 loop
-               if Natural (Stream (P)) * 256 + Natural (Stream (P + 1)) = Sync then
-                  Parse_Group (P, A, B, C, L, N, T, Ok);
-                  if Ok then
-                     return P;
-                  end if;
-               end if;
-            end loop;
-            return Length;
-         end Next_Sync;
       begin
-         Read_Header;
-         for C in 1 .. Channels loop
-            Output (C) := new Sample_Array'(0 .. Frames - 1 => 0);
-            Got (C) := new Sample_Array (0 .. Max_Block - 1);
-         end loop;
-         declare
-            Offset : Natural := First_Group;
-            Expected : Natural := 0;
-            Group_Length, Group_First, Group_Count, Leaf_Count, Table_At : Natural;
-            L : Leaf_List;
-            Ok : Boolean;
-         begin
-            while Offset < Length loop
-               Decode_Group (Offset, Output, 0, Group_Length, Group_First, Group_Count, Ok);
-               if Ok and then Group_First = Expected then
-                  Offset := Offset + Group_Length;
-                  Expected := Group_First + Group_Count;
-               else
-                  Bad_Groups := Bad_Groups + 1;
-                  Offset := Next_Sync (Offset + 1);
-                  if Offset < Length then
-                     Parse_Group (Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
-                     if Group_First > Expected then
-                        Lost_Frames := Lost_Frames + Group_First - Expected;
-                        Lost (Expected .. Group_First - 1) := [others => True];
-                     end if;
-                     Expected := Group_First;
-                  else
-                     Lost_Frames := Lost_Frames + Frames - Expected;
-                     Lost (Expected .. Frames - 1) := [others => True];
+         Stream_Reading.Read_Header (Stream (0 .. Length - 1), H);
+         Same := Same and then H.Ok and then H.Rate = Rate and then H.Frames = Frames and then H.Channels = Channels
+           and then H.Depth = Input.Depth and then H.Is_Float = Input.Is_Float
+           and then (for all C in 1 .. Channels => H.Modes (C) = Mode (C) and then H.Scales (C) = Scale (C));
+         if H.Ok then
+            Stream_Reading.Decode_All (Stream (0 .. Length - 1), H, Output, Lost, D);
+            for C in 1 .. Channels loop
+               for I in 0 .. Frames - 1 loop
+                  if not Lost (I) and then (if Mode (C) = 1 then From_Integer (Output (C) (I), Scale (C)) else Output (C) (I)) /= Original (C, I) then
+                     Wrong := Wrong + 1;
                   end if;
-               end if;
+               end loop;
             end loop;
-            Same := Same and then Decoded_Ok and then Expected = Frames and then Bad_Groups = 0 and then Bad_Crcs = 0;
-         end;
-         for C in 1 .. Channels loop
-            for I in 0 .. Frames - 1 loop
-               if not Lost (I) and then (if Mode (C) = 1 then From_Integer (Output (C) (I), Scale (C)) else Output (C) (I)) /= Original (C, I) then
-                  Wrong := Wrong + 1;
-               end if;
-            end loop;
-         end loop;
-         Same := Same and then Wrong = 0 and then Lost_Frames = 0;
+         end if;
+         Same := Same and then D.Blocks_Ok and then D.Complete and then D.Bad_Crcs = 0 and then Wrong = 0 and then D.Lost_Frames = 0;
          Decoded := Ada.Real_Time.Clock;
 
          Put_Line (Ada.Command_Line.Argument (1));
@@ -1066,52 +732,25 @@ begin
          Put_Line ("    framing: header" & Header_Length'Image & " bytes," & Groups'Image & " groups," & Blocks'Image & " blocks,"
                    & Framing'Image & " bytes of group headers and tables, "
                    & (if Independent then "every group a segment" elsif Segment_Span = 0 then "one segment"
-                      else "a segment every" & Segment_Span'Image & " groups") & "," & Seek_Count'Image & " seek points"
-                   & (if Tags > 0 then "; tags " & Ada.Strings.Unbounded.To_String (Tag_Text) else ""));
-         if Bad_Groups > 0 or else Bad_Crcs > 0 or else Wrong > 0 then
-            Put_Line ("    damage:" & Bad_Groups'Image & " groups failed," & Bad_Crcs'Image & " block CRCs failed," & Lost_Frames'Image
+                      else "a segment every" & Segment_Span'Image & " groups") & "," & Natural'Image (H.Seeks'Length) & " seek points"
+                   & (if H.Tag_Count > 0 then "; tags " & Ada.Strings.Unbounded.To_String (H.Tags) else ""));
+         if D.Bad_Groups > 0 or else D.Bad_Crcs > 0 or else Wrong > 0 then
+            Put_Line ("    damage:" & D.Bad_Groups'Image & " groups failed," & D.Bad_Crcs'Image & " block CRCs failed," & D.Lost_Frames'Image
                       & " frames lost," & Wrong'Image & " samples wrong outside them" & (if Wrong = 0 then "; damage contained" else ""));
          end if;
 
-         if Option ("--seek") > 0 then
+         if Option ("--seek") > 0 and then H.Ok then
             declare
                Target : constant Natural := Natural'Min (Option_Value ("--seek", 0), Frames - 1);
-               Buf : Channel_Buffers;
-               Offset : Natural := First_Group;
-               Floor, Hops, Count : Natural := 0;
-               Group_Length, Group_First, Group_Count, Leaf_Count, Table_At : Natural := 0;
-               L : Leaf_List;
-               Ok : Boolean := True;
+               Buf : Stream_Reading.Channel_Buffers;
+               Floor, Hops, Count, Last_First, Last_Count : Natural;
+               Ok : Boolean;
                Seek_Same : Boolean := True;
             begin
-               for E in 0 .. Seek_Count - 1 loop
-                  if Seek_Frames (E) <= Target then
-                     Offset := Seek_Offsets (E);
-                     Floor := Seek_Frames (E);
-                  end if;
-               end loop;
-               if Independent_Flag then
-                  loop
-                     Parse_Group (Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
-                     exit when not Ok or else Group_First + Group_Count > Target;
-                     Offset := Offset + Group_Length;
-                     Hops := Hops + 1;
-                  end loop;
-                  Floor := Group_First;
-               end if;
-               for C in 1 .. Channels loop
-                  Buf (C) := new Sample_Array'(0 .. Frames - 1 => 0);
-               end loop;
-               while Ok loop
-                  Decode_Group (Offset, Buf, Floor, Group_Length, Group_First, Group_Count, Ok);
-                  exit when not Ok;
-                  Count := Count + 1;
-                  Offset := Offset + Group_Length;
-                  exit when Group_First + Group_Count > Target;
-               end loop;
+               Stream_Reading.Decode_From (Stream (0 .. Length - 1), H, Target, Buf, Floor, Hops, Count, Last_First, Last_Count, Ok);
                if Ok then
                   for C in 1 .. Channels loop
-                     for I in Target .. Group_First + Group_Count - 1 loop
+                     for I in Target .. Last_First + Last_Count - 1 loop
                         Seek_Same := Seek_Same and then Buf (C) (I) = Output (C) (I);
                      end loop;
                   end loop;
