@@ -19,7 +19,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `extra.sh`: the codec on the wider corpus in `corpus/extra/`, results in `results/extra.tsv`.
 - `release.sh`, `.github/workflows/release.yml`: release package and its publication from a version tag.
 - `run.sh`, `compare.sh`, `bench.sh`, `tool_timing.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, timing against FLAC and WavPack, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
-- `vectors/`: format version 2 test streams, intact and damaged, with a manifest of decoded MD5s and `check.sh` to test a decoder.
+- `vectors/`: format version 2 test streams, intact and damaged, with a manifest of decoded MD5s and `check.sh` to test a decoder; `edge_audio.py` writes edge-case inputs for the encoder.
 - `docs/`: one page per compression topic with method, measured effect, decoder cost and where it applies beyond audio; `docs/format.md` lists every field of a block, and `docs/spec.md` defines format version 2 for a decoder.
 
 ## Corpus
