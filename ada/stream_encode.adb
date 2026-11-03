@@ -1,4 +1,4 @@
---  Code an audio file into a stream with the block codec.
+--  Code an audio file into a stream with the block codec. "-" names standard input or standard output.
 --  Usage: stream_encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent]
 --         [--no-pairs] <in.wav> <out.bin>
 --  Exit status: 0 written, 2 an unreadable input or wrong arguments.
@@ -7,6 +7,7 @@ with Ada.Exceptions;
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
+with Byte_Files;
 with Stream_Format; use Stream_Format;
 with Stream_Writing; use Stream_Writing;
 with Wav_Files;
@@ -103,7 +104,7 @@ begin
          Out_Bytes : Stream_Element_Array (1 .. Stream_Element_Offset (Length));
          for Out_Bytes'Address use Stream.all'Address;
       begin
-         Stream_IO.Create (File, Stream_IO.Out_File, Out_Name);
+         Byte_Files.Create (File, Out_Name);
          Stream_IO.Write (File, Out_Bytes);
          Stream_IO.Close (File);
       end;
