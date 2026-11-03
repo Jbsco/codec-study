@@ -205,7 +205,7 @@ A decoder checks the header CRC, each group's CRC and each block's CRC:
 
 - Groups whose sync word, fields or CRC are wrong are skipped. The decoder finds the next offset holding a sync word and a right group, with a first frame at or after the frames already decoded. Frames between count as lost and decode as zero.
 - Blocks whose CRC fails are decoded anyway and counted.
-- Blocks that break a rule of this page decode as zeros and are counted. Blocks that decode but whose byte length differs from their table entry keep their samples and are counted.
+- Blocks that break a rule of this page decode as zeros and are counted. A channel sample that a stereo mode rebuilds outside D bits, which only damaged blocks produce, decodes as zero and is counted. Blocks that decode but whose byte length differs from their table entry keep their samples and are counted.
 - Streams that end inside a group decode up to their last whole group.
 
 ## Conformance
