@@ -1,6 +1,6 @@
 # Container
 
-The stream is a header, then self-delimited groups of 4096 frames. A reader finds every part from the header alone, starts at any seek point without the groups before it, and finds the next group again after a damaged one.
+The stream is a header, then self-delimited groups of 4096 frames. A reader finds every part from the header alone, starts at any seek point without the groups before it, and finds the next group again after a damaged one. [spec.md](spec.md) gives every decoding rule of format version 2.
 
 ## Layout
 

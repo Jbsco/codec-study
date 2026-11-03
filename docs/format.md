@@ -1,6 +1,6 @@
 # Block format
 
-Every field of a block, as the three implementations write it. Fields are most significant bit first, and each block ends on a byte boundary. Stream layout around the blocks, header, groups, split trees and stereo modes, is in [container.md](container.md); CRCs are in [integrity.md](integrity.md); float input is in [float.md](float.md).
+Every field of a block, as the three implementations write it. Fields are most significant bit first, and each block ends on a byte boundary. Stream layout around the blocks, header, groups, split trees and stereo modes, is in [container.md](container.md); CRCs are in [integrity.md](integrity.md); float input is in [float.md](float.md). [spec.md](spec.md) gives every decoding rule of format version 2.
 
 ## Layout
 
