@@ -8,7 +8,7 @@ This repository licenses code, documentation and corpus separately, because each
 | Documentation: `docs/`, `README.md`, measured tables in `results/` | CC BY 4.0 | [`LICENSES/CC-BY-4.0.txt`](LICENSES/CC-BY-4.0.txt) |
 | Generated test signals: `corpus/signal_*`, `corpus/rate_*`, `corpus/depth_*` | CC0 1.0 | [`LICENSES/CC0-1.0.txt`](LICENSES/CC0-1.0.txt) |
 | Test vectors: `vectors/*.blkc`, `vectors/MANIFEST.tsv` | CC0 1.0 for streams of generated signals; streams of recording excerpts keep their source's status | [`LICENSES/CC0-1.0.txt`](LICENSES/CC0-1.0.txt) |
-| Recording excerpts: `corpus/rec_*` | each source's status, public domain or CC0 1.0, as listed in the README's corpus table | none added here |
+| Recording excerpts: `corpus/rec_*`, `corpus/extra/*` | each source's status, public domain or CC0 1.0, as listed in the README's corpus table | none added here |
 
 SPDX identifiers: `MIT` for code, `CC-BY-4.0` for documentation, `CC0-1.0` for generated signals.
 
@@ -18,7 +18,7 @@ Original work only: block codec and experiment coders in three implementations, 
 
 ## Not covered
 
-Recording excerpts in `corpus/rec_*` are 20 s cuts of recordings their archives mark as public domain (Public Domain Mark 1.0) or dedicate under CC0 1.0. Cutting and converting to FLAC adds nothing to license, so this repository adds no terms and claims none. The README's corpus table names each source and its mark, and `corpus/make_corpus.sh` fetches them again. Standards and papers in the README's references keep their own terms.
+Recording excerpts in `corpus/rec_*` and `corpus/extra/` are 20 s cuts of recordings their archives mark as public domain (Public Domain Mark 1.0) or dedicate under CC0 1.0. Cutting and converting to FLAC adds nothing to license, so this repository adds no terms and claims none. The README's corpus table names each source and its mark, and `corpus/make_corpus.sh` and `corpus/make_extra.sh` fetch them again. Standards and papers in the README's references keep their own terms.
 
 ## Rationale
 
