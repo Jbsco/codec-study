@@ -1,6 +1,7 @@
 -- | WAV input at 8, 16, 24 and 32-bit integer and 32-bit float, one vector per channel. Float samples become
 -- integers through their bit patterns in an order-keeping map: a pattern with the sign bit set becomes minus
--- its other 31 bits, minus one.
+-- its other 31 bits, minus one. Valid bits and the channel mask come from the extensible format header; a plain
+-- one gives the depth and no mask.
 module Wav (Audio (..), readWav) where
 
 import Data.Bits (shiftL, (.|.))
@@ -11,6 +12,8 @@ import qualified Data.Vector.Unboxed as U
 data Audio = Audio
   { rate :: !Int
   , depth :: !Int
+  , validBits :: !Int
+  , channelMask :: !Int
   , isFloat :: !Bool
   , frames :: !Int
   , channels :: [U.Vector Int]
@@ -27,14 +30,18 @@ readWav path = do
       chunks o fmt
         | o + 8 > B.length bs = Left "no data chunk"
         | tag o == "fmt " =
-            let f = if u16 (o + 8) == 0xFFFE then u16 (o + 32) else u16 (o + 8)
-            in chunks (next o) (Just (f, u16 (o + 10), u32 (o + 12), u16 (o + 22)))
-        | tag o == "data", Just (f, ch, r, d) <- fmt =
+            let ext = u16 (o + 8) == 0xFFFE && u32 (o + 4) >= 24
+                f = if ext then u16 (o + 32) else u16 (o + 8)
+                d = u16 (o + 22)
+                v = if ext && u16 (o + 26) >= 1 && u16 (o + 26) <= d then u16 (o + 26) else d
+                m = if ext then u32 (o + 28) else 0
+            in chunks (next o) (Just (f, u16 (o + 10), u32 (o + 12), d, v, m))
+        | tag o == "data", Just (f, ch, r, d, v, m) <- fmt =
             if (f == 1 && d `elem` [8, 16, 24, 32]) || (f == 3 && d == 32)
-              then Right (samples f ch r d (o + 8) (u32 (o + 4)))
+              then Right (samples f ch r d v m (o + 8) (u32 (o + 4)))
               else Left "only 8 to 32-bit integer and 32-bit float PCM are read"
         | otherwise = chunks (next o) fmt
-      samples f ch r d start len =
+      samples f ch r d v m start len =
         let width = d `div` 8
             half = 1 `shiftL` (d - 1) :: Int
             value raw
@@ -46,7 +53,7 @@ readWav path = do
               let o = start + (i * ch + c) * width
               in value (foldr (\k acc -> (acc `shiftL` 8) .|. u8 (o + k)) 0 [0 .. width - 1])
             n = len `div` (width * ch)
-        in Audio r d (f == 3) n [U.generate n (sample c) | c <- [0 .. ch - 1]]
+        in Audio r d v m (f == 3) n [U.generate n (sample c) | c <- [0 .. ch - 1]]
   if tag 0 /= "RIFF" || tag 8 /= "WAVE"
     then fail (path ++ ": not a WAV file")
     else either (fail . ((path ++ ": ") ++)) pure (chunks 12 Nothing)

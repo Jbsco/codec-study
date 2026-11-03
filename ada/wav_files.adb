@@ -45,6 +45,12 @@ package body Wav_Files is
                Result.Rate := Natural (U32 (Start + 4));
                Result.Depth := Natural (U16 (Start + 14));
                Result.Is_Float := Format = 3;
+               Result.Valid_Bits := Result.Depth;
+               Result.Channel_Mask := 0;
+               if Natural (U16 (Start)) = 16#FFFE# and then Length >= 24 then
+                  Result.Valid_Bits := (if U16 (Start + 18) in 1 .. Long_Long_Integer (Result.Depth) then Natural (U16 (Start + 18)) else Result.Depth);
+                  Result.Channel_Mask := U32 (Start + 20);
+               end if;
                if not ((Format = 1 and then Result.Depth in 8 | 16 | 24 | 32) or else (Format = 3 and then Result.Depth = 32))
                  or else Result.Channels > Max_Channels
                then
@@ -87,16 +93,16 @@ package body Wav_Files is
       raise Constraint_Error with Name & ": no data chunk";
    end Read;
 
-   procedure Write (Name : String; Channels, Rate, Depth : Positive; Is_Float : Boolean; Frames : Natural;
+   procedure Write (Name : String; Channels, Rate, Depth, Valid_Bits : Positive; Channel_Mask : Long_Long_Integer;
+                    Is_Float : Boolean; Frames : Natural;
                     Sample : not null access function (C : Positive; F : Natural) return Long_Long_Integer) is
       Width : constant Positive := Depth / 8;
       Data_Bytes : constant Long_Long_Integer := Long_Long_Integer (Frames) * Long_Long_Integer (Channels * Width);
-      Extensible : constant Boolean := Channels > 2 or else Depth > 16;
+      Extensible : constant Boolean := Channels > 2 or else Depth > 16 or else Valid_Bits /= Depth or else Channel_Mask /= 0;
       Format_Bytes : constant Positive := (if Extensible then 40 else 16);
       Fact_Bytes : constant Natural := (if Is_Float then 12 else 0);
       Riff_Bytes : constant Long_Long_Integer :=
         4 + Long_Long_Integer (8 + Format_Bytes + Fact_Bytes) + 8 + Data_Bytes + Data_Bytes mod 2;
-      Mask : constant Long_Long_Integer := (case Channels is when 1 => 4, when 2 => 3, when others => 0);
       Subformat_Tail : constant array (1 .. 8) of Long_Long_Integer := [16#80#, 0, 0, 16#AA#, 0, 16#38#, 16#9B#, 16#71#];
       Buffer : Stream_Element_Array (0 .. 65535);
       Fill : Stream_Element_Offset := 0;
@@ -145,8 +151,8 @@ package body Wav_Files is
       Bytes (Long_Long_Integer (Depth), 2);
       if Extensible then
          Bytes (22, 2);
-         Bytes (Long_Long_Integer (Depth), 2);
-         Bytes (Mask, 4);
+         Bytes (Long_Long_Integer (Valid_Bits), 2);
+         Bytes (Channel_Mask, 4);
          Bytes ((if Is_Float then 3 else 1), 4);
          Bytes (16#0000#, 2);
          Bytes (16#0010#, 2);

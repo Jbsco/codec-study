@@ -59,8 +59,7 @@ begin
             Lost : Boolean_Array_Access;
             D : Damage;
 
-            function Sample (C : Positive; F : Natural) return Long_Long_Integer is
-              (if H.Is_Float and then H.Modes (C) = 1 then From_Integer (Output (C) (F), H.Scales (C)) else Output (C) (F));
+            function Sample (C : Positive; F : Natural) return Long_Long_Integer is (Wav_Sample (H, Output, C, F));
          begin
             begin
                Decode_All (Stream.all, H, Output, Lost, D);
@@ -69,16 +68,20 @@ begin
                   Fail (Name & ": the header claims" & H.Frames'Image & " frames, more than memory holds");
                   return;
             end;
-            Wav_Files.Write (Ada.Command_Line.Argument (2), H.Channels, H.Rate, H.Depth, H.Is_Float, H.Frames, Sample'Access);
+            Wav_Files.Write (Ada.Command_Line.Argument (2), H.Channels, H.Rate, H.Depth, H.Valid_Bits, H.Channel_Mask, H.Is_Float,
+                             H.Frames, Sample'Access);
             Put_Line (Standard_Error, Name & ":" & H.Frames'Image & " frames," & H.Channels'Image & " channels,"
                       & H.Rate'Image & " Hz," & H.Depth'Image & (if H.Is_Float then "-bit float" else "-bit")
-                      & (if H.Tag_Count > 0 then ", tags " & Ada.Strings.Unbounded.To_String (H.Tags) else ""));
-            if D.Complete and then D.Blocks_Ok and then D.Bad_Crcs = 0 then
+                      & (if H.Tag_Count > 0 then ", tags " & Ada.Strings.Unbounded.To_String (H.Tags) else "")
+                      & (case D.Audio is when Matches => ", audio MD5 matches", when Differs => ", AUDIO MD5 DIFFERS",
+                         when Not_Recorded => ", no audio MD5 recorded", when Not_Checked => ""));
+            if D.Complete and then D.Blocks_Ok and then D.Bad_Crcs = 0 and then D.Audio /= Differs then
                Ada.Command_Line.Set_Exit_Status (0);
             else
                Put_Line (Standard_Error, Name & ": damaged," & D.Bad_Groups'Image & " groups failed," & D.Bad_Crcs'Image
                          & " block CRCs failed," & D.Lost_Frames'Image & " frames lost and written as zeros"
-                         & (if D.Blocks_Ok then "" else ", blocks that did not decode written as zeros"));
+                         & (if D.Blocks_Ok then "" else ", blocks that did not decode written as zeros")
+                         & (if D.Audio = Differs then ", audio MD5 differs from the header's" else ""));
                Ada.Command_Line.Set_Exit_Status (1);
             end if;
          end;

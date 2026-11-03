@@ -34,7 +34,8 @@ package body Stream_Reading is
       Take (32);
       Ok := Ok and then Field <= Unsigned_64 (Natural'Last);
       H.Rate := Small (Unsigned_64 (Natural'Last));
-      Take (32);
+      --  A 64-bit frame count; this reader holds the whole output in memory, so it takes up to Natural'Last.
+      Take (64);
       Ok := Ok and then Field <= Unsigned_64 (Natural'Last);
       H.Frames := Small (Unsigned_64 (Natural'Last));
       Take (8);
@@ -42,10 +43,19 @@ package body Stream_Reading is
       Take (8);
       H.Depth := Small (32);
       Take (8);
+      H.Valid_Bits := Small (32);
+      Take (8);
       Ok := Ok and then Field <= 1;
       H.Is_Float := Field = 1;
+      Take (32);
+      H.Channel_Mask := Long_Long_Integer (Field);
+      for I in H.Audio_Md5'Range loop
+         Take (8);
+         H.Audio_Md5 (I) := Byte (Field mod 256);
+      end loop;
       Ok := Ok and then H.Channels >= 1
-        and then (if H.Is_Float then H.Depth = 32 else H.Depth in 8 | 16 | 24 | 32);
+        and then (if H.Is_Float then H.Depth = 32 else H.Depth in 8 | 16 | 24 | 32)
+        and then H.Valid_Bits in 1 .. H.Depth and then (if H.Is_Float then H.Valid_Bits = H.Depth);
       if H.Is_Float then
          for C in 1 .. H.Channels loop
             Take (8);
@@ -331,7 +341,7 @@ package body Stream_Reading is
    end Next_Sync;
 
    procedure Decode_All (Stream : Byte_Array; H : Header; Output : out Channel_Buffers; Lost : out Boolean_Array_Access;
-                         D : out Damage) is
+                         D : out Damage; Verify : Boolean := True) is
       Work : Scratch := New_Scratch (H);
       Offset : Natural := H.First_Group;
       Expected : Natural := 0;
@@ -371,6 +381,18 @@ package body Stream_Reading is
          Lost (Expected .. H.Frames - 1) := [others => True];
       end if;
       D.Complete := Expected = H.Frames and then D.Bad_Groups = 0;
+      if Verify then
+         if H.Audio_Md5 = Audio_Digest.Not_Recorded then
+            D.Audio := Not_Recorded;
+         else
+            declare
+               function Sample (C : Positive; F : Natural) return Long_Long_Integer is (Wav_Sample (H, Output, C, F));
+            begin
+               D.Audio := (if Audio_Digest.Md5 (H.Channels, H.Frames, H.Depth, H.Valid_Bits, H.Is_Float, Sample'Access) = H.Audio_Md5
+                           then Matches else Differs);
+            end;
+         end if;
+      end if;
    end Decode_All;
 
    procedure Decode_From (Stream : Byte_Array; H : Header; Target : Natural; Buf : out Channel_Buffers;

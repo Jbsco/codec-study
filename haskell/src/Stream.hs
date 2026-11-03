@@ -1,6 +1,7 @@
 -- | The stream of the block codec, as ada/codec_main.adb writes it. A header: the magic "BLKC", a version, a
--- flags byte (bit 0: every group is a segment), the rate and the frames in 32 bits, channels, depth and a float
--- flag in 8 bits each, for float input a mode and a scale per channel, a count of metadata blocks each with a
+-- flags byte (bit 0: every group is a segment), the rate in 32 bits, the frames in 64, channels, depth, valid bits
+-- and a float flag in 8 bits each, the channel mask in 32, the MD5 of the input samples in FLAC's layout, for float
+-- input a mode and a scale per channel, a count of metadata blocks each with a
 -- type, a 24-bit length and its bytes (1 tags, 2 a seek table of 32-bit first frames and 64-bit offsets), and a
 -- CRC-16 of all that. Then the groups of 4096 frames, each a sync word, a 24-bit byte length, its first frame,
 -- its frame count, its split tree down to blocks of 512 frames with a 2-bit stereo mode per channel pair on
@@ -13,17 +14,21 @@
 module Stream (Prepared (..), Level (..), Container (..), levels, prepare, container, encodeStream, decodeStream) where
 
 import Control.DeepSeq (NFData (..))
+import Control.Monad (forM_)
 import Data.Bits
+import qualified Data.ByteString.Internal as BI
 import qualified Data.Vector as V
 import qualified Data.Vector.Storable as S
 import qualified Data.Vector.Unboxed as U
 import Data.Maybe (fromMaybe)
 import Data.Word (Word8)
+import Foreign.Storable (pokeByteOff)
 
 import BlockCodec (Effort (..), log2', maxBlock, maxHistory, usesHistory)
 import Bits (getBits)
 import Blocks (readWord32, word32)
 import Checksum (crc16)
+import Md5 (md5)
 import Parallel
 import Wav
 
@@ -33,6 +38,9 @@ data Prepared = Prepared
   { pFrames :: !Int
   , pRate :: !Int
   , pDepth :: !Int
+  , pValid :: !Int
+  , pMask :: !Int
+  , pMd5 :: S.Vector Word8
   , pFloat :: !Bool
   , pModes :: [(Int, Int)]
   , pCoded :: [U.Vector Int]
@@ -42,9 +50,27 @@ prepare :: Audio -> Prepared
 prepare a
   | isFloat a =
       let found = map toIntegers (channels a)
-      in Prepared (frames a) (rate a) (depth a) True [maybe (2, 0) (\(s, _) -> (1, s)) f | f <- found]
+      in Prepared (frames a) (rate a) (depth a) (validBits a) (channelMask a) (audioMd5 a) True [maybe (2, 0) (\(s, _) -> (1, s)) f | f <- found]
            [maybe c snd f | (f, c) <- zip found (channels a)]
-  | otherwise = Prepared (frames a) (rate a) (depth a) False [] (channels a)
+  | otherwise = Prepared (frames a) (rate a) (depth a) (validBits a) (channelMask a) (audioMd5 a) False [] (channels a)
+
+-- | MD5 of the input samples in FLAC's layout: frames in order with channels interleaved, each integer shifted down
+-- to its valid bits and written little-endian in as many bytes as those bits need, each float as its 32-bit pattern.
+audioMd5 :: Audio -> S.Vector Word8
+audioMd5 a = S.fromList (md5 bytes)
+  where
+    chs = V.fromList (channels a)
+    nch = V.length chs
+    width = if isFloat a then 4 else (validBits a + 7) `quot` 8
+    down = if isFloat a then 0 else depth a - validBits a
+    word v
+      | isFloat a = if v >= 0 then v else 2147483647 - v
+      | otherwise = v `shiftR` down
+    bytes = BI.unsafeCreate (frames a * nch * width) $ \ptr ->
+      forM_ [0 .. frames a * nch - 1] $ \j -> do
+        let (i, c) = j `quotRem` nch
+            u = word (U.unsafeIndex (chs V.! c) i)
+        forM_ [0 .. width - 1] $ \k -> pokeByteOff ptr (j * width + k) (fromIntegral (u `shiftR` (8 * k)) :: Word8)
 
 -- | Integers I with sample = I / 2**S for every sample, when one S up to 31 fits them all.
 toIntegers :: U.Vector Int -> Maybe (Int, U.Vector Int)
@@ -81,7 +107,7 @@ magic :: S.Vector Word8
 magic = S.fromList [0x42, 0x4C, 0x4B, 0x43]
 
 version, syncWord, groupHead, seekBlock :: Int
-version = 1
+version = 2
 syncWord = 0xB1C5
 groupHead = 11
 seekBlock = 2
@@ -233,7 +259,7 @@ encodeStream enc setting c p = S.concat ([header, word16 (fromIntegral (crc16 he
         hd = S.concat [word16 syncWord, word24 len, word32 first, word16 count]
         table = S.concat (concatMap (\b -> [word16 (S.length b), word16 (fromIntegral (crc16 b))]) bs)
     entries = if tableSpan == 0 then 0 else (groups + tableSpan - 1) `quot` tableSpan
-    headerLength = 17 + (if pFloat p then 2 * nch else 0) + 1 + (if entries > 0 then 4 + 12 * entries else 0) + 2
+    headerLength = 42 + (if pFloat p then 2 * nch else 0) + 1 + (if entries > 0 then 4 + 12 * entries else 0) + 2
     offsets = V.fromList (scanl (+) headerLength (map S.length groupsCoded))
     seekTable
       | entries == 0 = S.empty
@@ -243,9 +269,11 @@ encodeStream enc setting c p = S.concat ([header, word16 (fromIntegral (crc16 he
       [ magic
       , S.fromList [fromIntegral version, if cIndependent c then 1 else 0]
       , word32 (pRate p)
-      , word32 n
-      , S.fromList ([fromIntegral nch, fromIntegral (pDepth p), if pFloat p then 1 else 0]
-                    ++ concat [[fromIntegral m, fromIntegral s] | (m, s) <- pModes p])
+      , word64 n
+      , S.fromList [fromIntegral nch, fromIntegral (pDepth p), fromIntegral (pValid p), if pFloat p then 1 else 0]
+      , word32 (pMask p)
+      , pMd5 p
+      , S.fromList (concat [[fromIntegral m, fromIntegral s] | (m, s) <- pModes p])
       , S.fromList [if entries > 0 then 1 else 0]
       , seekTable
       ]
@@ -256,11 +284,11 @@ encodeStream enc setting c p = S.concat ([header, word16 (fromIntegral (crc16 he
 decodeStream :: (Int -> U.Vector Int -> Int -> S.Vector Word8 -> U.Vector Int) -> S.Vector Word8 -> ([U.Vector Int], [Int])
 decodeStream dec v = (map (U.concat . reverse) (go 0 (replicate nch [])), bad)
   where
-    nch = fromIntegral (S.unsafeIndex v 14)
-    float = S.unsafeIndex v 16 == 1
-    width = if float then 32 else fromIntegral (S.unsafeIndex v 15)
+    nch = fromIntegral (S.unsafeIndex v 18)
+    float = S.unsafeIndex v 21 == 1
+    width = if float then 32 else fromIntegral (S.unsafeIndex v 19)
     pairs = nch `quot` 2
-    metaAt = 17 + (if float then 2 * nch else 0)
+    metaAt = 42 + (if float then 2 * nch else 0)
     (seekEntries, metaEnd) = meta (fromIntegral (S.unsafeIndex v metaAt)) (metaAt + 1) []
     meta :: Int -> Int -> [(Int, Int)] -> ([(Int, Int)], Int)
     meta 0 pos acc = (acc, pos)
