@@ -202,23 +202,23 @@ Haskell decodes every block that does not reach back before itself in parallel. 
 
 | Method | Bytes | Encode | Decode |
 |---|---|---|---|
-| `flac -0` | 50,031,889 | 0.44 s | 0.47 s |
-| `flac -5` | 45,629,256 | 0.67 s | 0.47 s |
-| `flac -8` | 44,873,757 | 1.49 s | 0.50 s |
-| `wavpack -f` | 52,969,614 | 0.63 s | 0.31 s |
-| `wavpack` | 52,446,880 | 0.97 s | 0.45 s |
-| `wavpack -hh` | 52,082,680 | 1.49 s | 0.75 s |
-| `wavpack -hh -x4` | 43,357,970 | 13.23 s | 0.49 s |
-| `stream_encode --level 0` | 42,436,904 | 3.25 s | 2.06 s |
-| `stream_encode --level 1` | 37,914,752 | 5.38 s | 2.19 s |
-| `stream_encode --level 2` | 37,462,799 | 17.30 s | 4.12 s |
-| `stream_encode --level 4` | 37,109,813 | 120.04 s | 3.98 s |
+| `flac -0` | 50,031,889 | 0.44 s | 0.44 s |
+| `flac -5` | 45,629,256 | 0.65 s | 0.48 s |
+| `flac -8` | 44,873,757 | 1.45 s | 0.50 s |
+| `wavpack -f` | 52,969,614 | 0.54 s | 0.29 s |
+| `wavpack` | 52,446,880 | 0.70 s | 0.35 s |
+| `wavpack -hh` | 52,082,680 | 1.22 s | 0.63 s |
+| `wavpack -hh -x4` | 43,358,374 | 12.21 s | 0.50 s |
+| `stream_encode --level 0` | 42,436,904 | 2.93 s | 1.19 s |
+| `stream_encode --level 1` | 37,914,752 | 4.58 s | 1.41 s |
+| `stream_encode --level 2` | 37,462,799 | 16.72 s | 2.36 s |
+| `stream_encode --level 4` | 37,109,813 | 119.34 s | 2.28 s |
 
 </details>
 
-Level 0 is smaller than every FLAC and WavPack mode and encodes in 3.25 s, against 1.49 s for `flac -8` and 13.23 s for `wavpack -hh -x4`. Its decoder takes 2.06 s, four times `flac -d`. From level 2 the range decoder doubles that. WavPack without `-x` is larger than `flac -0` here: the 192 kHz recording alone costs 4.9 MB more than with `-x4`.
+Level 0 is smaller than every FLAC and WavPack mode and encodes in 2.93 s, against 1.45 s for `flac -8` and 12.21 s for `wavpack -hh -x4`. Its decoder takes 1.19 s, against 0.50 s for `flac -d` on `flac -8` streams. From level 2 the range decoder doubles that. WavPack without `-x` is larger than `flac -0` here: the 192 kHz recording alone costs 4.9 MB more than with `-x4`.
 
-The release build leaves out run-time checks and assertions and inlines across units at `-O3`. Its streams and decoded files are identical to the checked build's. Over the whole corpus at level 0, release `stream_encode` takes 3.02 s against 5.87 s for the checked build, and `stream_decode` 1.86 s against 3.25 s.
+The release build leaves out run-time checks and assertions and inlines across units at `-O3`. Its streams and decoded files are identical to the checked build's. Over the whole corpus at level 0, release `stream_encode` takes 3.12 s against 5.95 s for the checked build, and `stream_decode` 1.29 s against 1.83 s.
 
 Haskell uses unboxed vectors whose loops fuse, strict unpacked writer state, `countLeadingZeros` for unary and bit-length codes, and decoding from a 32-bit peek. Parallelism comes from sparks over pure functions, so output cannot depend on scheduling. Executables run with `-N -A4m`; a 4 MB allocation area measured faster than 64 MB.
 
