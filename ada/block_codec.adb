@@ -338,7 +338,8 @@ package body Block_Codec with SPARK_Mode is
             while J < Q loop
                Range_Coding.Encode_Bit (E, P (CK, Natural (Unsigned_64'Min (J, 7))), True, Output, Pos);
                J := J + 1;
-               if Pos > Limit then
+               if Pos + 8 * E.Pending > Limit then
+                  Pos := Natural'Max (Pos, Limit + 1);
                   return;
                end if;
             end loop;
@@ -349,7 +350,8 @@ package body Block_Codec with SPARK_Mode is
                   Range_Coding.Encode_Direct (E, (Shift_Right (U, B) and 1) = 1, Output, Pos);
                end loop;
             end if;
-            if Pos > Limit then
+            if Pos + 8 * E.Pending > Limit then
+               Pos := Natural'Max (Pos, Limit + 1);
                return;
             end if;
             S := S + U - Shift_Right (S, Adaptive_Window);
