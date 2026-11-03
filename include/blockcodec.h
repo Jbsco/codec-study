@@ -18,6 +18,7 @@ extern "C" {
 #define BLKC_REFUSED 2      /* not a readable stream: magic, version, field or header CRC */
 #define BLKC_UNSUPPORTED 3  /* a float stream, which this API version does not decode */
 #define BLKC_BAD_ARGUMENT (-1)
+#define BLKC_FAILED (-2)    /* the library could not finish the call, for lack of memory */
 
 /* The audio a stream holds. Samples are signed integers in depth bits, left-justified when valid_bits is less. */
 typedef struct {

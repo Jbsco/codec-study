@@ -17,6 +17,7 @@ package body Codec_Api is
    Refused : constant := 2;
    Unsupported : constant := 3;
    Bad_Argument : constant := -1;
+   Failed : constant := -2;
 
    type Int32_Array is array (Integer_64 range <>) of Integer_32;
 
@@ -88,6 +89,9 @@ package body Codec_Api is
          Free (Coded);
          return Integer_64 (Length);
       end;
+   exception
+      when others =>
+         return Failed;
    end Encode;
 
    --  The stream at Stream as an array indexed from 0, as the reader takes it.
@@ -122,6 +126,9 @@ package body Codec_Api is
          Release (H);
          return Ok;
       end;
+   exception
+      when others =>
+         return Failed;
    end Read_Info;
 
    function Decode (Stream : System.Address; Length : Integer_64; Samples : System.Address; Capacity_Frames : Integer_64;
@@ -146,7 +153,7 @@ package body Codec_Api is
             Release (H);
             return Refused;
          end if;
-         if H.Is_Float or else Integer_64 (H.Frames) > Capacity_Frames then
+         if H.Is_Float or else Integer_64 (H.Frames) > Integer_64'Min (Capacity_Frames, Integer_64 (Natural'Last)) then
             declare
                Unused : Byte_Array_Access := S;
             begin
@@ -190,6 +197,9 @@ package body Codec_Api is
                     then Ok else Damaged);
          end;
       end;
+   exception
+      when others =>
+         return Failed;
    end Decode;
 
 end Codec_Api;
