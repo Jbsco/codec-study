@@ -180,6 +180,10 @@ if [ "$ok" = 3 ] && [ "$ha" = "$hh" ] && [ "$ha" = "$hy" ]; then
   ada/obj/stream_encode --level 1 - - < build/four_48k.wav 2> /dev/null | ada/obj/stream_decode - - 2> /dev/null > build/four_piped.wav
   cmp -s build/four_48k.wav build/four_piped.wav && echo "  through pipes: four channels byte-identical" \
     || { echo "  through pipes: FAILED"; FAIL=1; }
+  ada/obj/stream_encode --level 2 --threads 1 build/four_48k.wav build/four_t1.bin 2> /dev/null
+  ada/obj/stream_encode --level 2 --threads 3 build/four_48k.wav build/four_t3.bin 2> /dev/null
+  cmp -s build/four_t1.bin build/four_t3.bin && echo "  one thread and three: same stream" \
+    || { echo "  one thread and three: FAILED"; FAIL=1; }
 else
   echo "  four channels: FAILED (round trips $ok, hashes $ha $hh $hy)"
   FAIL=1

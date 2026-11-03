@@ -12,7 +12,8 @@ package Stream_Writing is
    type Tag_List is array (1 .. Max_Tags) of Ada.Strings.Unbounded.Unbounded_String;
 
    --  The level, 0 to 5; seconds between seek points, 0 for one segment; whether every group is a segment; whether
-   --  channel pairs may take stereo modes; the tags; and a file for each group's features, or null.
+   --  channel pairs may take stereo modes; the tags; a file for each group's features, or null; and how many groups
+   --  are coded at once.
    type Options is record
       Level : Natural range 0 .. 5 := 4;
       Seek_Every : Natural := 10;
@@ -21,6 +22,7 @@ package Stream_Writing is
       Tag_Count : Natural range 0 .. Max_Tags := 0;
       Tags : Tag_List;
       Features : access Ada.Text_IO.File_Type;
+      Threads : Positive := 1;
    end record;
 
    type Kind_Counts is array (0 .. 12) of Natural;

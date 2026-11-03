@@ -1,6 +1,7 @@
 --  Code an audio file into a stream with the block codec. "-" names standard input or standard output.
 --  Usage: stream_encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent]
---         [--no-pairs] [--verify] <in.wav> <out.bin>
+--         [--no-pairs] [--threads <n>] [--verify] <in.wav> <out.bin>
+--  --threads sets how many groups are coded at once, every processor when left out; the stream is the same.
 --  --verify decodes the stream before writing it and checks every frame against the audio's MD5.
 --  Exit status: 0 written, 1 verification failed and nothing written, 2 an unreadable input or wrong arguments.
 with Ada.Command_Line;
@@ -14,6 +15,7 @@ with Byte_Files;
 with Stream_Reading;
 with Stream_Format; use Stream_Format;
 with Stream_Writing; use Stream_Writing;
+with System.Multiprocessors;
 with Wav_Files;
 
 procedure Stream_Encode is
@@ -25,6 +27,7 @@ procedure Stream_Encode is
    Name_Count : Natural := 0;
    I : Positive := 1;
    Bad, Verify : Boolean := False;
+   Threads : Natural := 0;
 
    procedure Fail (Message : String) is
    begin
@@ -71,6 +74,9 @@ begin
             Opt.Independent := True;
          elsif A = "--no-pairs" then
             Opt.Pairs := False;
+         elsif A = "--threads" then
+            Threads := Value (1, 1024);
+            I := I + 1;
          elsif A = "--verify" then
             Verify := True;
          elsif A'Length > 2 and then A (A'First .. A'First + 1) = "--" then
@@ -86,7 +92,7 @@ begin
    end loop;
    if Bad or else Name_Count /= 2 then
       Fail ("usage: stream_encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent] "
-            & "[--no-pairs] [--verify] <in.wav> <out.bin>");
+            & "[--no-pairs] [--threads <n>] [--verify] <in.wav> <out.bin>");
       return;
    end if;
    declare
@@ -105,6 +111,7 @@ begin
             Fail (Ada.Exceptions.Exception_Message (E));
             return;
       end;
+      Opt.Threads := (if Threads > 0 then Threads else Positive (System.Multiprocessors.Number_Of_CPUs));
       Encode (Input, Opt, Stream, Length, Stats);
       if Verify then
          declare
