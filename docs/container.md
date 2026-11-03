@@ -67,7 +67,7 @@ A seek to frame F starts at the last seek point at or before F and decodes group
 
 A decoder reads the header's CRC, then each group's. A group whose sync word, fields or CRC are wrong is skipped. The decoder scans forward for the next sync word whose group header passes its CRC, resumes at that group's first frame, and counts the frames between as lost. A block whose CRC fails is counted and decoded anyway.
 
-`stream_decode <stream.bin> <out.wav>` decodes this way from the stream's bytes alone, writes lost frames as zeros and exits with status 1 when anything was lost. A truncated stream decodes up to its last whole group. `codec_main <file> <level> --flip <group> <byte>` flips one bit of the written stream before decoding and reports what was lost. `corrupt_test <stream.bin>` checks the same on a written stream, with the group found again after a damaged length.
+`stream_decode <stream.bin> <out.wav>` decodes this way from the stream's bytes alone, group by group, writes lost frames as zeros and exits with status 1 when anything was lost. A header that claims more frames than its groups hold costs output length, not memory. A truncated stream decodes up to its last whole group. `codec_main <file> <level> --flip <group> <byte>` flips one bit of the written stream before decoding and reports what was lost. `corrupt_test <stream.bin>` checks the same on a written stream, with the group found again after a damaged length.
 
 Within a segment, blocks after a lost group that read the lost samples decode to wrong values without a CRC failure. The next segment is exact again. With every group a segment, damage is contained to the lost group.
 

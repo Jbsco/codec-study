@@ -1,4 +1,4 @@
-with Ada.Directories;
+with Byte_Files;
 with Interfaces; use Interfaces;
 with Ada.Streams.Stream_IO;
 with Ada.Unchecked_Deallocation;
@@ -8,8 +8,7 @@ package body Wav_Files is
 
    use Ada.Streams;
 
-   type Element_Array_Access is access Stream_Element_Array;
-   procedure Free is new Ada.Unchecked_Deallocation (Stream_Element_Array, Element_Array_Access);
+   procedure Free is new Ada.Unchecked_Deallocation (Stream_Element_Array, Byte_Files.Bytes_Access);
 
    --  Wave64's chunk identifiers: the RIFF and WAVE equivalents and the format and data chunks, as GUIDs.
    type Guid is array (0 .. 15) of Stream_Element;
@@ -23,10 +22,8 @@ package body Wav_Files is
                                 16#8C#, 16#D1#, 16#00#, 16#C0#, 16#4F#, 16#8E#, 16#DB#, 16#8A#];
 
    procedure Read (Name : String; Max_Seconds : Natural; Result : out Audio) is
-      Size : constant Stream_Element_Offset := Stream_Element_Offset (Ada.Directories.Size (Name));
-      Data : Element_Array_Access := new Stream_Element_Array (0 .. Size - 1);
-      File : Stream_IO.File_Type;
-      Last : Stream_Element_Offset;
+      Data : Byte_Files.Bytes_Access := Byte_Files.Load (Name);
+      Last : constant Stream_Element_Offset := Data'Last;
       Have_Format : Boolean := False;
 
       --  Integer of Bytes bytes at Offset, least or most significant byte first: unsigned up to 7 bytes, and two's
@@ -335,9 +332,6 @@ package body Wav_Files is
          end loop;
       end Read_Aiff;
    begin
-      Stream_IO.Open (File, Stream_IO.In_File, Name);
-      Stream_IO.Read (File, Data.all, Last);
-      Stream_IO.Close (File);
       if Id (0) in "RIFF" | "RF64" | "BW64" and then Id (8) = "WAVE" then
          Kind := (if Id (0) = "RIFF" then Riff_Wave elsif Id (0) = "RF64" then Rf64_Wave else Bw64_Wave);
          Size_Field := U32 (4);
@@ -536,7 +530,7 @@ package body Wav_Files is
          if (Kind = Riff_Wave or else Kind in Aiff | Aiff_C) and then 4 + Chunks_Bytes > 16#FFFF_FFFF# then
             return;
          end if;
-         Stream_IO.Create (File, Stream_IO.Out_File, Name);
+         Byte_Files.Create (File, Name);
          case Kind is
             when Riff_Wave | Rf64_Wave | Bw64_Wave =>
                for Ch of String'(if Kind = Riff_Wave then "RIFF" elsif Kind = Rf64_Wave then "RF64" else "BW64") loop

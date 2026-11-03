@@ -1,3 +1,4 @@
+with Ada.Unchecked_Deallocation;
 with Interfaces; use Interfaces;
 with Checksums;
 
@@ -215,12 +216,6 @@ package body Stream_Reading is
       Ok := Checksums.Matches (Stream, P / 8, Checksums.Of_Bytes (Stream (Offset .. P / 8 - 1)));
    end Parse_Group;
 
-   --  Scratch space of a decode: one block per channel, and the history of a mid or side signal.
-   type Scratch is record
-      Got : Channel_Buffers;
-      Derived : Sample_Array_Access;
-   end record;
-
    function New_Scratch (H : Header) return Scratch is
       S : Scratch;
    begin
@@ -437,5 +432,108 @@ package body Stream_Reading is
          exit when Last_First + Last_Count > Target;
       end loop;
    end Decode_From;
+
+   procedure Free is new Ada.Unchecked_Deallocation (Sample_Array, Sample_Array_Access);
+
+   procedure Start (W : in out Walker; Stream : Byte_Array_Access; H : Header) is
+   begin
+      W.Stream := Stream;
+      W.H := H;
+      W.Work := New_Scratch (H);
+      W.Base := 0;
+      W.Filled := 0;
+      W.Offset := H.First_Group;
+      W.D := (others => <>);
+      for C in 1 .. H.Channels loop
+         W.Buf (C) := new Sample_Array'(0 .. Window - 1 => 0);
+      end loop;
+   end Start;
+
+   --  Move the window so it holds frames From .. Upto, keeping what it holds of them; the rest reads as zeros.
+   procedure Cover (W : in out Walker; From, Upto : Natural) is
+   begin
+      if From >= W.Base and then Upto <= W.Base + Window - 1 then
+         return;
+      end if;
+      for C in 1 .. W.H.Channels loop
+         declare
+            Old : Sample_Array_Access := W.Buf (C);
+            New_Buf : constant Sample_Array_Access := new Sample_Array'(From .. From + Window - 1 => 0);
+            Low : constant Natural := Natural'Max (From, Old'First);
+            High : constant Integer := Integer'Min (From + Window - 1, Old'Last);
+         begin
+            if Low <= High then
+               New_Buf (Low .. High) := Old (Low .. High);
+            end if;
+            Free (Old);
+            W.Buf (C) := New_Buf;
+         end;
+      end loop;
+      W.Base := From;
+   end Cover;
+
+   --  Frames From .. Upto are lost: zero those the window holds and count them.
+   procedure Lose (W : in out Walker; From, Upto : Natural) is
+      Low : constant Natural := Natural'Max (From, W.Base);
+      High : constant Integer := Integer'Min (Upto, W.Base + Window - 1);
+   begin
+      if Upto < From then
+         return;
+      end if;
+      W.D.Lost_Frames := W.D.Lost_Frames + Upto - From + 1;
+      for C in 1 .. W.H.Channels loop
+         if Low <= High then
+            W.Buf (C) (Low .. High) := [others => 0];
+         end if;
+      end loop;
+   end Lose;
+
+   procedure Advance (W : in out Walker; Upto : Natural) is
+      Target : constant Natural := Natural'Min (Upto, W.H.Frames - 1);
+      Group_Length, Group_First, Group_Count, Leaf_Count, Table_At : Natural;
+      L : Leaf_List;
+      Ok : Boolean;
+   begin
+      while W.Filled <= Target loop
+         if W.Offset >= W.Stream'Length then
+            Lose (W, W.Filled, W.H.Frames - 1);
+            W.Filled := W.H.Frames;
+         else
+            Parse_Group (W.Stream.all, W.H, W.Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
+            if Ok and then Group_First = W.Filled then
+               Cover (W, Natural'Max (0, Group_First - Max_History), Group_First + Group_Count - 1);
+               Decode_Group (W.Stream.all, W.H, W.Offset, W.Buf, 0, W.Work, W.D, Group_Length, Group_First, Group_Count, Ok);
+            else
+               Ok := False;
+            end if;
+            if Ok then
+               W.Offset := W.Offset + Group_Length;
+               W.Filled := Group_First + Group_Count;
+            else
+               W.D.Bad_Groups := W.D.Bad_Groups + 1;
+               --  The next group with a right header that starts at or after the frames already given out.
+               loop
+                  W.Offset := Next_Sync (W.Stream.all, W.H, W.Offset + 1);
+                  exit when W.Offset >= W.Stream'Length;
+                  Parse_Group (W.Stream.all, W.H, W.Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
+                  exit when Group_First >= W.Filled;
+               end loop;
+               if W.Offset >= W.Stream'Length then
+                  Lose (W, W.Filled, W.H.Frames - 1);
+                  W.Filled := W.H.Frames;
+               else
+                  Lose (W, W.Filled, Group_First - 1);
+                  W.Filled := Group_First;
+               end if;
+            end if;
+         end if;
+      end loop;
+      W.D.Complete := W.Filled = W.H.Frames and then W.D.Bad_Groups = 0 and then W.D.Lost_Frames = 0;
+   end Advance;
+
+   function Value (W : Walker; C : Positive; F : Natural) return Long_Long_Integer is
+     (if F >= W.Base and then F <= W.Base + Window - 1 then W.Buf (C) (F) else 0);
+
+   function Report (W : Walker) return Damage is (W.D);
 
 end Stream_Reading;

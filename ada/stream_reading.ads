@@ -77,4 +77,42 @@ package Stream_Reading is
                           Floor, Hops, Count, Last_First, Last_Count : out Natural; Ok : out Boolean)
      with Pre => Stream'First = 0 and then H.Ok and then Target < H.Frames;
 
+   --  A decoder for frames asked for in order. It decodes group by group and keeps only the samples later blocks may
+   --  read, so its memory does not grow with the stream's frame count. Frames of groups that cannot be read, and of
+   --  groups missing at the end, read as zeros.
+   type Walker is limited private;
+
+   procedure Start (W : in out Walker; Stream : Byte_Array_Access; H : Header)
+     with Pre => H.Ok and then Stream /= null and then Stream'First = 0;
+
+   --  Make every frame up to Upto final.
+   procedure Advance (W : in out Walker; Upto : Natural);
+
+   --  Sample F of channel C, after Advance (W, F) and before any frame more than the history length later is asked
+   --  for; zero for a lost frame.
+   function Value (W : Walker; C : Positive; F : Natural) return Long_Long_Integer;
+
+   function Report (W : Walker) return Damage;
+
+private
+
+   --  Scratch space of a decode: one block per channel, and the history of a mid or side signal.
+   type Scratch is record
+      Got : Channel_Buffers;
+      Derived : Sample_Array_Access;
+   end record;
+
+   --  Window frames per channel: the history and eight groups.
+   Window : constant := Max_History + 8 * Max_Block;
+
+   type Walker is limited record
+      Stream : Byte_Array_Access;
+      H : Header;
+      Work : Scratch;
+      Buf : Channel_Buffers;
+      Base : Natural := 0;
+      Filled, Offset : Natural := 0;
+      D : Damage;
+   end record;
+
 end Stream_Reading;
