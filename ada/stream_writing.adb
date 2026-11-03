@@ -1,3 +1,4 @@
+with Ada.Unchecked_Deallocation;
 with Bit_Streams; use Bit_Streams;
 with Block_Codec; use Block_Codec;
 with Checksums;
@@ -251,7 +252,7 @@ package body Stream_Writing is
       Tree_Bound : constant Natural := (2**Top + 2 * Pairs * 2**Top) / 8 + 2;
       Group_Bound : constant Natural :=
         Group_Head + Tree_Bound + 4 * Channels * 2**Top + 2 + Channels * (Bound (Max_Block) + 16 * 2**Top);
-      Data : constant Byte_Array_Access := new Byte_Array (0 .. Groups * Group_Bound);
+      Data : Byte_Array_Access := new Byte_Array (0 .. Groups * Group_Bound);
       Group_Start : array (0 .. Groups - 1) of Natural := [others => 0];
       Header_Length : Natural := 0;
       Blocks, Data_Length, Framing : Natural := 0;
@@ -283,7 +284,10 @@ package body Stream_Writing is
       end record;
       type Result_Array is array (Natural range <>) of Group_Result;
       type Result_Array_Access is access Result_Array;
-      Results : constant Result_Array_Access := new Result_Array (0 .. Groups - 1);
+      Results : Result_Array_Access := new Result_Array (0 .. Groups - 1);
+      procedure Free is new Ada.Unchecked_Deallocation (Result_Array, Result_Array_Access);
+      procedure Free is new Ada.Unchecked_Deallocation (Byte_Array, Byte_Array_Access);
+      procedure Free is new Ada.Unchecked_Deallocation (Sample_Array, Sample_Array_Access);
 
       --  The channel-pair mappings of Stream_Format for this stream's channel count.
       function Pair_Of (C : Positive) return Natural is (Stream_Format.Pair_Of (C, Pairs));
@@ -374,6 +378,15 @@ package body Stream_Writing is
             W.Blocks := new Byte_Array (0 .. Channels * (Bound (Max_Block) + 16 * 2**Top));
             return W;
          end New_Work;
+
+         procedure Free_Work (W : in out Work_Area) is
+         begin
+            for T of W.Trial loop
+               Free (T);
+            end loop;
+            Free (W.Tree);
+            Free (W.Blocks);
+         end Free_Work;
 
          procedure Code_Group (G : Natural; Work : Work_Area; R : out Group_Result) is
             Trial : Trial_Set renames Work.Trial;
@@ -547,17 +560,18 @@ package body Stream_Writing is
       begin
          if Workers = 1 then
             declare
-               Work : constant Work_Area := New_Work;
+               Work : Work_Area := New_Work;
             begin
                for G in 0 .. Groups - 1 loop
                   Code_Group (G, Work, Results (G));
                end loop;
+               Free_Work (Work);
             end;
          else
             declare
                task type Worker with Storage_Size => 32 * 2**20;
                task body Worker is
-                  Work : constant Work_Area := New_Work;
+                  Work : Work_Area := New_Work;
                   G : Natural;
                   Ok : Boolean;
                begin
@@ -566,9 +580,11 @@ package body Stream_Writing is
                      exit when not Ok;
                      Code_Group (G, Work, Results (G));
                   end loop;
+                  Free_Work (Work);
                exception
                   when others =>
                      Failed := True;
+                     Free_Work (Work);
                end Worker;
                Pool : array (1 .. Workers) of Worker;
                pragma Unreferenced (Pool);
@@ -698,6 +714,17 @@ package body Stream_Writing is
          Stats.Modes (C) := Mode (C);
          Stats.Scales (C) := Scale (C);
       end loop;
+      Free (Data);
+      Free (Results);
+      for S of Signal loop
+         Free (S);
+      end loop;
    end Encode;
+
+   procedure Release (Stats : in out Statistics) is
+      procedure Free is new Ada.Unchecked_Deallocation (Natural_Array, Natural_Array_Access);
+   begin
+      Free (Stats.Group_Starts);
+   end Release;
 
 end Stream_Writing;
