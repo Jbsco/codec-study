@@ -86,11 +86,13 @@ package Stream_Reading is
      with Pre => H.Ok and then Stream /= null and then Stream'First = 0;
 
    --  Make every frame up to Upto final.
-   procedure Advance (W : in out Walker; Upto : Natural);
+   procedure Advance (W : in out Walker; Upto : Natural)
+     with Inline;
 
    --  Sample F of channel C, after Advance (W, F) and before any frame more than the history length later is asked
    --  for; zero for a lost frame.
-   function Value (W : Walker; C : Positive; F : Natural) return Long_Long_Integer;
+   function Value (W : Walker; C : Positive; F : Natural) return Long_Long_Integer
+     with Inline;
 
    function Report (W : Walker) return Damage;
 
