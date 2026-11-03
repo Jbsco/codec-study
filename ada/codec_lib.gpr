@@ -15,7 +15,16 @@ library project Codec_Lib is
    for Library_Standalone use "encapsulated";
    for Library_Auto_Init use "true";
 
+   --  The units the proof shows free of run-time errors build without those checks; the rest keep them.
+   Optimize := ("-O3", "-gnat2022", "-gnatn", "-gnatwa");
+   Proved := Optimize & ("-gnatp");
+
    package Compiler is
-      for Default_Switches ("Ada") use ("-O2", "-gnat2022", "-gnatwa");
+      for Default_Switches ("Ada") use Optimize;
+      for Switches ("bit_streams.adb") use Proved;
+      for Switches ("canonical_decoding.adb") use Proved;
+      for Switches ("checksums.adb") use Proved;
+      for Switches ("range_coding.adb") use Proved;
+      for Switches ("block_codec.adb") use Proved;
    end Compiler;
 end Codec_Lib;
