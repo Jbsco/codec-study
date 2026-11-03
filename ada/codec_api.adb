@@ -265,4 +265,99 @@ package body Codec_Api is
          return Failed;
    end Decode_Float;
 
+   --  Decode frames First .. First + Count - 1 of a stream of the sample kind Is_Float names, from the seek point at or
+   --  before First, handing interleaved sample I of the range to Store.
+   function Decode_Range_With (Stream : System.Address; Length : Integer_64; Is_Float : Boolean; First, Count : Integer_64;
+                               Store : not null access procedure (I : Integer_64; V : Long_Long_Integer);
+                               Report : access Damage_Report) return int is
+      S : Byte_Array_Access := Copy (Stream, Length);
+      H : Header;
+   begin
+      Read_Header (S.all, H);
+      if not H.Ok or else H.Is_Float /= Is_Float or else First < 0 or else Count < 0
+        or else First + Count > Integer_64 (H.Frames)
+      then
+         Free (S);
+         Release (H);
+         return (if not H.Ok then Refused elsif H.Is_Float /= Is_Float then Unsupported else Bad_Argument);
+      end if;
+      declare
+         Channels : constant Integer_64 := Integer_64 (H.Channels);
+         W : Walker;
+         D : Damage;
+      begin
+         Start (W, S, H);
+         if Count > 0 then
+            Seek (W, Natural (First));
+         end if;
+         for F in Natural (First) .. Natural (First + Count) - 1 loop
+            Advance (W, F);
+            for C in 1 .. H.Channels loop
+               declare
+                  V : Long_Long_Integer := Value (W, C, F);
+               begin
+                  if H.Is_Float and then H.Modes (C) = 1 then
+                     V := From_Integer (V, H.Scales (C));
+                  end if;
+                  Store ((Integer_64 (F) - First) * Channels + Integer_64 (C - 1), V);
+               end;
+            end loop;
+         end loop;
+         D := Stream_Reading.Report (W);
+         Stop (W);
+         Free (S);
+         Report.all := (Lost_Frames => Integer_64 (D.Lost_Frames), Bad_Groups => Integer_32 (D.Bad_Groups),
+                        Bad_Block_Crcs => Integer_32 (D.Bad_Crcs), Blocks_Ok => (if D.Blocks_Ok then 1 else 0),
+                        Audio_Md5 => 0);
+         Release (H);
+         return (if D.Bad_Groups = 0 and then D.Lost_Frames = 0 and then D.Bad_Crcs = 0 and then D.Blocks_Ok then Ok
+                 else Damaged);
+      end;
+   end Decode_Range_With;
+
+   function Range_Arguments_Ok (Stream, Samples : System.Address; Length, Count : Integer_64;
+                                Report : access Damage_Report) return Boolean is
+     (Stream /= System.Null_Address and then Samples /= System.Null_Address and then Report /= null
+      and then Length in 0 .. Integer_64 (Natural'Last) and then Count in 0 .. Integer_64 (Natural'Last));
+
+   function Decode_Range (Stream : System.Address; Length, First, Count : Integer_64; Samples : System.Address;
+                          Report : access Damage_Report) return int is
+   begin
+      if not Range_Arguments_Ok (Stream, Samples, Length, Count, Report) then
+         return Bad_Argument;
+      end if;
+      declare
+         X : Int32_Array (0 .. Count * Integer_64 (Max_Channels) - 1) with Import, Address => Samples;
+         procedure Store (I : Integer_64; V : Long_Long_Integer) is
+         begin
+            X (I) := Integer_32 (V);
+         end Store;
+      begin
+         return Decode_Range_With (Stream, Length, False, First, Count, Store'Access, Report);
+      end;
+   exception
+      when others =>
+         return Failed;
+   end Decode_Range;
+
+   function Decode_Range_Float (Stream : System.Address; Length, First, Count : Integer_64; Samples : System.Address;
+                                Report : access Damage_Report) return int is
+   begin
+      if not Range_Arguments_Ok (Stream, Samples, Length, Count, Report) then
+         return Bad_Argument;
+      end if;
+      declare
+         X : Pattern_Array (0 .. Count * Integer_64 (Max_Channels) - 1) with Import, Address => Samples;
+         procedure Store (I : Integer_64; V : Long_Long_Integer) is
+         begin
+            X (I) := Unsigned_32 (Bits_Of (V));
+         end Store;
+      begin
+         return Decode_Range_With (Stream, Length, True, First, Count, Store'Access, Report);
+      end;
+   exception
+      when others =>
+         return Failed;
+   end Decode_Range_Float;
+
 end Codec_Api;

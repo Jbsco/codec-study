@@ -71,6 +71,15 @@ int blkc_decode(const uint8_t *stream, int64_t length, int32_t *samples, int64_t
 int blkc_decode_float(const uint8_t *stream, int64_t length, float *samples, int64_t capacity_frames,
                       blkc_damage *damage);
 
+/* Decode frames first to first + count - 1 into count * channels interleaved samples, starting at the seek point at
+   or before first, so only the groups from there are read. damage covers those groups; its audio_md5 is 0, since a
+   range cannot be checked against the whole stream's digest. Returns as blkc_decode does, with BLKC_BAD_ARGUMENT for
+   a range past the stream's frames. */
+int blkc_decode_range(const uint8_t *stream, int64_t length, int64_t first, int64_t count, int32_t *samples,
+                      blkc_damage *damage);
+int blkc_decode_range_float(const uint8_t *stream, int64_t length, int64_t first, int64_t count, float *samples,
+                            blkc_damage *damage);
+
 /* Block level: one block of one signal, as the Haskell hybrid calls it. Samples are 64-bit, history the decoded samples
    before the block. block_encode returns the bytes written or -1; block_decode returns 0 decoded, 1 truncated input,
    2 bad data, or -1. */
