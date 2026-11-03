@@ -16,19 +16,20 @@ extern "C" {
 #define BLKC_OK 0           /* decoded intact */
 #define BLKC_DAMAGED 1      /* decoded with damage: lost frames are zero, blkc_damage says what was found */
 #define BLKC_REFUSED 2      /* not a readable stream: magic, version, field or header CRC */
-#define BLKC_UNSUPPORTED 3  /* a float stream, which this API version does not decode */
+#define BLKC_UNSUPPORTED 3  /* a stream of the other sample kind: float for blkc_decode, integer for blkc_decode_float */
 #define BLKC_BAD_ARGUMENT (-1)
 #define BLKC_FAILED (-2)    /* the library could not finish the call, for lack of memory */
 
-/* The audio a stream holds. Samples are signed integers in depth bits, left-justified when valid_bits is less. */
+/* The audio a stream holds. Integer samples are signed in depth bits, left-justified when valid_bits is less; float
+   samples are 32-bit IEEE 754 values with depth and valid_bits 32. */
 typedef struct {
   int32_t channels;      /* 1 to 8 */
   int32_t rate;          /* samples per second, 0 when unknown */
-  int32_t depth;         /* 8, 16, 24 or 32 */
+  int32_t depth;         /* 8, 16, 24 or 32; a float stream read from 64-bit input reports 64 */
   int32_t valid_bits;    /* 1 to depth */
   int64_t frames;        /* 0 to 2^31 - 1 */
   uint32_t channel_mask; /* WAV speaker positions, 0 when none */
-  int32_t is_float;      /* 0; set by blkc_read_info for float streams */
+  int32_t is_float;      /* 1 for a float stream, set by blkc_read_info; the encoders ignore it */
   uint8_t audio_md5[16]; /* MD5 of the samples in FLAC's layout, all zeros when not recorded */
 } blkc_info;
 
@@ -53,12 +54,22 @@ int64_t blkc_encode_bound(int64_t frames, int32_t channels);
 int64_t blkc_encode(const int32_t *samples, const blkc_info *info, int32_t level, int32_t threads, uint8_t *stream,
                     int64_t capacity);
 
+/* Code info->frames frames of interleaved float samples; info->depth and info->valid_bits must be 32. Every bit
+   pattern, NaN and infinity included, comes back as it was. Returns as blkc_encode does. */
+int64_t blkc_encode_float(const float *samples, const blkc_info *info, int32_t level, int32_t threads, uint8_t *stream,
+                          int64_t capacity);
+
 /* Read a stream's header into info. Returns BLKC_OK, BLKC_REFUSED or BLKC_BAD_ARGUMENT. */
 int blkc_read_info(const uint8_t *stream, int64_t length, blkc_info *info);
 
 /* Decode a stream into frames * channels interleaved samples; capacity_frames must hold the header's frame count.
    Returns BLKC_OK, BLKC_DAMAGED, BLKC_REFUSED, BLKC_UNSUPPORTED or BLKC_BAD_ARGUMENT. */
 int blkc_decode(const uint8_t *stream, int64_t length, int32_t *samples, int64_t capacity_frames, blkc_damage *damage);
+
+/* Decode a float stream into interleaved float samples, as blkc_decode does for integer streams. A stream coded from
+   64-bit floats gives their values, which are exactly 32-bit floats. */
+int blkc_decode_float(const uint8_t *stream, int64_t length, float *samples, int64_t capacity_frames,
+                      blkc_damage *damage);
 
 /* Block level: one block of one signal, as the Haskell hybrid calls it. Samples are 64-bit, history the decoded samples
    before the block. block_encode returns the bytes written or -1; block_decode returns 0 decoded, 1 truncated input,
