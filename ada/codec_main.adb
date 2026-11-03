@@ -19,7 +19,7 @@ with Checksums;
 with Huffman_Codes; use Huffman_Codes;
 with Stream_Format; use Stream_Format;
 with Stream_Reading;
-with Wav_Files;
+with Wav_Files; use type Wav_Files.Source_Access;
 
 procedure Codec_Main is
    use Ada.Text_IO;
@@ -400,7 +400,7 @@ begin
          end if;
       end loop;
       Header_Length := 42 + (if Input.Is_Float then 2 * Channels else 0) + 1 + (if Tag_Count > 0 then 4 + Tag_Bytes else 0)
-        + (if Entries > 0 then 4 + 12 * Entries else 0) + 2;
+        + (if Entries > 0 then 4 + 12 * Entries else 0) + (if Input.Source /= null then 4 + Input.Source'Length else 0) + 2;
       Stream := new Byte_Array (0 .. Header_Length + Data'Length);
       Audio_Md5 := Audio_Digest.Md5 (Channels, Frames, Input.Depth, Input.Valid_Bits, Input.Is_Float, Input_Sample'Access);
       if Input.Is_Float then
@@ -629,7 +629,7 @@ begin
             Put (Stream.all, Pos, Unsigned_64 (Scale (C)), 8);
          end loop;
       end if;
-      Meta_Count := (if Tag_Count > 0 then 1 else 0) + (if Entries > 0 then 1 else 0);
+      Meta_Count := (if Tag_Count > 0 then 1 else 0) + (if Entries > 0 then 1 else 0) + (if Input.Source /= null then 1 else 0);
       Put (Stream.all, Pos, Unsigned_64 (Meta_Count), 8);
       if Tag_Count > 0 then
          Put (Stream.all, Pos, Tag_Block, 8);
@@ -653,6 +653,13 @@ begin
          for E in 0 .. Entries - 1 loop
             Put (Stream.all, Pos, Unsigned_64 (E * Table_Span * Max_Block), 32);
             Put (Stream.all, Pos, Unsigned_64 (Header_Length + Group_Start (E * Table_Span)), 64);
+         end loop;
+      end if;
+      if Input.Source /= null then
+         Put (Stream.all, Pos, Source_Block, 8);
+         Put (Stream.all, Pos, Unsigned_64 (Input.Source'Length), 24);
+         for B of Input.Source.all loop
+            Put (Stream.all, Pos, Unsigned_64 (B), 8);
          end loop;
       end if;
       Put (Stream.all, Pos, Unsigned_64 (Checksums.Of_Bytes (Stream (0 .. Pos / 8 - 1))), 16);
@@ -689,6 +696,7 @@ begin
          Same := Same and then H.Ok and then H.Rate = Rate and then H.Frames = Frames and then H.Channels = Channels
            and then H.Depth = Input.Depth and then H.Valid_Bits = Input.Valid_Bits and then H.Is_Float = Input.Is_Float
            and then H.Channel_Mask = Input.Channel_Mask and then H.Audio_Md5 = Audio_Md5
+           and then (H.Source = null) = (Input.Source = null) and then (Input.Source = null or else H.Source.all = Input.Source.all)
            and then (for all C in 1 .. Channels => H.Modes (C) = Mode (C) and then H.Scales (C) = Scale (C));
          if H.Ok then
             Stream_Reading.Decode_All (Stream (0 .. Length - 1), H, Output, Lost, D, Verify => False);
@@ -746,7 +754,9 @@ begin
                    & (if Independent then "every group a segment" elsif Segment_Span = 0 then "one segment"
                       else "a segment every" & Segment_Span'Image & " groups") & "," & Natural'Image (H.Seeks'Length) & " seek points"
                    & (if H.Tag_Count > 0 then "; tags " & Ada.Strings.Unbounded.To_String (H.Tags) else "")
-                   & "; audio MD5 " & Audio_Digest.Image (Audio_Md5));
+                   & "; audio MD5 " & Audio_Digest.Image (Audio_Md5)
+                   & (if Input.Source /= null then "; source" & Natural'Image (Input.Source'Length) & " bytes" else "")
+                   & (if Input.Foreign_Dropped then ", chunks other than format and audio too large to keep" else ""));
          if D.Bad_Groups > 0 or else D.Bad_Crcs > 0 or else Wrong > 0 then
             Put_Line ("    damage:" & D.Bad_Groups'Image & " groups failed," & D.Bad_Crcs'Image & " block CRCs failed," & D.Lost_Frames'Image
                       & " frames lost," & Wrong'Image & " samples wrong outside them" & (if Wrong = 0 then "; damage contained" else ""));
