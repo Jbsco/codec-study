@@ -167,6 +167,9 @@ if [ "$ok" = 3 ] && [ "$ha" = "$hh" ] && [ "$ha" = "$hy" ]; then
   else
     echo "  four channels: stream_decode FAILED"; FAIL=1
   fi
+  ada/obj/stream_encode --level 1 - - < build/four_48k.wav 2> /dev/null | ada/obj/stream_decode - - 2> /dev/null > build/four_piped.wav
+  cmp -s build/four_48k.wav build/four_piped.wav && echo "  through pipes: four channels byte-identical" \
+    || { echo "  through pipes: FAILED"; FAIL=1; }
 else
   echo "  four channels: FAILED (round trips $ok, hashes $ha $hh $hy)"
   FAIL=1
