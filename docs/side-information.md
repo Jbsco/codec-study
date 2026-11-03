@@ -8,9 +8,9 @@ Level-4 streams, from the `bits:` line of `codec_main`:
 
 | Files | Headers | LPC coefficients | LPC warm-up | Code tables | Framing | Residuals |
 |---|---|---|---|---|---|---|
-| Generated signals | 0.16% | 0.30% | 0.28% | 0.22% | 1.05% | 97.99% |
+| Generated signals | 0.16% | 0.30% | 0.28% | 0.22% | 1.06% | 97.99% |
 | Sample-rate sweep | 0.09% | 0.03% | 0.07% | 0.04% | 0.56% | 99.20% |
-| Bit-depth sweep | 0.06% | 0.01% | 0.06% | 0.10% | 0.39% | 99.38% |
+| Bit-depth sweep | 0.06% | 0.01% | 0.06% | 0.10% | 0.40% | 99.37% |
 | Recordings | 0.07% | 0.64% | 0.77% | 0.02% | 0.24% | 98.26% |
 | Whole corpus | 0.08% | 0.46% | 0.55% | 0.05% | 0.39% | 98.46% |
 

@@ -70,9 +70,9 @@ Segments, measured by `segments.sh` at level 4 on the corpus, where a block may 
 
 | Segment | Bytes | Against one segment |
 |---|---|---|
-| one segment, no seek table (`--seek-every 0`) | 41,963,961 | |
-| a seek point every 10 s, the default | 41,966,578 | +2,617, 0.006 percent |
-| a seek point every 1 s | 42,037,486 | +73,525, 0.18 percent |
-| every group a segment (`--independent`) | 42,731,273 | +767,312, 1.83 percent |
+| one segment, no seek table (`--seek-every 0`) | 41,964,961 | |
+| a seek point every 10 s, the default | 41,967,578 | +2,617, 0.006 percent |
+| a seek point every 1 s | 42,038,486 | +73,525, 0.18 percent |
+| every group a segment (`--independent`) | 42,732,273 | +767,312, 1.83 percent |
 
 A seek point every 10 s costs nothing worth measuring, because few blocks reach more than 16,384 samples back and fewer start a segment. Every group its own segment costs 1.8 percent, which is what the history buys: the delay predictor's reach into earlier samples and the adaptive stage's warm-up, both lost by the first blocks of every segment. A stream for random access or for links that drop data chooses between these by how much it must be able to lose at once.
