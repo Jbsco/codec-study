@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
 # Time FLAC, WavPack and the block codec's own programs over the corpus in one run, one file at a time on one
-# thread, and level 4 once more with groups coded on every processor: encode to a file, decode it with the tool's
-# own decoder, and check the decoded samples. Writes
-# results/tool_timing.tsv, one line per method and file (bytes, encode and decode seconds, ok or unsupported),
-# then prints totals over the files every method codes. Needs flac, wavpack, ffmpeg and the Ada programs built in
-# release mode (gprbuild -P ada/huffman_audio.gpr -XBUILD=release).
+# thread, and levels 4 and 5 with groups coded on every processor: encode to a file, decode it with the tool's own
+# decoder, and check the decoded samples. Writes results/tool_timing.tsv, one line per method and file (bytes,
+# encode and decode seconds, ok or unsupported), then prints totals over the files every method codes. Needs flac,
+# wavpack, ffmpeg and the Ada programs built in release mode (gprbuild -P ada/huffman_audio.gpr -XBUILD=release).
 set -uo pipefail
 cd "$(dirname "$0")"
 work=$(mktemp -d -p "${TMPDIR:-/var/tmp}")
@@ -14,7 +13,7 @@ out=results/tool_timing.tsv
 printf 'method\tfile\tbytes\tencode_s\tdecode_s\tstatus\n' > "$out"
 
 methods=("flac -0" "flac -5" "flac -8" "wavpack -f" "wavpack" "wavpack -hh" "wavpack -hh -x4"
-         "block level 0" "block level 1" "block level 2" "block level 4" "block level 4 parallel")
+         "block level 0" "block level 1" "block level 2" "block level 4" "block level 4 parallel" "block level 5 parallel")
 
 now() { date +%s.%N; }
 
@@ -29,7 +28,8 @@ for wav in build/wav/*.wav; do
     case $method in
       flac*) coded="$work/c.flac"; $method -s -f -o "$coded" "$wav" 2> /dev/null ;;
       wavpack*) coded="$work/c.wv"; $method -q -y "$wav" -o "$coded" 2> /dev/null ;;
-      block*parallel) coded="$work/c.bin"; ada/obj-release/stream_encode --level 4 "$wav" "$coded" 2> /dev/null ;;
+      block*parallel) coded="$work/c.bin"; level=${method#block level }
+        ada/obj-release/stream_encode --level "${level%% *}" "$wav" "$coded" 2> /dev/null ;;
       block*) coded="$work/c.bin"; ada/obj-release/stream_encode --threads 1 --level "${method##* }" "$wav" "$coded" 2> /dev/null ;;
     esac
     t1=$(now)
