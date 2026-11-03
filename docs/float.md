@@ -4,6 +4,8 @@
 
 Float samples become integers before any block is coded. When every sample in a channel equals an integer over one power of two up to 2^31, those integers are coded and the stream records the power (mode 1). This is the case for float files made from integer audio, which is most float audio. Otherwise the 32-bit patterns are mapped to integers that keep their order, by inverting the magnitude bits of negative values, and those are coded (mode 2). Both maps are exact, so the stream is lossless in either mode.
 
+64-bit float input is read when every sample is exactly a 32-bit float, as it is in 64-bit files made from 32-bit float or from integer audio up to 24 bits. Each sample is coded through its 32-bit pattern, the header records 64 bits, and the decoder widens every sample back, which is exact. A file whose samples need more than a 32-bit float's precision is refused with a message.
+
 ## Measured
 
 - `rec_orchestra_f32`, the 24-bit orchestra as float, converts exactly to integers over 2^23 and costs what the integer file costs, 13.82 bits per sample. WavPack, the one audio codec in the comparison that accepts float, reaches 13.81.

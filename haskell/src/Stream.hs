@@ -28,6 +28,7 @@ import BlockCodec (Effort (..), log2', maxBlock, maxHistory, usesHistory)
 import Bits (getBits)
 import Blocks (readWord32, word32)
 import Checksum (crc16)
+import FloatBits (widen)
 import Md5 (md5)
 import Parallel
 import Wav
@@ -60,15 +61,17 @@ sourceOf :: Audio -> Maybe (S.Vector Word8)
 sourceOf = fmap (S.fromList . BI.unpackBytes) . source
 
 -- | MD5 of the input samples in FLAC's layout: frames in order with channels interleaved, each integer shifted down
--- to its valid bits and written little-endian in as many bytes as those bits need, each float as its 32-bit pattern.
+-- to its valid bits and written little-endian in as many bytes as those bits need, each float as its 32 or 64-bit
+-- pattern.
 audioMd5 :: Audio -> S.Vector Word8
 audioMd5 a = S.fromList (md5 bytes)
   where
     chs = V.fromList (channels a)
     nch = V.length chs
-    width = if isFloat a then 4 else (validBits a + 7) `quot` 8
+    width = if isFloat a then depth a `quot` 8 else (validBits a + 7) `quot` 8
     down = if isFloat a then 0 else depth a - validBits a
     word v
+      | isFloat a && depth a == 64 = fromIntegral (widen (fromIntegral (if v >= 0 then v else 2147483647 - v)))
       | isFloat a = if v >= 0 then v else 2147483647 - v
       | otherwise = v `shiftR` down
     bytes = BI.unsafeCreate (frames a * nch * width) $ \ptr ->

@@ -13,7 +13,7 @@ Header, in order:
 | flags | 8 | bit 0: every group is a segment |
 | rate | 32 | samples per second, 0 when unknown |
 | frames | 64 | frames in the stream, 0 when unknown |
-| channels, depth, valid bits, float | 8 each | channel count, bits per sample of the container, bits that carry audio with zeros below them, 1 for float input |
+| channels, depth, valid bits, float | 8 each | channel count, bits per sample of the container, bits that carry audio with zeros below them, 1 for float input; 64-bit float is coded through its 32-bit patterns |
 | channel mask | 32 | speaker positions as in WAV's extensible format, 0 when none was given |
 | audio MD5 | 128 | MD5 of the input samples in FLAC's layout, zero when not recorded |
 | mode, scale | 8 each, per channel, float input only | float samples as integers over 2^scale (mode 1) or as ordered bit patterns (mode 2) |
@@ -53,7 +53,7 @@ The decoder writes plain WAV when the stream has no description, or when the for
 
 ## Audio MD5
 
-The MD5 covers the samples as the input file held them, frames in order with channels interleaved. Each integer sample is shifted down to its valid bits and written little-endian in as many bytes as those bits need. Each float sample is its 32-bit pattern. This is FLAC's layout, so a FLAC file of the same audio records the same digest. `metaflac --show-md5sum` gives the stream's digest for every FLAC file of the corpus, and for a 20-bit file in 24-bit words.
+The MD5 covers the samples as the input file held them, frames in order with channels interleaved. Each integer sample is shifted down to its valid bits and written little-endian in as many bytes as those bits need. Each float sample is its 32-bit or 64-bit pattern. This is FLAC's layout, so a FLAC file of the same audio records the same digest. `metaflac --show-md5sum` gives the stream's digest for every FLAC file of the corpus, and for a 20-bit file in 24-bit words.
 
 Per-block CRCs show that coded bytes arrived intact. The MD5 shows that the decoder rebuilt the input: `stream_decode` checks the decoded audio against it and exits with status 1 on a difference.
 
