@@ -85,6 +85,34 @@ ada/obj/stream_decode build/truncated.bin build/truncated.wav 2> /dev/null
 head -c 3000 build/wav/rec_speech_8k.wav > build/not_a_stream.bin
 ada/obj/stream_decode build/not_a_stream.bin build/not_a_stream.wav 2> /dev/null
 [ $? = 2 ] && echo "  foreign file: refused" || { echo "  foreign file: wrong status"; FAIL=1; }
+# --skip and --until write the same frames as a full decode, here on streams whose blocks read earlier groups.
+for v in delay_in_history:0:1:5000:9000:6208:10000:19000:20000 adaptive_stage:0:4096:4095:8193:30000:34000:44000:44100; do
+  name=${v%%:*}; ranges=${v#*:}; ok=1
+  ada/obj/stream_decode "vectors/$name.blkc" "build/${name}_full.wav" 2> /dev/null || ok=0
+  while [ -n "$ranges" ]; do
+    skip=${ranges%%:*}; ranges=${ranges#*:}; until=${ranges%%:*}; ranges=${ranges#"$until"}; ranges=${ranges#:}
+    ada/obj/stream_decode --skip "$skip" --until "$until" "vectors/$name.blkc" "build/${name}_range.wav" 2> /dev/null || ok=0
+    python3 -I - "build/${name}_full.wav" "build/${name}_range.wav" "$skip" "$until" <<'EOF' || ok=0
+import sys
+def pcm(path):
+    b = open(path, 'rb').read()
+    i, fmt = 12, b''
+    while i + 8 <= len(b):
+        kind, n = b[i:i + 4], int.from_bytes(b[i + 4:i + 8], 'little')
+        if kind == b'fmt ':
+            fmt = b[i + 8:i + 8 + n]
+        if kind == b'data':
+            return fmt, b[i + 8:i + 8 + n]
+        i += 8 + n + (n & 1)
+    return fmt, b''
+fmt, full = pcm(sys.argv[1])
+part = pcm(sys.argv[2])[1]
+align, a, z = int.from_bytes(fmt[12:14], 'little'), int(sys.argv[3]), int(sys.argv[4])
+sys.exit(0 if len(part) == (z - a) * align and part == full[a * align:z * align] else 1)
+EOF
+  done
+  [ $ok = 1 ] && echo "  $name: frame ranges equal the full decode" || { echo "  $name: frame ranges FAILED"; FAIL=1; }
+done
 
 echo "== 4/10  Input containers"
 # The same samples in RF64, Wave64, AIFF and AIFF-C, and in a WAV written to a pipe with its sizes unknown, give their

@@ -1,7 +1,8 @@
 --  Decode a stream written by codec_main --stream or stream_encode into the file it came from, from the stream's own
 --  bytes, group by group, so memory does not grow with the audio's length. Frames of a group that cannot be read
---  are written as zeros and reported. "-" names standard input or standard output.
---  Usage: stream_decode <stream.bin> <out.wav>, or stream_decode --version
+--  are written as zeros and reported. "-" names standard input or standard output. --skip and --until write frames
+--  from the first named up to the second as a WAV file, decoding from the groups those frames need.
+--  Usage: stream_decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>, or stream_decode --version
 --  Exit status: 0 decoded intact, 1 written with damage or with audio that differs from its MD5, 2 not a readable
 --  stream or wrong arguments.
 with Ada.Command_Line;
@@ -25,18 +26,8 @@ procedure Stream_Decode is
       Put_Line (Standard_Error, "stream_decode: " & Message);
       Ada.Command_Line.Set_Exit_Status (2);
    end Fail;
-begin
-   if Ada.Command_Line.Argument_Count = 1 and then Ada.Command_Line.Argument (1) = "--version" then
-      Put_Line ("stream_decode " & Build_Version.Version & ", format version" & Integer'Image (Version) & ", C API version 1");
-      return;
-   end if;
-   if Ada.Command_Line.Argument_Count /= 2 then
-      Fail ("usage: stream_decode <stream.bin> <out.wav>");
-      return;
-   end if;
-   declare
-      Name : constant String := Ada.Command_Line.Argument (1);
-      Out_Name : constant String := Ada.Command_Line.Argument (2);
+
+   procedure Decode (Name, Out_Name : String; Skip, Until_Frame : Natural; Ranged : Boolean) is
    begin
       if Name /= "-" and then not Ada.Directories.Exists (Name) then
          Fail (Name & ": no such file");
@@ -55,10 +46,15 @@ begin
             Fail (Name & ": not a readable stream (magic, version, field or header CRC)");
             return;
          end if;
+         if Skip > Natural'Min (Until_Frame, H.Frames) then
+            Fail (Name & ": --skip past --until or past the stream's" & H.Frames'Image & " frames");
+            return;
+         end if;
          declare
+            Last : constant Natural := Natural'Min (Until_Frame, H.Frames);
             W : Walker;
             Check : Audio_Digest.Hasher;
-            Recorded : constant Boolean := H.Audio_Md5 /= Audio_Digest.Not_Recorded;
+            Recorded : constant Boolean := H.Audio_Md5 /= Audio_Digest.Not_Recorded and then not Ranged;
             Written : Boolean := False;
             Audio : Audio_Check := Not_Recorded;
 
@@ -66,8 +62,8 @@ begin
             function Sample (C : Positive; F : Natural) return Long_Long_Integer is
                V : Long_Long_Integer;
             begin
-               Advance (W, F);
-               V := Value (W, C, F);
+               Advance (W, Skip + F);
+               V := Value (W, C, Skip + F);
                if H.Is_Float and then H.Modes (C) = 1 then
                   V := From_Integer (V, H.Scales (C));
                end if;
@@ -78,10 +74,13 @@ begin
             end Sample;
          begin
             Start (W, Stream, H);
+            if Skip > 0 and then Skip < H.Frames then
+               Seek (W, Skip);
+            end if;
             if Recorded then
                Audio_Digest.Start (Check, H.Depth, H.Valid_Bits, H.Is_Float);
             end if;
-            if H.Source /= null then
+            if H.Source /= null and then not Ranged then
                Wav_Files.Write_Source (Out_Name, H.Source.all, H.Channels, H.Depth, H.Valid_Bits, H.Is_Float, H.Frames,
                                        Sample'Access, Written);
                if not Written then
@@ -89,7 +88,7 @@ begin
                end if;
             end if;
             if not Written then
-               Wav_Files.Write (Out_Name, H.Channels, H.Rate, H.Depth, H.Valid_Bits, H.Channel_Mask, H.Is_Float, H.Frames,
+               Wav_Files.Write (Out_Name, H.Channels, H.Rate, H.Depth, H.Valid_Bits, H.Channel_Mask, H.Is_Float, Last - Skip,
                                 Sample'Access);
             end if;
             if Recorded then
@@ -106,9 +105,13 @@ begin
                Put_Line (Standard_Error, Name & ":" & H.Frames'Image & " frames," & H.Channels'Image & " channels,"
                          & H.Rate'Image & " Hz," & H.Depth'Image & (if H.Is_Float then "-bit float" else "-bit")
                          & (if H.Tag_Count > 0 then ", tags " & Ada.Strings.Unbounded.To_String (H.Tags) else "")
+                         & (if Ranged then ", frames" & Skip'Image & " to" & Natural'Image (Last - 1) & " written" else "")
                          & (case Audio is when Matches => ", audio MD5 matches", when Differs => ", AUDIO MD5 DIFFERS",
-                            when Not_Recorded => ", no audio MD5 recorded", when Not_Checked => ""));
-               if D.Complete and then D.Blocks_Ok and then D.Bad_Crcs = 0 and then Audio /= Differs then
+                            when Not_Recorded => (if Ranged then "" else ", no audio MD5 recorded"),
+                            when Not_Checked => ""));
+               if (D.Complete or else (Ranged and then D.Lost_Frames = 0 and then D.Bad_Groups = 0)) and then D.Blocks_Ok
+                 and then D.Bad_Crcs = 0 and then Audio /= Differs
+               then
                   Ada.Command_Line.Set_Exit_Status (0);
                else
                   Put_Line (Standard_Error, Name & ": damaged," & D.Bad_Groups'Image & " groups failed," & D.Bad_Crcs'Image
@@ -120,5 +123,58 @@ begin
             end;
          end;
       end;
+   end Decode;
+
+begin
+   if Ada.Command_Line.Argument_Count = 1 and then Ada.Command_Line.Argument (1) = "--version" then
+      Put_Line ("stream_decode " & Build_Version.Version & ", format version" & Integer'Image (Version) & ", C API version 1");
+      return;
+   end if;
+   declare
+      use Ada.Strings.Unbounded;
+      Usage : constant String := "usage: stream_decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>";
+      Names : array (1 .. 2) of Unbounded_String;
+      Named : Natural := 0;
+      Skip : Natural := 0;
+      Until_Frame : Natural := Natural'Last;
+      Ranged : Boolean := False;
+      I : Positive := 1;
+   begin
+      while I <= Ada.Command_Line.Argument_Count loop
+         declare
+            A : constant String := Ada.Command_Line.Argument (I);
+         begin
+            if (A = "--skip" or else A = "--until") and then I < Ada.Command_Line.Argument_Count then
+               declare
+                  V : constant Natural := Natural'Value (Ada.Command_Line.Argument (I + 1));
+               begin
+                  if A = "--skip" then
+                     Skip := V;
+                  else
+                     Until_Frame := V;
+                  end if;
+               end;
+               Ranged := True;
+               I := I + 2;
+            elsif Named < 2 and then (A = "-" or else A (A'First) /= '-') then
+               Named := Named + 1;
+               Names (Named) := To_Unbounded_String (A);
+               I := I + 1;
+            else
+               Fail (Usage);
+               return;
+            end if;
+         end;
+      end loop;
+      if Named /= 2 then
+         Fail (Usage);
+         return;
+      end if;
+      Decode (To_String (Names (1)), To_String (Names (2)), Skip, Until_Frame, Ranged);
+   exception
+      when Constraint_Error =>
+         Fail (Usage);
    end;
 end Stream_Decode;
+
+
