@@ -23,12 +23,32 @@ package body Bit_Streams with SPARK_Mode is
 
    procedure Get (Buffer : Byte_Array; Pos : in out Natural; Value : out Unsigned_64; Count : Field_Width) is
    begin
-      Value := 0;
-      for K in 1 .. Count loop
-         pragma Loop_Invariant (Pos = Pos'Loop_Entry + K - 1 and then Value < 2**(K - 1));
-         Value := Value * 2 + Bit_At (Buffer, Pos);
-         Pos := Pos + 1;
-      end loop;
+      if Count = 0 then
+         Value := 0;
+      elsif Count <= 56 then
+         --  The bytes that hold the field, in one word, then the field shifted down and masked.
+         declare
+            First : constant Natural := Buffer'First + Pos / 8;
+            Skip : constant Natural := Pos mod 8;
+            N : constant Positive := (Skip + Count + 7) / 8;
+            W : Unsigned_64 := 0;
+         begin
+            pragma Assert (N <= 8 and then First + N - 1 <= Buffer'Last);
+            for I in 0 .. N - 1 loop
+               W := Shift_Left (W, 8) or Unsigned_64 (Buffer (First + I));
+            end loop;
+            Value := Shift_Right (W, 8 * N - Skip - Count) and (Shift_Left (1, Count) - 1);
+            pragma Assert (Shift_Right (Value, Count) = 0);
+            Pos := Pos + Count;
+         end;
+      else
+         Value := 0;
+         for K in 1 .. Count loop
+            pragma Loop_Invariant (Pos = Pos'Loop_Entry + K - 1 and then Value < 2**(K - 1));
+            Value := Value * 2 + Bit_At (Buffer, Pos);
+            Pos := Pos + 1;
+         end loop;
+      end if;
    end Get;
 
 end Bit_Streams;
