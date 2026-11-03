@@ -4,8 +4,8 @@
 # stream decoder on whole, truncated and foreign files, the release programs against the checked ones, the audio MD5
 # against FLAC's and against a changed digest, RF64, Wave64, AIFF and 64-bit float input, the three implementations
 # against one another on a short file at every level, on a four-channel file, the test vectors, changed copies of
-# them through the fuzzer, the C interface, and the release package. Needs gprbuild and GNAT on the PATH (an Alire toolchain), stack, flac
-# with metaflac, ffmpeg, python3, a C compiler and nm.
+# them through the fuzzer, edge-case inputs through the encoder, the C interface, and the release package. Needs
+# gprbuild and GNAT on the PATH (an Alire toolchain), stack, flac with metaflac, ffmpeg, python3, a C compiler and nm.
 exec >&2
 cd "$(dirname "$0")" || exit 1
 FAIL=0
@@ -218,6 +218,25 @@ vectors/check.sh ada/obj-release/stream_decode > /dev/null || { echo "  test vec
 echo "== 8/10  Fuzzing"
 # Changed copies of every vector through the decoder with checks on; a failing stream is kept as build/fuzz_failure.blkc.
 (cd build && ../ada/obj/fuzz_decode 2000 1 ../vectors/*.blkc | sed 's/^/  /') || FAIL=1
+# Edge-case inputs through the encoder: each decodes back through --verify at levels 0, 2 and 4, and Ada and Haskell
+# write one stream at level 2 for the first of them.
+failed=0 differ=0
+for seed in $(seq 1 20); do
+  python3 -I vectors/edge_audio.py "$seed" build/edge.wav > /dev/null
+  for level in 0 2 4; do
+    ada/obj/stream_encode --level $level --verify build/edge.wav build/edge.bin 2> /dev/null || failed=$((failed + 1))
+  done
+  if [ "$seed" -le 8 ]; then
+    a=$(ada/obj/codec_main build/edge.wav 2 | grep -oE 'round trip OK, hash [0-9a-f]+')
+    h=$("$hs/huffman-audio/huffman-audio" build/edge.wav --block 2 | grep -oE 'round trip OK, hash [0-9a-f]+')
+    { [ -n "$a" ] && [ "$a" = "$h" ]; } || differ=$((differ + 1))
+  fi
+done
+if [ $failed = 0 ] && [ $differ = 0 ]; then
+  echo "  encoder: edge-case inputs verified at levels 0, 2 and 4, Ada and Haskell agree"
+else
+  echo "  encoder edge cases: $failed failed verification, $differ disagree"; FAIL=1
+fi
 
 echo "== 9/10  C interface"
 capi/check.sh || FAIL=1
