@@ -556,6 +556,14 @@ package body Stream_Reading is
 
    function Report (W : Walker) return Damage is (W.D);
 
+   procedure Release (H : in out Header) is
+      procedure Free is new Ada.Unchecked_Deallocation (Seek_List, Seek_List_Access);
+      procedure Free is new Ada.Unchecked_Deallocation (Byte_Array, Byte_Array_Access);
+   begin
+      Free (H.Seeks);
+      Free (H.Source);
+   end Release;
+
    procedure Stop (W : in out Walker) is
    begin
       for C in 1 .. W.H.Channels loop

@@ -55,4 +55,7 @@ package Stream_Writing is
    procedure Encode (Input : in out Wav_Files.Audio; Opt : Options; Stream : out Byte_Array_Access; Length : out Natural;
                      Stats : out Statistics);
 
+   --  Free what Encode allocated in Stats.
+   procedure Release (Stats : in out Statistics);
+
 end Stream_Writing;

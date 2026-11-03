@@ -46,6 +46,9 @@ package Stream_Reading is
    procedure Read_Header (Stream : Byte_Array; H : out Header)
      with Pre => Stream'First = 0;
 
+   --  Free what Read_Header allocated in H.
+   procedure Release (H : in out Header);
+
    --  Sample F of channel C in the form Wav_Files reads it: the integer, or for float the order-keeping integer of
    --  its bit pattern.
    function Wav_Sample (H : Header; Output : Channel_Buffers; C : Positive; F : Natural) return Long_Long_Integer is

@@ -12,6 +12,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `ada/block_codec.ads`, `.adb`: block codec. SPARK decoder with no heap and no exceptions; malformed input returns `Truncated_Input` or `Bad_Data`. Encoder with no heap and no shared state; linear prediction analysis in 64-bit floating point.
 - `ada/canonical_decoding`, `bit_streams`, `checksums`, `range_coding`: canonical Huffman decoding, bit access, CRC-16 and the binary range coder, in SPARK. `ada/checksums_test.adb` tests the CRC; `ada/corrupt_test.adb` walks a written stream and checks its framing and every CRC against flipped bits. `ada/fuzz_decode.adb` decodes changed copies of the test vectors and fails on any exception.
 - `ada/codec_main.adb`: stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/stream_reading` and `ada/stream_format`: header, groups and damage handling, read from a stream's own bytes. `ada/stream_writing` with `ada/stream_encode.adb`: audio file to stream. `ada/stream_decode.adb`: stream to audio file, group by group. `ada/byte_files`: files and pipes. `ada/block_codec_ffi` and `ada/codec_lib.gpr`: block codec as a C library, `ada/lib/libblockcodec.so`.
+- `ada/codec_api` with `include/blockcodec.h`: the library's C interface for streams; `capi/` tests it.
 - `ada/wav_files`: input from WAV, RF64, Wave64 and AIFF, WAV output. `ada/audio_huffman.adb` with `huffman_codes`, `predictors` and `residual_coders`: experiment coders.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
@@ -275,7 +276,7 @@ Installed sizes of the tools compared, and this work's binaries. Decoder rows co
 | Block decoder before the adaptive code, measured the same way, `-Os -gnatp` | 6,316 code (8,396 with checks on) |
 | Block encoder with the adaptive code, Cortex-M4 Thumb-2, `-Os -gnatp` | 11,328 code, plus libgcc's software double precision |
 | Read-only data of the five units, `-Os -gnatp` | 521 (637 with checks on) |
-| `libblockcodec.so`, x86-64, stripped, Ada runtime included | 267,688 |
+| `libblockcodec.so`, x86-64, stripped, Ada runtime included, blocks and streams | 777,816 |
 | `codec_main`, x86-64, stripped, needs only libc | 777,984 |
 | `stream_decode`, x86-64, stripped, needs only libc | 670,528 |
 | `huffman-audio`, Haskell, x86-64, stripped, needs libgmp | 6,543,248 |
@@ -348,6 +349,15 @@ Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer, 32-bit float, or 64-bit
 `stream_decode <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). It decodes group by group and keeps only the history later blocks may read, so its memory does not grow with the audio's length.
 
 Exit status 0 means the stream was intact. Status 1 means damage: frames of unreadable groups, and blocks that did not decode, are written as zeros and counted on stderr. Status 2 means the file is not a readable stream.
+
+### C interface
+
+`include/blockcodec.h` declares the library's C interface, API version 1. `blkc_encode` codes interleaved integer samples into a stream, `blkc_read_info` reads a stream's header, and `blkc_decode` decodes a stream with a damage report. `block_encode` and `block_decode` code one block, as the Haskell hybrid calls them. Every call is independent, so calls may run on many threads at once.
+
+    (cd ada && gprbuild -P codec_lib.gpr)      # ada/lib/libblockcodec.so, Ada runtime included
+    cc -Iinclude app.c -Lada/lib -lblockcodec
+
+Float streams decode with status `BLKC_UNSUPPORTED` in API version 1. `capi/check.sh` builds `capi/api_test.c` against the header and checks the library's exported functions against `capi/symbols.txt`, so a changed interface fails the tests before it reaches a release.
 
 ## References
 
