@@ -1,7 +1,7 @@
 --  Decode a stream written by codec_main --stream or stream_encode into the file it came from, from the stream's own
 --  bytes, group by group, so memory does not grow with the audio's length. Frames of a group that cannot be read
 --  are written as zeros and reported. "-" names standard input or standard output.
---  Usage: stream_decode <stream.bin> <out.wav>
+--  Usage: stream_decode <stream.bin> <out.wav>, or stream_decode --version
 --  Exit status: 0 decoded intact, 1 written with damage or with audio that differs from its MD5, 2 not a readable
 --  stream or wrong arguments.
 with Ada.Command_Line;
@@ -11,6 +11,7 @@ with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with Audio_Digest;
 with Bit_Streams; use Bit_Streams;
+with Build_Version;
 with Byte_Files;
 with Stream_Format; use Stream_Format;
 with Stream_Reading; use Stream_Reading;
@@ -25,6 +26,10 @@ procedure Stream_Decode is
       Ada.Command_Line.Set_Exit_Status (2);
    end Fail;
 begin
+   if Ada.Command_Line.Argument_Count = 1 and then Ada.Command_Line.Argument (1) = "--version" then
+      Put_Line ("stream_decode " & Build_Version.Version & ", format version" & Integer'Image (Version) & ", C API version 1");
+      return;
+   end if;
    if Ada.Command_Line.Argument_Count /= 2 then
       Fail ("usage: stream_decode <stream.bin> <out.wav>");
       return;

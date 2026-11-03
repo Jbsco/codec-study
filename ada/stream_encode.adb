@@ -3,6 +3,7 @@
 --         [--no-pairs] [--threads <n>] [--verify] <in.wav> <out.bin>
 --  --threads sets how many groups are coded at once, every processor when left out; the stream is the same.
 --  --verify decodes the stream before writing it and checks every frame against the audio's MD5.
+--  --version prints the program's version, the format version and the C API version.
 --  Exit status: 0 written, 1 verification failed and nothing written, 2 an unreadable input or wrong arguments.
 with Ada.Command_Line;
 with Ada.Exceptions;
@@ -11,6 +12,7 @@ with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with Audio_Digest;
 with Bit_Streams; use Bit_Streams;
+with Build_Version;
 with Byte_Files;
 with Stream_Reading;
 with Stream_Format; use Stream_Format;
@@ -56,6 +58,10 @@ procedure Stream_Encode is
          return Low;
    end Value;
 begin
+   if Ada.Command_Line.Argument_Count = 1 and then Ada.Command_Line.Argument (1) = "--version" then
+      Put_Line ("stream_encode " & Build_Version.Version & ", format version" & Integer'Image (Version) & ", C API version 1");
+      return;
+   end if;
    while I <= Ada.Command_Line.Argument_Count loop
       declare
          A : constant String := Ada.Command_Line.Argument (I);
