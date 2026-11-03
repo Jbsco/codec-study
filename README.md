@@ -18,6 +18,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
 - `extra.sh`: the codec on the wider corpus in `corpus/extra/`, results in `results/extra.tsv`.
 - `release.sh`, `.github/workflows/release.yml`: release package and its publication from a version tag.
+- `seek_timing.sh` with `capi/seek_bench.c`: seek times through the FLAC, WavPack and block codec libraries, results in `results/seek_timing.tsv`.
 - `run.sh`, `compare.sh`, `bench.sh`, `tool_timing.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, timing against FLAC and WavPack, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
 - `vectors/`: format version 2 test streams, intact and damaged, with a manifest of decoded MD5s and `check.sh` to test a decoder; `edge_audio.py` writes edge-case inputs for the encoder.
 - `docs/`: one page per compression topic with method, measured effect, decoder cost and where it applies beyond audio; `docs/format.md` lists every field of a block, and `docs/spec.md` defines format version 2 for a decoder.
@@ -76,7 +77,7 @@ A block codes 1 to 4096 samples of one signal, as one constant value or as a pre
 
 A stream is a header and groups of 4096 frames. The header contains the magic `BLKC`, format fields, an MD5 of the input samples in FLAC's layout, metadata with tags and a seek table, and a CRC-16. Each group is framed by a sync word, its byte length, its first frame, a split tree with a stereo mode per channel pair, a byte length and a CRC-16 per block, and a CRC-16 over that framing.
 
-Blocks read earlier samples only within their segment, so a decoder can start at any seek point and a damaged group costs at most the rest of its segment. `docs/container.md` and `docs/integrity.md` have the layout, its cost and the damage tests.
+Blocks read earlier samples only within their segment, so a decoder can start at any seek point and a damaged group costs at most the rest of its segment. A seek decodes only the groups whose samples the frame's blocks read, which on recordings at levels 0 to 4 is the group that contains it. `docs/container.md` and `docs/integrity.md` have the layout, its cost and the damage tests.
 
 Float input becomes integers: exact integers over one power of two when every sample allows it (mode 1), as float made from 24-bit audio does, and otherwise float bit patterns through an order-keeping map (mode 2). `docs/float.md` measures both.
 
@@ -246,6 +247,22 @@ The release build leaves out run-time checks and assertions and inlines across u
 
 Haskell uses unboxed vectors whose loops fuse, strict unpacked writer state, `countLeadingZeros` for unary and bit-length codes, and decoding from a 32-bit peek. Parallelism comes from sparks over pure functions, so output cannot depend on scheduling. Executables run with `-N -A4m`; a 4 MB allocation area measured faster than 64 MB.
 
+### Seeking
+
+`seek_timing.sh` opens each file once through its codec's library, then seeks to 200 frames drawn from one seed and reads 4096 frames from each. It ran on one pinned processor at a load average of 28, since a player seeks while the rest of the machine works. Every method read the same samples as FLAC. Times are in ms: median, 90th percentile and largest.
+
+| Method | 48 kHz, 120 s | 192 kHz, 20 s |
+|---|---|---|
+| `flac -5` | 0.31, 0.88, 3.21 | 0.22, 0.28, 0.54 |
+| `flac -8` | 0.40, 1.07, 3.47 | 0.22, 0.28, 0.41 |
+| `wavpack` | 0.69, 1.96, 4.28 | 0.73, 1.20, 1.61 |
+| `wavpack -hh` | 1.72, 3.12, 4.26 | 1.29, 2.14, 2.73 |
+| level 2 | 2.10, 2.44, 3.29 | 1.13, 1.29, 2.44 |
+| level 4 | 1.59, 1.96, 2.30 | 1.13, 1.26, 2.16 |
+| level 5 | 226, 617, 1,926 | 1,570, 3,580, 8,517 |
+
+The 48 kHz file is six corpus recordings joined, and the 192 kHz file is the vinyl recording. At levels 0 to 4 a seek decodes one or two groups, about 0.9 ms each at 48 kHz. Level 5 decodes back to the seek point, up to 10 s of audio, because each adaptive stage trains on the group before it.
+
 ### Sizes
 
 Installed sizes of the tools compared, and this work's binaries. Decoder rows cover `Block_Codec.Decode`, `Canonical_Decoding.Decode`, `Checksums`, `Range_Coding` and the bit reader, built with GNAT 16.1 for `arm-eabi` and the `light-cortex-m4` runtime, each unit with `-ffunction-sections` and sections summed by subprogram role. Tool rows include encoders, containers and front ends. `docs/decoder-cost.md` has the method and what each part added; `sizes.sh` produces the tool table.
@@ -347,13 +364,17 @@ Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer, 32-bit float, or 64-bit
 
 `stream_encode [--level <0 to 5>] [--tag <key=value>] [--seek-every <seconds>] [--independent] [--no-pairs] [--threads <n>] [--verify] <in.wav> <out.bin>` codes a file into a stream, byte for byte the stream `codec_main --stream` writes. It codes groups on every processor, or on `--threads` of them, and the stream is the same for any count. Either program takes `-` for standard input or output. With `--verify` it decodes the stream before writing it and checks every frame against the audio MD5. On a mismatch it writes nothing and exits with status 1.
 
-`stream_decode <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). It decodes group by group and keeps only the history later blocks may read, so its memory does not grow with the audio's length.
+`stream_decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). It decodes group by group and keeps only the history later blocks may read, so its memory does not grow with the audio's length. With `--skip` or `--until` it writes frames from the first named up to the second as a WAV file, decoding only the groups those frames need, as `flac --skip --until` does.
 
 Exit status 0 means the stream was intact. Status 1 means damage: frames of unreadable groups, and blocks that did not decode, are written as zeros and counted on stderr. Status 2 means the file is not a readable stream.
 
 ### C interface
 
-`include/blockcodec.h` declares the library's C interface, API version 1. `blkc_encode` codes interleaved integer samples into a stream, `blkc_read_info` reads a stream's header, and `blkc_decode` decodes a stream with a damage report. `blkc_decode_range` decodes a range of frames, reading only the groups from the seek point at or before its first frame. `block_encode` and `block_decode` code one block, as the Haskell hybrid calls them. Every call is independent, so calls may run on many threads at once.
+`include/blockcodec.h` declares the library's C interface, API version 1. `blkc_encode` codes interleaved integer samples into a stream, `blkc_read_info` reads a stream's header, and `blkc_decode` decodes a stream with a damage report. `blkc_decode_range` decodes a range of frames, reading only the groups they need. `block_encode` and `block_decode` code one block, as the Haskell hybrid calls them.
+
+A player opens a stream once with `blkc_open`. `blkc_seek` moves to a frame, `blkc_read` and `blkc_read_float` hand out frames in order from there, `blkc_report` gives the damage met since the last seek, and `blkc_close` frees the decoder. A decoder keeps the stream, its header and its scratch space between seeks, so a seek reads no header and copies no stream. Calls on different streams or decoders may run on many threads at once, and one decoder serves one thread at a time.
+
+The library builds the units proved free of run-time errors without run-time checks: the block decoder, bit access, Huffman decoding, the range coder and the CRC. The stream reader and the C interface, which the proof does not cover, keep their checks. Block decoding at level 4 went from 1.42 to 0.89 ms per group of 4096 stereo frames at 48 kHz (six recordings joined, one thread, load average 19).
 
     (cd ada && gprbuild -P codec_lib.gpr)      # ada/lib/libblockcodec.so, Ada runtime included
     cc -Iinclude app.c -Lada/lib -lblockcodec
