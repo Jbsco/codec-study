@@ -82,7 +82,8 @@ package body Range_Coding with SPARK_Mode is
    --  Bring the span back above Top, taking a byte into the code for each shift.
    procedure Normalize (D : in out Decoder; Input : Byte_Array; Pos : in out Natural; Ok : out Boolean)
      with Pre => Valid_Buffer (Input) and then Pos <= Input'Length * 8 and then D.Span >= 2**12,
-       Post => Pos <= Input'Length * 8 and then (if Ok then D.Span >= Top)
+       Post => Pos <= Input'Length * 8 and then (if Ok then D.Span >= Top),
+       Inline
    is
       Total : constant Natural := Input'Length * 8;
       B : Unsigned_64;

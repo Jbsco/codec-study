@@ -488,7 +488,16 @@ package body Stream_Reading is
       end loop;
    end Lose;
 
+   procedure Fill (W : in out Walker; Upto : Natural);
+
    procedure Advance (W : in out Walker; Upto : Natural) is
+   begin
+      if Upto >= W.Filled then
+         Fill (W, Upto);
+      end if;
+   end Advance;
+
+   procedure Fill (W : in out Walker; Upto : Natural) is
       Target : constant Natural := Natural'Min (Upto, W.H.Frames - 1);
       Group_Length, Group_First, Group_Count, Leaf_Count, Table_At : Natural;
       L : Leaf_List;
@@ -529,7 +538,7 @@ package body Stream_Reading is
          end if;
       end loop;
       W.D.Complete := W.Filled = W.H.Frames and then W.D.Bad_Groups = 0 and then W.D.Lost_Frames = 0;
-   end Advance;
+   end Fill;
 
    function Value (W : Walker; C : Positive; F : Natural) return Long_Long_Integer is
      (if F >= W.Base and then F <= W.Base + Window - 1 then W.Buf (C) (F) else 0);
