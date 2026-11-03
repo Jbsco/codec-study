@@ -1,6 +1,6 @@
---  WAV input and output at 8, 16, 24 and 32-bit integer and 32-bit float, one array per channel. Float samples become
---  integers through their bit patterns in an order-keeping map: a pattern with the sign bit set becomes
---  minus its other 31 bits, minus one.
+--  WAV output, and input from WAV, RF64, Wave64 and AIFF, at 8, 16, 24 and 32-bit integer and 32-bit float, one array
+--  per channel. Float samples become integers through their bit patterns in an order-keeping map: a pattern with the
+--  sign bit set becomes minus its other 31 bits, minus one.
 with Huffman_Codes; use Huffman_Codes;
 
 package Wav_Files is

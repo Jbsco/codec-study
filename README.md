@@ -12,7 +12,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `ada/block_codec.ads`, `.adb`: block codec. SPARK decoder with no heap and no exceptions; malformed input returns `Truncated_Input` or `Bad_Data`. Encoder with no heap and no shared state; linear prediction analysis in 64-bit floating point.
 - `ada/canonical_decoding`, `bit_streams`, `checksums`, `range_coding`: canonical Huffman decoding, bit access, CRC-16 and the binary range coder, in SPARK. `ada/checksums_test.adb` tests the CRC; `ada/corrupt_test.adb` walks a written stream and checks its framing and every CRC against flipped bits.
 - `ada/codec_main.adb`: stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/stream_reading` and `ada/stream_format`: header, groups and damage handling, read from a stream's own bytes. `ada/stream_decode.adb`: stream to WAV. `ada/block_codec_ffi` and `ada/codec_lib.gpr`: block codec as a C library, `ada/lib/libblockcodec.so`.
-- `ada/audio_huffman.adb` with `huffman_codes`, `predictors`, `residual_coders` and `wav_files`: experiment coders.
+- `ada/wav_files`: input from WAV, RF64, Wave64 and AIFF, WAV output. `ada/audio_huffman.adb` with `huffman_codes`, `predictors` and `residual_coders`: experiment coders.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
 - `run.sh`, `compare.sh`, `bench.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
@@ -261,7 +261,7 @@ GNAT 15.2 and gprbuild 25.0.1 (for example from Alire's toolchains) on the PATH,
     ./tables.sh > results/tables.md
     cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb checksums.adb range_coding.adb block_codec.adb
 
-`codec_main <file.wav> <level>`, `huffman-audio <file.wav> --block <level>` and `huffman-audio-hybrid <file.wav> <level>` take the level, 4 when left out. The hybrid executable finds the SPARK library through `LD_LIBRARY_PATH=ada/lib`, which `run.sh` and `bench.sh` set. `codec_main` also takes:
+Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer or 32-bit float. `codec_main <file.wav> <level>`, `huffman-audio <file.wav> --block <level>` and `huffman-audio-hybrid <file.wav> <level>` take the level, 4 when left out. The hybrid executable finds the SPARK library through `LD_LIBRARY_PATH=ada/lib`, which `run.sh` and `bench.sh` set. `codec_main` also takes:
 
 | Option | Effect |
 |---|---|

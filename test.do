@@ -1,19 +1,19 @@
 #!/bin/bash
 # Test gate: the CRC package against its check value and its bitwise form, a written stream's framing and CRCs against
 # flipped bits, a seek and a damaged group on one stream, the stream decoder on whole, truncated and foreign files,
-# the audio MD5 against FLAC's and against a changed digest, the three implementations against one another on a short
-# file at every level, and on a four-channel file. Needs gprbuild and GNAT on the PATH (an Alire toolchain), stack,
-# flac with metaflac, ffmpeg and python3.
+# the audio MD5 against FLAC's and against a changed digest, RF64, Wave64 and AIFF input, the three implementations
+# against one another on a short file at every level, and on a four-channel file. Needs gprbuild and GNAT on the PATH
+# (an Alire toolchain), stack, flac with metaflac, ffmpeg and python3.
 exec >&2
 cd "$(dirname "$0")" || exit 1
 FAIL=0
 
-echo "== 1/5  Build"
+echo "== 1/6  Build"
 (cd ada && gprbuild -q -P huffman_audio.gpr && gprbuild -q -P codec_lib.gpr) || { echo "  Ada build failed"; exit 1; }
 (cd haskell && stack build 2>&1 | grep -E "rror" && exit 1; true) || { echo "  Haskell build failed"; exit 1; }
 echo "  built"
 
-echo "== 2/5  Checksums, framing, seek, damage"
+echo "== 2/6  Checksums, framing, seek, damage"
 ada/obj/checksums_test || FAIL=1
 mkdir -p build/wav
 flac -d -s -f -o build/wav/rec_speech_8k.wav corpus/rec_speech_8k.flac || exit 1
@@ -26,7 +26,7 @@ else
   echo "  seek or damage containment FAILED"; FAIL=1
 fi
 
-echo "== 3/5  Stream decoder"
+echo "== 3/6  Stream decoder"
 # Same audio from the decoded WAV as from the original, by ffmpeg's hash of the samples.
 same_audio() { [ "$(ffmpeg -v error -i "$1" -map 0:a -f md5 - 2>&1)" = "$(ffmpeg -v error -i "$2" -map 0:a -f md5 - 2>&1)" ]; }
 ada/obj/codec_main corpus/depth_pink_32f.wav 1 --stream build/pink_32f.bin > /dev/null || exit 1
@@ -71,8 +71,28 @@ head -c 3000 build/wav/rec_speech_8k.wav > build/not_a_stream.bin
 ada/obj/stream_decode build/not_a_stream.bin build/not_a_stream.wav 2> /dev/null
 [ $? = 2 ] && echo "  foreign file: refused" || { echo "  foreign file: wrong status"; FAIL=1; }
 
-echo "== 4/5  Three implementations, every level"
+echo "== 4/6  Input containers"
+# The same samples in RF64, Wave64, AIFF and AIFF-C give the stream their WAV gives, since none of these carries a
+# channel mask for these files; the Haskell reader agrees with the Ada reader on AIFF.
+ffmpeg -v error -y -i build/wav/rec_speech_8k.wav -c:a pcm_u8 -rf64 always build/speech_8k_rf64.wav || exit 1
+ffmpeg -v error -y -i build/wav/rec_speech_8k.wav -c:a pcm_u8 build/speech_8k.w64 || exit 1
+ffmpeg -v error -y -i build/wav/rec_speech_8k.wav -c:a pcm_s8 build/speech_8k.aiff || exit 1
+flac -d -s -f -o build/wav/rec_speech_16k.wav corpus/rec_speech_16k.flac || exit 1
+ffmpeg -v error -y -i build/wav/rec_speech_16k.wav -c:a pcm_s16le -f aiff build/speech_16k_sowt.aifc || exit 1
+ffmpeg -v error -y -i corpus/depth_pink_32f.wav -c:a pcm_f32be -f aiff build/pink_32f.aifc || exit 1
+stream_hash() { ada/obj/codec_main "$1" 0 | grep -oE 'round trip OK, hash [0-9a-f]+'; }
+for s in rec_speech_8k.wav:speech_8k_rf64.wav rec_speech_8k.wav:speech_8k.w64 rec_speech_8k.wav:speech_8k.aiff \
+         rec_speech_16k.wav:speech_16k_sowt.aifc; do
+  a=$(stream_hash "build/wav/${s%%:*}"); b=$(stream_hash "build/${s#*:}")
+  [ -n "$a" ] && [ "$a" = "$b" ] && echo "  ${s#*:}: same stream as its WAV" || { echo "  ${s#*:}: FAILED"; FAIL=1; }
+done
+a=$(stream_hash corpus/depth_pink_32f.wav); b=$(stream_hash build/pink_32f.aifc)
+[ -n "$a" ] && [ "$a" = "$b" ] && echo "  pink_32f.aifc: same stream as its WAV" || { echo "  pink_32f.aifc: FAILED"; FAIL=1; }
 hs=haskell/$(cd haskell && stack path --dist-dir)/build
+h=$("$hs/huffman-audio/huffman-audio" build/speech_8k.aiff --block 0 | grep -oE 'round trip OK, hash [0-9a-f]+')
+[ "$h" = "$(stream_hash build/speech_8k.aiff)" ] && echo "  Haskell reads AIFF as Ada does" || { echo "  Haskell AIFF: FAILED"; FAIL=1; }
+
+echo "== 5/6  Three implementations, every level"
 export LD_LIBRARY_PATH=$PWD/ada/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
 for level in 0 1 2 3 4 5; do
   a=$(ada/obj/codec_main build/wav/rec_speech_8k.wav "$level" | grep 'Block codec')
@@ -90,7 +110,7 @@ $y")
   fi
 done
 
-echo "== 5/5  Four channels"
+echo "== 6/6  Four channels"
 ffmpeg -v error -y -i corpus/rec_orchestra.flac -i corpus/rec_room.flac -filter_complex "[0:a][1:a]amerge=inputs=2" \
   -c:a pcm_s24le build/four_48k.wav || exit 1
 a=$(ada/obj/codec_main build/four_48k.wav 1 | grep 'Block codec')
