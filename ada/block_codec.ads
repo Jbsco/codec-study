@@ -50,4 +50,10 @@ package Block_Codec with SPARK_Mode is
        and then (for all V of History => In_Range (V, Depth)) and then Valid_Buffer (Input),
        Post => Used <= Input'Length;
 
+   --  How many samples before the block it reads: the distance of a delay into earlier samples, or the warm-up and
+   --  order of an adaptive stage; 0 for any other block. A block too short to tell gives Max_History.
+   function History_Reach (Input : Byte_Array) return Natural
+     with Pre => Valid_Buffer (Input),
+       Post => History_Reach'Result <= Max_History;
+
 end Block_Codec;
