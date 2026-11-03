@@ -251,12 +251,8 @@ package body Stream_Writing is
       Tree_Bound : constant Natural := (2**Top + 2 * Pairs * 2**Top) / 8 + 2;
       Group_Bound : constant Natural :=
         Group_Head + Tree_Bound + 4 * Channels * 2**Top + 2 + Channels * (Bound (Max_Block) + 16 * 2**Top);
-      Tree : Byte_Array (0 .. Tree_Bound - 1) := [others => 0];
-      Group_Blocks : constant Byte_Array_Access := new Byte_Array (0 .. Channels * (Bound (Max_Block) + 16 * 2**Top));
       Data : constant Byte_Array_Access := new Byte_Array (0 .. Groups * Group_Bound);
       Group_Start : array (0 .. Groups - 1) of Natural := [others => 0];
-      Sizes : array (0 .. Channels * 2**Top - 1) of Natural := [others => 0];
-      Crcs : array (0 .. Channels * 2**Top - 1) of Unsigned_16 := [others => 0];
       Header_Length : Natural := 0;
       Blocks, Data_Length, Framing : Natural := 0;
       Pos : Natural := 0;
@@ -267,8 +263,27 @@ package body Stream_Writing is
       Signal : array (1 .. Signals) of Sample_Array_Access;
       Signal_Depth : array (1 .. Signals) of Sample_Bits := [others => Depth];
       Coupled : array (1 .. Pairs) of Boolean := [others => False];
-      Trial : array (0 .. Top, 0 .. 2**Top - 1, 1 .. Signals) of Byte_Array_Access;
       Audio_Md5 : Audio_Digest.Digest;
+
+      --  A worker's buffers: a trial block per tree node and signal, the tree bits and the group's blocks.
+      type Trial_Set is array (0 .. Top, 0 .. 2**Top - 1, 1 .. Signals) of Byte_Array_Access;
+      type Work_Area is record
+         Trial : Trial_Set;
+         Tree, Blocks : Byte_Array_Access;
+      end record;
+
+      --  What one group wrote into its slot of Data, and what it counted.
+      type Group_Result is record
+         Length, Head_Bytes, Count : Natural := 0;
+         Kinds : Kind_Counts := [others => 0];
+         Side : Side_Counts;
+         Stereo : Natural_Array (0 .. 3) := [others => 0];
+         Leaves : Natural_Array (0 .. Top) := [others => 0];
+         Root_Split : Boolean := False;
+      end record;
+      type Result_Array is array (Natural range <>) of Group_Result;
+      type Result_Array_Access is access Result_Array;
+      Results : constant Result_Array_Access := new Result_Array (0 .. Groups - 1);
 
       --  The channel-pair mappings of Stream_Format for this stream's channel count.
       function Pair_Of (C : Positive) return Natural is (Stream_Format.Pair_Of (C, Pairs));
@@ -341,18 +356,31 @@ package body Stream_Writing is
             Signal_Depth (Pair_Signal (P, 4)) := Depth + 1;
          end if;
       end loop;
-      for L in 0 .. Top loop
-         for J in 0 .. 2**Top - 1 loop
-            for S in 1 .. Signals loop
-               Trial (L, J, S) := new Byte_Array (0 .. Bound (Max_Block / 2**L) - 1);
-            end loop;
-         end loop;
-      end loop;
-
       --  Code every node of each group's tree, keep the cheaper of each node and its halves, then write the
-      --  group: its header, its leaves' modes, the block table, the CRC and the blocks.
-      for G in 0 .. Groups - 1 loop
-         declare
+      --  group into its own slot of Data: its header, its leaves' modes, the block table, the CRC and the blocks.
+      --  A group reads only the input, so workers take groups in any order.
+      declare
+         function New_Work return Work_Area is
+            W : Work_Area;
+         begin
+            for L in 0 .. Top loop
+               for J in 0 .. 2**Top - 1 loop
+                  for S in 1 .. Signals loop
+                     W.Trial (L, J, S) := new Byte_Array (0 .. Bound (Max_Block / 2**L) - 1);
+                  end loop;
+               end loop;
+            end loop;
+            W.Tree := new Byte_Array (0 .. Tree_Bound - 1);
+            W.Blocks := new Byte_Array (0 .. Channels * (Bound (Max_Block) + 16 * 2**Top));
+            return W;
+         end New_Work;
+
+         procedure Code_Group (G : Natural; Work : Work_Area; R : out Group_Result) is
+            Trial : Trial_Set renames Work.Trial;
+            Tree : Byte_Array renames Work.Tree.all;
+            Group_Blocks : constant Byte_Array_Access := Work.Blocks;
+            Sizes : array (0 .. Channels * 2**Top - 1) of Natural := [others => 0];
+            Crcs : array (0 .. Channels * 2**Top - 1) of Unsigned_16 := [others => 0];
             Group_First : constant Natural := G * Max_Block;
             Group_Count : constant Natural := Natural'Min (Max_Block, Frames - Group_First);
             Upto : constant Natural := Group_First + Group_Count;
@@ -386,9 +414,9 @@ package body Stream_Writing is
                end if;
                for P in 1 .. Pairs loop
                   Put (Tree, Tree_Pos, Unsigned_64 (Choice (L, J) (P)), 2);
-                  Stereo (Choice (L, J) (P)) := Stereo (Choice (L, J) (P)) + 1;
+                  R.Stereo (Choice (L, J) (P)) := R.Stereo (Choice (L, J) (P)) + 1;
                end loop;
-               Leaves (L) := Leaves (L) + 1;
+               R.Leaves (L) := R.Leaves (L) + 1;
                for C in 1 .. Channels loop
                   declare
                      S : constant Positive := Coded_Signal (C, Choice (L, J));
@@ -396,7 +424,7 @@ package body Stream_Writing is
                   begin
                      Group_Blocks (Group_Bytes .. Group_Bytes + B - 1) := Trial (L, J, S) (0 .. B - 1);
                      Count_Kind (Group_Blocks.all, Group_Bytes, B, Natural'Min (First_Of (L, J) + Max_Block / 2**L, Upto) - First_Of (L, J),
-                                 Kinds, Side);
+                                 R.Kinds, R.Side);
                      Sizes (Count) := B;
                      Crcs (Count) := Checksums.Of_Bytes (Trial (L, J, S) (0 .. B - 1));
                      Count := Count + 1;
@@ -405,6 +433,7 @@ package body Stream_Writing is
                end loop;
             end Emit;
          begin
+            R := (others => <>);
             Tree := [others => 0];
             for L in 0 .. Top loop
                for J in 0 .. 2**L - 1 loop
@@ -469,36 +498,15 @@ package body Stream_Writing is
                end loop;
             end loop;
             Emit (0, 0);
-            --  Features of the group's first channel: bits of the summed absolute first differences of each
-            --  eighth, bits of the peak sample, and the frames; then the label, whether the root was split.
-            if Opt.Features /= null and then Group_Count = Max_Block then
-               declare
-                  Peak : Long_Long_Integer := 0;
-               begin
-                  for Eighth in 0 .. 7 loop
-                     declare
-                        Sum : Long_Long_Integer := 0;
-                        From : constant Natural := Group_First + Eighth * (Max_Block / 8);
-                     begin
-                        for I in From + 1 .. From + Max_Block / 8 - 1 loop
-                           Sum := Sum + abs (Signal (1) (I) - Signal (1) (I - 1));
-                           Peak := Long_Long_Integer'Max (Peak, abs Signal (1) (I));
-                        end loop;
-                        Ada.Text_IO.Put (Opt.Features.all, Natural'Image (Bits_Of (Sum)));
-                     end;
-                  end loop;
-                  Ada.Text_IO.Put (Opt.Features.all, Natural'Image (Bits_Of (Peak)) & Natural'Image (Boolean'Pos (Split (0, 0))));
-                  Ada.Text_IO.New_Line (Opt.Features.all);
-               end;
-            end if;
+            R.Root_Split := Split (0, 0);
             Put (Tree, Tree_Pos, 0, (8 - Tree_Pos mod 8) mod 8);
             declare
                Tree_Bytes : constant Natural := Tree_Pos / 8;
                Head_Bytes : constant Natural := Group_Head + Tree_Bytes + 4 * Count + 2;
                Group_Length : constant Natural := Head_Bytes + Group_Bytes;
-               P : Natural := Data_Length * 8;
+               Start : constant Natural := G * Group_Bound;
+               P : Natural := Start * 8;
             begin
-               Group_Start (G) := Data_Length;
                Put (Data.all, P, Sync, 16);
                Put (Data.all, P, Unsigned_64 (Group_Length), 24);
                Put (Data.all, P, Unsigned_64 (Group_First), 32);
@@ -509,14 +517,119 @@ package body Stream_Writing is
                   Put (Data.all, P, Unsigned_64 (Sizes (I)), 16);
                   Put (Data.all, P, Unsigned_64 (Crcs (I)), 16);
                end loop;
-               Put (Data.all, P, Unsigned_64 (Checksums.Of_Bytes (Data (Data_Length .. P / 8 - 1))), 16);
+               Put (Data.all, P, Unsigned_64 (Checksums.Of_Bytes (Data (Start .. P / 8 - 1))), 16);
                Data (P / 8 .. P / 8 + Group_Bytes - 1) := Group_Blocks (0 .. Group_Bytes - 1);
-               Data_Length := Data_Length + Group_Length;
-               Framing := Framing + Head_Bytes;
-               Blocks := Blocks + Count;
+               R.Length := Group_Length;
+               R.Head_Bytes := Head_Bytes;
+               R.Count := Count;
             end;
-         end;
-      end loop;
+         end Code_Group;
+
+         protected Queue is
+            procedure Take (G : out Natural; Ok : out Boolean);
+         private
+            Next : Natural := 0;
+         end Queue;
+
+         protected body Queue is
+            procedure Take (G : out Natural; Ok : out Boolean) is
+            begin
+               G := Next;
+               Ok := Next < Groups;
+               if Ok then
+                  Next := Next + 1;
+               end if;
+            end Take;
+         end Queue;
+
+         Workers : constant Positive := Natural'Max (1, Natural'Min (Opt.Threads, Groups));
+         Failed : Boolean := False with Atomic;
+      begin
+         if Workers = 1 then
+            declare
+               Work : constant Work_Area := New_Work;
+            begin
+               for G in 0 .. Groups - 1 loop
+                  Code_Group (G, Work, Results (G));
+               end loop;
+            end;
+         else
+            declare
+               task type Worker with Storage_Size => 32 * 2**20;
+               task body Worker is
+                  Work : constant Work_Area := New_Work;
+                  G : Natural;
+                  Ok : Boolean;
+               begin
+                  loop
+                     Queue.Take (G, Ok);
+                     exit when not Ok;
+                     Code_Group (G, Work, Results (G));
+                  end loop;
+               exception
+                  when others =>
+                     Failed := True;
+               end Worker;
+               Pool : array (1 .. Workers) of Worker;
+               pragma Unreferenced (Pool);
+            begin
+               null;
+            end;
+            if Failed then
+               raise Program_Error with "a worker failed while coding groups";
+            end if;
+         end if;
+
+         --  The groups in order: offsets, totals and each group's features.
+         for G in 0 .. Groups - 1 loop
+            declare
+               Group_First : constant Natural := G * Max_Block;
+               Group_Count : constant Natural := Natural'Min (Max_Block, Frames - Group_First);
+               Q : Group_Result renames Results (G);
+            begin
+               Group_Start (G) := Data_Length;
+               Data_Length := Data_Length + Q.Length;
+               Framing := Framing + Q.Head_Bytes;
+               Blocks := Blocks + Q.Count;
+               for K in Kinds'Range loop
+                  Kinds (K) := Kinds (K) + Q.Kinds (K);
+               end loop;
+               Side := (Headers => Side.Headers + Q.Side.Headers, Coefficients => Side.Coefficients + Q.Side.Coefficients,
+                        Warm_Up => Side.Warm_Up + Q.Side.Warm_Up, Tables => Side.Tables + Q.Side.Tables,
+                        Residuals => Side.Residuals + Q.Side.Residuals,
+                        Coded_Coefficients => Side.Coded_Coefficients + Q.Side.Coded_Coefficients,
+                        Seeded_Warm_Up => Side.Seeded_Warm_Up + Q.Side.Seeded_Warm_Up);
+               for M in Stereo'Range loop
+                  Stereo (M) := Stereo (M) + Q.Stereo (M);
+               end loop;
+               for L in Leaves'Range loop
+                  Leaves (L) := Leaves (L) + Q.Leaves (L);
+               end loop;
+               --  Features of the group's first channel: bits of the summed absolute first differences of each
+               --  eighth, bits of the peak sample, and the frames; then the label, whether the root was split.
+               if Opt.Features /= null and then Group_Count = Max_Block then
+                  declare
+                     Peak : Long_Long_Integer := 0;
+                  begin
+                     for Eighth in 0 .. 7 loop
+                        declare
+                           Sum : Long_Long_Integer := 0;
+                           From : constant Natural := Group_First + Eighth * (Max_Block / 8);
+                        begin
+                           for I in From + 1 .. From + Max_Block / 8 - 1 loop
+                              Sum := Sum + abs (Signal (1) (I) - Signal (1) (I - 1));
+                              Peak := Long_Long_Integer'Max (Peak, abs Signal (1) (I));
+                           end loop;
+                           Ada.Text_IO.Put (Opt.Features.all, Natural'Image (Bits_Of (Sum)));
+                        end;
+                     end loop;
+                     Ada.Text_IO.Put (Opt.Features.all, Natural'Image (Bits_Of (Peak)) & Natural'Image (Boolean'Pos (Results (G).Root_Split)));
+                     Ada.Text_IO.New_Line (Opt.Features.all);
+                  end;
+               end if;
+            end;
+         end loop;
+      end;
 
       --  The header, then the groups.
       Stream (0 .. 3) := Magic;
@@ -572,7 +685,10 @@ package body Stream_Writing is
       end if;
       Put (Stream.all, Pos, Unsigned_64 (Checksums.Of_Bytes (Stream (0 .. Pos / 8 - 1))), 16);
       pragma Assert (Pos / 8 = Header_Length);
-      Stream (Header_Length .. Header_Length + Data_Length - 1) := Data (0 .. Data_Length - 1);
+      for G in 0 .. Groups - 1 loop
+         Stream (Header_Length + Group_Start (G) .. Header_Length + Group_Start (G) + Results (G).Length - 1) :=
+           Data (G * Group_Bound .. G * Group_Bound + Results (G).Length - 1);
+      end loop;
       Length := Header_Length + Data_Length;
       Stats := (Kinds => Kinds, Side => Side, Stereo => Natural_Array (Stereo), Leaves => Natural_Array (Leaves),
                 Header_Length => Header_Length, Groups => Groups, Blocks => Blocks, Framing => Framing,
