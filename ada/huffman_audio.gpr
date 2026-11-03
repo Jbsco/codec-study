@@ -3,7 +3,9 @@ project Huffman_Audio is
    type Build_Kind is ("check", "release");
    Build : Build_Kind := external ("BUILD", "check");
 
-   for Source_Dirs use (".");
+   --  The directory holding Build_Version: version/ in the repository, a generated one in release.sh.
+   Version_Source := external ("VERSION_SOURCE", "version");
+   for Source_Dirs use (".", Version_Source);
    case Build is
       when "check" => for Object_Dir use "obj";
       when "release" => for Object_Dir use "obj-release";
