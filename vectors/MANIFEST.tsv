@@ -1,0 +1,39 @@
+vector	status	decoded_md5	content
+constant	0	9198c17392970c48bf949f060a26e7f6	constant blocks, generated;  blocks: constant 3, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 0, adaptive 0; adaptive stage 0
+polynomial	0	e65d8932812e43ff1181ebc0b06d2a01	polynomial orders 0 to 4, a group each from five generated signals;  blocks: constant 0, orders 0-4 1 1 1 1 1, delay 0, tiers 0, LPC 0; Rice 0, run-length 5, adaptive 0; adaptive stage 0
+delay_in_block	0	2d2950897998bb06cd14f2b8d5e65dc0	delay within a block, generated;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 2, tiers 0, LPC 0; Rice 0, run-length 2, adaptive 0; adaptive stage 0
+delay_in_history	0	d70c1064982a4d9a83c33f041159fd52	delay into earlier samples, generated;  blocks: constant 0, orders 0-4 2 0 0 0 0, delay 3, tiers 0, LPC 0; Rice 0, run-length 5, adaptive 0; adaptive stage 0
+tiers	0	f467cd555649b919c0ca3b0c895ef8c4	tiers, pink noise excerpt;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 4, LPC 0; Rice 4, run-length 0, adaptive 0; adaptive stage 0
+lpc_rice	0	7649b99a3034e798ef7e28ba7b0c9fdd	linear prediction with Rice codes, piano excerpt;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 10; Rice 5, run-length 5, adaptive 0; adaptive stage 0  stereo: left/right 2, left/side 0, side/right 0, mid/side 3
+run_length	0	a42d0747a740ac68234bc21c743141fa	run-length Huffman, generated;  blocks: constant 0, orders 0-4 0 1 0 0 0, delay 2, tiers 0, LPC 0; Rice 0, run-length 3, adaptive 0; adaptive stage 0
+adaptive_code	0	7785e59f381f902a82cac33a94ff948b	adaptive binary code, speech excerpt;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 12; Rice 0, run-length 0, adaptive 12; adaptive stage 0  stereo: left/right 0, left/side 0, side/right 1, mid/side 5
+adaptive_stage	0	f3161629e838cd2c16e26889ca24be8a	adaptive stage, piano excerpt;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 22; Rice 0, run-length 0, adaptive 22; adaptive stage 20  stereo: left/right 11, left/side 0, side/right 0, mid/side 0
+stereo_modes	0	03c7ec7bd97f18c097b9fe1b4f4aacaa	stereo modes and split blocks, electronic excerpt;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 20; Rice 5, run-length 0, adaptive 15; adaptive stage 0  stereo: left/right 0, left/side 1, side/right 0, mid/side 9
+split_tree	0	c6b5577108757f3997c07d62ed6b7b87	blocks of 512 to 4096 frames, 8 kHz speech excerpt;  blocks: constant 0, orders 0-4 0 2 0 0 0, delay 0, tiers 0, LPC 10; Rice 4, run-length 0, adaptive 8; adaptive stage 0
+three_channels	0	c33db4012743cf118a664ddc59e9b4c1	three channels, one coded alone;  blocks: constant 0, orders 0-4 0 2 1 1 0, delay 0, tiers 1, LPC 7; Rice 1, run-length 0, adaptive 11; adaptive stage 0  stereo: left/right 0, left/side 0, side/right 1, mid/side 3
+eight_channels	0	453fa9450ec179d9eafa1db6a8a60dbf	eight channels in four pairs;  blocks: constant 3, orders 0-4 0 1 0 0 0, delay 0, tiers 1, LPC 19; Rice 12, run-length 9, adaptive 0; adaptive stage 0  stereo: left/right 2, left/side 3, side/right 2, mid/side 5
+depth_8	0	ee7cdaae08e136ad425291d6783cd227	8-bit WAV;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 4, LPC 0; Rice 4, run-length 0, adaptive 0; adaptive stage 0
+depth_24	0	f68d846ed48787064a1dc3823a16e653	24-bit WAV;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 4, LPC 0; Rice 4, run-length 0, adaptive 0; adaptive stage 0
+depth_32	0	714fdfc6a7bea262e8541141544e5d53	32-bit WAV;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 4, LPC 0; Rice 4, run-length 0, adaptive 0; adaptive stage 0
+depth_12_in_16	0	3fa7f10f5d3597a1bde0b413de37de94	12 significant bits in 16-bit samples, shared low bits;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 3, tiers 0, LPC 1; Rice 0, run-length 4, adaptive 0; adaptive stage 0
+float_integers	0	48309da5b7e7246eec60a94297967471	32-bit float of integer samples, float mode 1;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 2, LPC 6; Rice 4, run-length 4, adaptive 0; adaptive stage 0; float as integers / 2** 23  stereo: left/right 1, left/side 0, side/right 0, mid/side 3
+float_patterns	0	1b73a1a84483875dd9c2467665191faf	32-bit float, float mode 2;  blocks: constant 0, orders 0-4 0 4 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 4, adaptive 0; adaptive stage 0; float as ordered bits
+float_64	0	0e89b6c34b95157fdfc519f497a460b9	64-bit float of 32-bit values;  blocks: constant 0, orders 0-4 0 4 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 4, adaptive 0; adaptive stage 0; float as ordered bits
+rf64	0	bfb9e901f8d7879af61d76f2a4cbdc4f	RF64 container;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 2; Rice 2, run-length 0, adaptive 0; adaptive stage 0
+wave64	0	afc47816ec9320f815b8f077fee6344c	Wave64 container;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 2; Rice 2, run-length 0, adaptive 0; adaptive stage 0
+aiff	0	9e2e55328bdccd55ea130b622b126572	AIFF container;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 2; Rice 2, run-length 0, adaptive 0; adaptive stage 0
+aifc_sowt	0	7eb99bb8f5071ca513a16a0d5f2a12df	AIFF-C sowt, little-endian samples;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 2; Rice 2, run-length 0, adaptive 0; adaptive stage 0
+aifc_fl32	0	8626cda18b9057268e1dbdb48a69033b	AIFF-C fl32;  blocks: constant 0, orders 0-4 0 4 0 0 0, delay 0, tiers 0, LPC 0; Rice 0, run-length 4, adaptive 0; adaptive stage 0; float as ordered bits
+piped_wav	0	520e8df2b0e3dd1ea0edfb90876ebe4d	WAV written to a pipe, unknown sizes;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 2; Rice 2, run-length 0, adaptive 0; adaptive stage 0
+tags_seek_table	0	c6b5577108757f3997c07d62ed6b7b87	tags and a seek point every second;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 3; Rice 1, run-length 2, adaptive 0; adaptive stage 0
+independent	0	c6b5577108757f3997c07d62ed6b7b87	every group a segment, no seek table;  blocks: constant 0, orders 0-4 0 0 0 0 0, delay 0, tiers 0, LPC 3; Rice 1, run-length 2, adaptive 0; adaptive stage 0
+single_channel_pairs	0	03c7ec7bd97f18c097b9fe1b4f4aacaa	stereo with every channel coded alone;  blocks: constant 0, orders 0-4 0 7 0 0 0, delay 0, tiers 2, LPC 3; Rice 0, run-length 12, adaptive 0; adaptive stage 0  stereo: left/right 6, left/side 0, side/right 0, mid/side 0
+damaged_header_crc	2	-	header field changed, header CRC fails: refused
+damaged_audio_md5	1	c6b5577108757f3997c07d62ed6b7b87	recorded audio MD5 changed, header CRC recomputed: audio reported as different
+damaged_group_sync	1	aa385dd9339c5ad9878df6ba06e0f948	second group's sync word broken: group lost, frames written as zeros
+damaged_group_length	1	aa385dd9339c5ad9878df6ba06e0f948	second group's length changed: group CRC fails, group lost
+damaged_block_table	1	aa385dd9339c5ad9878df6ba06e0f948	second group's block table changed: group CRC fails, group lost
+damaged_block_bit	1	85f369ac1b6a6af7cefec4b610d00326	bit flipped in the second group's last block: block CRC fails, decoded anyway
+damaged_truncated	1	652c69c459ecf0dc23eff862c3f8a5a2	stream cut inside the third group: decoded to the last whole group
+damaged_garbage	1	c6b5577108757f3997c07d62ed6b7b87	false sync words between the first and second groups: next group found again
+not_a_stream	2	-	WAV bytes, not a stream: refused
