@@ -41,9 +41,9 @@ package body Stream_Reading is
       Take (8);
       H.Channels := Small (Max_Channels);
       Take (8);
-      H.Depth := Small (32);
+      H.Depth := Small (64);
       Take (8);
-      H.Valid_Bits := Small (32);
+      H.Valid_Bits := Small (64);
       Take (8);
       Ok := Ok and then Field <= 1;
       H.Is_Float := Field = 1;
@@ -54,7 +54,7 @@ package body Stream_Reading is
          H.Audio_Md5 (I) := Byte (Field mod 256);
       end loop;
       Ok := Ok and then H.Channels >= 1
-        and then (if H.Is_Float then H.Depth = 32 else H.Depth in 8 | 16 | 24 | 32)
+        and then (if H.Is_Float then H.Depth in 32 | 64 else H.Depth in 8 | 16 | 24 | 32)
         and then H.Valid_Bits in 1 .. H.Depth and then (if H.Is_Float then H.Valid_Bits = H.Depth);
       if H.Is_Float then
          for C in 1 .. H.Channels loop

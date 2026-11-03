@@ -1,6 +1,7 @@
---  WAV output, and input from WAV, RF64, Wave64 and AIFF, at 8, 16, 24 and 32-bit integer and 32-bit float, one array
---  per channel. Float samples become integers through their bit patterns in an order-keeping map: a pattern with the
---  sign bit set becomes minus its other 31 bits, minus one.
+--  WAV output, and input from WAV, RF64, Wave64 and AIFF, at 8, 16, 24 and 32-bit integer and 32 or 64-bit float, one
+--  array per channel. Float samples become integers through their 32-bit patterns in an order-keeping map: a pattern
+--  with the sign bit set becomes minus its other 31 bits, minus one. A 64-bit float file is read when every sample is
+--  exactly a 32-bit float, and written back by widening each one.
 with Bit_Streams; use Bit_Streams;
 with Huffman_Codes; use Huffman_Codes;
 
@@ -53,7 +54,7 @@ package Wav_Files is
                            Frames : Natural;
                            Sample : not null access function (C : Positive; F : Natural) return Long_Long_Integer;
                            Written : out Boolean)
-     with Pre => Channels <= Max_Channels and then Valid_Bits <= Depth and then Depth in 8 | 16 | 24 | 32;
+     with Pre => Channels <= Max_Channels and then Valid_Bits <= Depth and then Depth in 8 | 16 | 24 | 32 | 64;
 
    --  Write a WAV file of Frames frames, taking each sample from Sample (C, F) in the form Read gives it: the
    --  integer, or for float the order-keeping integer of its bit pattern. More than two channels, more than 16
@@ -62,6 +63,6 @@ package Wav_Files is
                     Is_Float : Boolean; Frames : Natural;
                     Sample : not null access function (C : Positive; F : Natural) return Long_Long_Integer)
      with Pre => Channels <= Max_Channels and then Valid_Bits <= Depth
-       and then (if Is_Float then Depth = 32 else Depth in 8 | 16 | 24 | 32);
+       and then (if Is_Float then Depth in 32 | 64 else Depth in 8 | 16 | 24 | 32);
 
 end Wav_Files;

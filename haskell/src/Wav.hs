@@ -1,6 +1,7 @@
--- | Audio input from WAV, RF64, Wave64 and AIFF at 8, 16, 24 and 32-bit integer and 32-bit float, one vector per
--- channel. Float samples become integers through their bit patterns in an order-keeping map: a pattern with the
--- sign bit set becomes minus its other 31 bits, minus one. Valid bits and the channel mask come from WAV's
+-- | Audio input from WAV, RF64, Wave64 and AIFF at 8, 16, 24 and 32-bit integer and 32 or 64-bit float, one vector
+-- per channel. Float samples become integers through their 32-bit patterns in an order-keeping map: a pattern with
+-- the sign bit set becomes minus its other 31 bits, minus one. A 64-bit float file is read when every sample is
+-- exactly a 32-bit float. Valid bits and the channel mask come from WAV's
 -- extensible format header; a plain one gives the depth and no mask. AIFF's sample size may be any bit count,
 -- left-justified in whole bytes, and gives the valid bits. The source description records the container and
 -- every chunk in file order, as ada/wav_files.ads defines it, so a decoder can write the file back.
@@ -11,6 +12,8 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Unsafe as BU
 import qualified Data.Vector.Unboxed as U
 import Data.Word (Word64, Word8)
+
+import FloatBits (narrow)
 
 data Audio = Audio
   { rate :: !Int
@@ -64,9 +67,9 @@ parseAudio bs
 
     waveFormat o len
       | len < 16 || not (fits o 16) = Left "short format chunk"
-      | not ((f == 1 && d `elem` [8, 16, 24, 32]) || (f == 3 && d == 32)) || ch < 1 || ch > 8 =
-          Left "only 8 to 32-bit integer and 32-bit float PCM are read"
-      | otherwise = Right (Format ch (le (o + 4) 4) d v m (f == 3), False)
+      | not ((f == 1 && d `elem` [8, 16, 24, 32]) || (f == 3 && d `elem` [32, 64])) || ch < 1 || ch > 8 =
+          Left "only 8 to 32-bit integer and 32 or 64-bit float PCM are read"
+      | otherwise = Right (Format ch (le (o + 4) 4) d (if f == 3 then d else v) m (f == 3), False)
       where
         ext = le o 2 == 0xFFFE && len >= 24 && fits o 28
         f = if ext then le (o + 24) 2 else le o 2
@@ -111,19 +114,22 @@ parseAudio bs
         expo = be (s + 8) 2 .&. 0x7FFF - 16383
         mantissa = fromIntegral (be (s + 10) 4) `shiftL` 32 .|. fromIntegral (be (s + 14) 4) :: Word64
         kind = if tag 8 == "AIFC" && len >= 22 && fits (s + 18) 4 then tag (s + 18) else "NONE"
-        float = kind `elem` ["fl32", "FL32"]
+        float = kind `elem` ["fl32", "FL32", "fl64", "FL64"]
         ch = be s 2
-        d = if float then 32 else (bits + 7) `quot` 8 * 8
+        d = if kind `elem` ["fl64", "FL64"] then 64 else if float then 32 else (bits + 7) `quot` 8 * 8
         sampleRate = if expo >= 0 && expo <= 63 then fromIntegral (mantissa `shiftR` (63 - expo)) else 0
         comm
-          | kind `notElem` ["NONE", "twos", "sowt", "fl32", "FL32"] || (float && bits /= 32) || d `notElem` [8, 16, 24, 32]
-            || bits == 0 || ch < 1 || ch > 8 = Left "only 1 to 32-bit integer and 32-bit float AIFF are read"
-          | otherwise = Right (Format ch sampleRate d (if float then 32 else bits) 0 float, kind == "sowt")
+          | kind `notElem` ["NONE", "twos", "sowt", "fl32", "FL32", "fl64", "FL64"] || (float && bits /= d) || d `notElem` [8, 16, 24, 32, 64]
+            || bits == 0 || ch < 1 || ch > 8 = Left "only 1 to 32-bit integer and 32 or 64-bit float AIFF are read"
+          | otherwise = Right (Format ch sampleRate d (if float then d else bits) 0 float, kind == "sowt")
 
     finish kind sizeField (Just (f, little), Just (start, len), entries) =
       let isAiff = kind >= 5
           (described, dropped) = describe kind sizeField (take 1024 entries)
-      in Right ((samples f (isAiff && not little) isAiff start len) described dropped)
+          a = samples f (isAiff && not little) isAiff start len described dropped
+      in if any (U.elem inexact) (channels a)
+           then Left "64-bit float samples that are not exactly 32-bit float are not read"
+           else Right a
     finish _ _ (Nothing, _, _) = Left "audio data before its format"
     finish _ _ (_, Nothing, _) = Left "no audio chunk"
 
@@ -145,11 +151,16 @@ parseAudio bs
         int :: Int -> Int -> [Word8]
         int k v = [fromIntegral (v `shiftR` (8 * i)) | i <- [k - 1, k - 2 .. 0]]
 
+    -- A marker for a 64-bit float sample that is not exactly a 32-bit one, outside every 32-bit pattern's range.
+    inexact = -(2 ^ (40 :: Int)) :: Int
+
     samples (Format ch r d v m float) big signedBytes start len =
       let width = d `div` 8
-          half = 1 `shiftL` (d - 1) :: Int
+          half = 1 `shiftL` (min d 32 - 1) :: Int
+          single raw = if raw >= 2147483648 then 2147483647 - raw else raw
           value raw
-            | float = if raw >= half then half - 1 - raw else raw
+            | float && width == 8 = maybe inexact (single . fromIntegral) (narrow (fromIntegral raw))
+            | float = single raw
             | width == 1 && not signedBytes = raw - 128
             | raw >= half = raw - 2 * half
             | otherwise = raw

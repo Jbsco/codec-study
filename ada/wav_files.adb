@@ -2,6 +2,7 @@ with Ada.Directories;
 with Interfaces; use Interfaces;
 with Ada.Streams.Stream_IO;
 with Ada.Unchecked_Deallocation;
+with Float_Bits;
 
 package body Wav_Files is
 
@@ -68,10 +69,13 @@ package body Wav_Files is
             Result.Valid_Bits := (if U16 (Start + 18) in 1 .. Long_Long_Integer (Result.Depth) then Natural (U16 (Start + 18)) else Result.Depth);
             Result.Channel_Mask := U32 (Start + 20);
          end if;
-         if not ((Format = 1 and then Result.Depth in 8 | 16 | 24 | 32) or else (Format = 3 and then Result.Depth = 32))
+         if not ((Format = 1 and then Result.Depth in 8 | 16 | 24 | 32) or else (Format = 3 and then Result.Depth in 32 | 64))
            or else Result.Channels not in 1 .. Max_Channels
          then
-            raise Constraint_Error with Name & ": only 8 to 32-bit integer and 32-bit float PCM are read";
+            raise Constraint_Error with Name & ": only 8 to 32-bit integer and 32 or 64-bit float PCM are read";
+         end if;
+         if Result.Is_Float then
+            Result.Valid_Bits := Result.Depth;
          end if;
          Have_Format := True;
       end Wave_Format;
@@ -84,7 +88,7 @@ package body Wav_Files is
          Frames : constant Natural :=
            Natural (Long_Long_Integer'Min (Long_Long_Integer (Available) / Long_Long_Integer (Width * Result.Channels),
                                            Long_Long_Integer (Max_Seconds) * Long_Long_Integer (Result.Rate)));
-         Half : constant Long_Long_Integer := 2**(Result.Depth - 1);
+         Half : constant Long_Long_Integer := 2**(Natural'Min (Result.Depth, 32) - 1);
       begin
          if not Have_Format then
             raise Constraint_Error with Name & ": audio data before its format";
@@ -98,12 +102,26 @@ package body Wav_Files is
                declare
                   Offset : constant Stream_Element_Offset := Start + Stream_Element_Offset ((F * Result.Channels + C - 1) * Width);
                   Raw : Long_Long_Integer := 0;
+                  Double : Unsigned_64 := 0;
+                  Single : Unsigned_32;
+                  Exact : Boolean;
                begin
-                  for B in 0 .. Width - 1 loop
-                     Raw := Raw * 256 + Long_Long_Integer (Data (Offset + Stream_Element_Offset (if Big then B else Width - 1 - B)));
-                  end loop;
+                  if Width = 8 then
+                     for B in 0 .. 7 loop
+                        Double := Double * 256 + Unsigned_64 (Data (Offset + Stream_Element_Offset (if Big then B else 7 - B)));
+                     end loop;
+                     Float_Bits.Narrow (Double, Single, Exact);
+                     if not Exact then
+                        raise Constraint_Error with Name & ": 64-bit float samples that are not exactly 32-bit float are not read";
+                     end if;
+                     Raw := Long_Long_Integer (Single);
+                  else
+                     for B in 0 .. Width - 1 loop
+                        Raw := Raw * 256 + Long_Long_Integer (Data (Offset + Stream_Element_Offset (if Big then B else Width - 1 - B)));
+                     end loop;
+                  end if;
                   Result.Samples (C) (F) :=
-                    (if Result.Is_Float then (if Raw >= Half then Half - 1 - Raw else Raw)
+                    (if Result.Is_Float then (if Raw >= 2**31 then 2**31 - 1 - Raw else Raw)
                      elsif Width = 1 and then not Signed_Bytes then Raw - 128
                      elsif Raw >= Half then Raw - 2 * Half
                      else Raw);
@@ -283,17 +301,17 @@ package body Wav_Files is
                   begin
                      Result.Channels := Natural (U (Start, 2, Big => True));
                      Result.Rate := (if Exponent in 0 .. 63 then Natural (Shift_Right (Mantissa, Natural (63 - Exponent))) else 0);
-                     Result.Is_Float := Coding in "fl32" | "FL32";
+                     Result.Is_Float := Coding in "fl32" | "FL32" | "fl64" | "FL64";
                      Little := Coding = "sowt";
-                     Result.Depth := (if Result.Is_Float then 32 else (Bits + 7) / 8 * 8);
-                     Result.Valid_Bits := (if Result.Is_Float then 32 else Bits);
+                     Result.Depth := (if Coding in "fl64" | "FL64" then 64 elsif Result.Is_Float then 32 else (Bits + 7) / 8 * 8);
+                     Result.Valid_Bits := (if Result.Is_Float then Result.Depth else Bits);
                      Result.Channel_Mask := 0;
-                     if Coding not in "NONE" | "twos" | "sowt" | "fl32" | "FL32"
-                       or else (Result.Is_Float and then Bits /= 32)
-                       or else Result.Depth not in 8 | 16 | 24 | 32 or else Bits = 0
+                     if Coding not in "NONE" | "twos" | "sowt" | "fl32" | "FL32" | "fl64" | "FL64"
+                       or else (Result.Is_Float and then Bits /= Result.Depth)
+                       or else Result.Depth not in 8 | 16 | 24 | 32 | 64 or else Bits = 0
                        or else Result.Channels not in 1 .. Max_Channels
                      then
-                        raise Constraint_Error with Name & ": only 1 to 32-bit integer and 32-bit float AIFF are read";
+                        raise Constraint_Error with Name & ": only 1 to 32-bit integer and 32 or 64-bit float AIFF are read";
                      end if;
                      Have_Format := True;
                      Record_Chunk (Format_Chunk, Chunk, 4, Field, Start, Length);
@@ -497,8 +515,9 @@ package body Wav_Files is
                Coding : constant String := (if Kind = Aiff_C and then F.Body_Length >= 22 then Text (B + 18) else "NONE");
             begin
                if F.Body_Length < 18 or else Natural (Be (B, 2)) /= Channels or else Be (B + 2, 4) not in 0 | Long_Long_Integer (Frames)
-                 or else Natural (Be (B + 6, 2)) /= Valid_Bits or else (Coding in "fl32" | "FL32") /= Is_Float
-                 or else Coding not in "NONE" | "twos" | "sowt" | "fl32" | "FL32"
+                 or else Natural (Be (B + 6, 2)) /= Valid_Bits or else (Coding in "fl32" | "FL32" | "fl64" | "FL64") /= Is_Float
+                 or else (Coding in "fl64" | "FL64") /= (Depth = 64)
+                 or else Coding not in "NONE" | "twos" | "sowt" | "fl32" | "FL32" | "fl64" | "FL64"
                then
                   return;
                end if;
@@ -573,8 +592,18 @@ package body Wav_Files is
                         declare
                            V : constant Long_Long_Integer := Sample (C, F);
                         begin
-                           Bytes ((if Is_Float then (if V >= 0 then V else 2**31 - 1 - V)
-                                   elsif Width = 1 and then not Signed_Bytes then V + 128 else V), Width, Big_Endian => Big);
+                           if Width = 8 then
+                              declare
+                                 D : constant Unsigned_64 := Float_Bits.Widen (Unsigned_32 (if V >= 0 then V else 2**31 - 1 - V));
+                              begin
+                                 for K in 0 .. 7 loop
+                                    Bytes (Long_Long_Integer (Shift_Right (D, 8 * (if Big then 7 - K else K)) and 255), 1);
+                                 end loop;
+                              end;
+                           else
+                              Bytes ((if Is_Float then (if V >= 0 then V else 2**31 - 1 - V)
+                                      elsif Width = 1 and then not Signed_Bytes then V + 128 else V), Width, Big_Endian => Big);
+                           end if;
                         end;
                      end loop;
                   end loop;
