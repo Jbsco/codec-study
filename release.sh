@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 out=${1:-dist}
-name=${2:-codec-study}
+name=${2:-blockcodec}
 version=$(git describe --tags --match 'v*' --abbrev=8 --always --dirty)
 work=$(mktemp -d -p "${TMPDIR:-/var/tmp}")
 trap 'rm -rf "$work"' EXIT

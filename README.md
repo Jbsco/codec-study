@@ -383,7 +383,7 @@ The library builds the units proved free of run-time errors without run-time che
 
 ### Release
 
-`release.sh [out] [name]` builds the release programs and the library with the version `git describe` gives, and packs them with the header, the specification, the README and the licenses into `<name>-<version>-linux-x86_64.tar.gz` with its SHA-256. `stream_encode --version` and `stream_decode --version` report that version, the format version and the C API version.
+`release.sh [out] [name]` builds the release programs and the library with the version `git describe` gives, and packs them with the header, the specification, the README and the licenses into `<name>-<version>-linux-x86_64.tar.gz` with its SHA-256. The name is `blockcodec` when none is given. `stream_encode --version` and `stream_decode --version` report that version, the format version and the C API version.
 
 Once the repository variable `RELEASE_NAME` is set, every merge to main runs `.github/workflows/release.yml` on a hosted runner. It tags the merge as the next version, runs `release.sh` with that name, and publishes a GitHub release with generated notes. Releases are numbered from v0.1.0, and each one raises the last number only: v0.1.1, v0.1.2, and on past v0.1.9 to v0.1.10.
 
