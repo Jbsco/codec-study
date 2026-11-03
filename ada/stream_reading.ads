@@ -96,6 +96,9 @@ package Stream_Reading is
 
    function Report (W : Walker) return Damage;
 
+   --  Free the walker's buffers. Start it again before any other call.
+   procedure Stop (W : in out Walker);
+
 private
 
    --  Scratch space of a decode: one block per channel, and the history of a mid or side signal.

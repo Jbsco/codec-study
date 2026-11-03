@@ -556,4 +556,13 @@ package body Stream_Reading is
 
    function Report (W : Walker) return Damage is (W.D);
 
+   procedure Stop (W : in out Walker) is
+   begin
+      for C in 1 .. W.H.Channels loop
+         Free (W.Buf (C));
+         Free (W.Work.Got (C));
+      end loop;
+      Free (W.Work.Derived);
+   end Stop;
+
 end Stream_Reading;
