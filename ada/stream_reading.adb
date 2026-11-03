@@ -252,12 +252,12 @@ package body Stream_Reading is
             declare
                First : constant Natural := L (I).First;
                Size_Of : constant Natural := L (I).Count;
-               From : constant Natural := Natural'Max (Floor, First - Max_History);
             begin
                for C in 1 .. H.Channels loop
                   declare
                      S : constant Positive := Coded_Signal (C, L (I).Modes, H.Channels);
                      Size : Natural;
+                     From : Natural := Natural'Max (Floor, First - Max_History);
                   begin
                      Get (Stream, P, Field, 16);
                      Size := Natural (Field);
@@ -265,6 +265,8 @@ package body Stream_Reading is
                         Ok := False;
                         return;
                      end if;
+                     --  A block reads only the samples its reach names, so it gets only those.
+                     From := Natural'Max (From, First - History_Reach (Stream (Block_At .. Block_At + Size - 1)));
                      if not Checksums.Matches (Stream, P / 8, Checksums.Of_Bytes (Stream (Block_At .. Block_At + Size - 1))) then
                         D.Bad_Crcs := D.Bad_Crcs + 1;
                      end if;
