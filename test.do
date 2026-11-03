@@ -12,7 +12,7 @@ FAIL=0
 
 echo "== 1/10  Build"
 (cd ada && gprbuild -q -P huffman_audio.gpr && gprbuild -q -P codec_lib.gpr) || { echo "  Ada build failed"; exit 1; }
-(cd ada && gprbuild -q -P huffman_audio.gpr -XBUILD=release stream_encode stream_decode) \
+(cd ada && gprbuild -q -P huffman_audio.gpr -XBUILD=release blkc_encode blkc_decode) \
   || { echo "  Ada release build failed"; exit 1; }
 (cd haskell && stack build 2>&1 | grep -E "rror" && exit 1; true) || { echo "  Haskell build failed"; exit 1; }
 echo "  built"
@@ -36,21 +36,21 @@ echo "== 3/10  Stream decoder"
 ada/obj/codec_main corpus/depth_pink_32f.wav 1 --stream build/pink_32f.bin > /dev/null || exit 1
 for s in speech_8k:build/wav/rec_speech_8k.wav pink_32f:corpus/depth_pink_32f.wav; do
   name=${s%%:*}; wav=${s#*:}
-  if ada/obj/stream_decode "build/$name.bin" "build/${name}_decoded.wav" 2>&1 | grep -q "audio MD5 matches" \
+  if ada/obj/blkc-decode "build/$name.bin" "build/${name}_decoded.wav" 2>&1 | grep -q "audio MD5 matches" \
      && cmp -s "$wav" "build/${name}_decoded.wav"; then
     echo "  $name: decoded from the stream alone, byte-identical file, audio MD5 checked"
   else
-    echo "  $name: stream_decode FAILED"; FAIL=1
+    echo "  $name: blkc-decode FAILED"; FAIL=1
   fi
 done
-ada/obj/stream_encode --level 1 --tag title=speech build/wav/rec_speech_8k.wav build/speech_8k_tool.bin 2> /dev/null
-cmp -s build/speech_8k.bin build/speech_8k_tool.bin && echo "  stream_encode writes codec_main's stream" \
-  || { echo "  stream_encode: FAILED"; FAIL=1; }
+ada/obj/blkc-encode --level 1 --tag title=speech build/wav/rec_speech_8k.wav build/speech_8k_tool.bin 2> /dev/null
+cmp -s build/speech_8k.bin build/speech_8k_tool.bin && echo "  blkc-encode writes codec_main's stream" \
+  || { echo "  blkc-encode: FAILED"; FAIL=1; }
 # The release programs, built without run-time checks, write the same stream and the same file, and --verify passes.
-ada/obj-release/stream_encode --level 4 --verify build/wav/rec_speech_8k.wav build/speech_8k_release.bin 2> /dev/null \
-  && ada/obj/stream_encode --level 4 build/wav/rec_speech_8k.wav build/speech_8k_checked.bin 2> /dev/null \
+ada/obj-release/blkc-encode --level 4 --verify build/wav/rec_speech_8k.wav build/speech_8k_release.bin 2> /dev/null \
+  && ada/obj/blkc-encode --level 4 build/wav/rec_speech_8k.wav build/speech_8k_checked.bin 2> /dev/null \
   && cmp -s build/speech_8k_release.bin build/speech_8k_checked.bin \
-  && ada/obj-release/stream_decode build/speech_8k_release.bin build/speech_8k_release.wav 2> /dev/null \
+  && ada/obj-release/blkc-decode build/speech_8k_release.bin build/speech_8k_release.wav 2> /dev/null \
   && cmp -s build/wav/rec_speech_8k.wav build/speech_8k_release.wav \
   && echo "  release programs: same stream, verified, byte-identical file" \
   || { echo "  release programs: FAILED"; FAIL=1; }
@@ -76,22 +76,22 @@ b[26] ^= 1
 b[pos:pos + 2] = crc16(b[:pos]).to_bytes(2, 'big')
 open(sys.argv[2], 'wb').write(b)
 EOF
-out=$(ada/obj/stream_decode build/wrong_md5.bin build/wrong_md5.wav 2>&1); st=$?
+out=$(ada/obj/blkc-decode build/wrong_md5.bin build/wrong_md5.wav 2>&1); st=$?
 [ $st = 1 ] && grep -q "AUDIO MD5 DIFFERS" <<< "$out" && echo "  changed audio MD5: reported" \
   || { echo "  changed audio MD5: not reported"; FAIL=1; }
 head -c 60000 build/speech_8k.bin > build/truncated.bin
-ada/obj/stream_decode build/truncated.bin build/truncated.wav 2> /dev/null
+ada/obj/blkc-decode build/truncated.bin build/truncated.wav 2> /dev/null
 [ $? = 1 ] && echo "  truncated stream: damage status" || { echo "  truncated stream: wrong status"; FAIL=1; }
 head -c 3000 build/wav/rec_speech_8k.wav > build/not_a_stream.bin
-ada/obj/stream_decode build/not_a_stream.bin build/not_a_stream.wav 2> /dev/null
+ada/obj/blkc-decode build/not_a_stream.bin build/not_a_stream.wav 2> /dev/null
 [ $? = 2 ] && echo "  foreign file: refused" || { echo "  foreign file: wrong status"; FAIL=1; }
 # --skip and --until write the same frames as a full decode, here on streams whose blocks read earlier groups.
 for v in delay_in_history:0:1:5000:9000:6208:10000:19000:20000 adaptive_stage:0:4096:4095:8193:30000:34000:44000:44100; do
   name=${v%%:*}; ranges=${v#*:}; ok=1
-  ada/obj/stream_decode "vectors/$name.blkc" "build/${name}_full.wav" 2> /dev/null || ok=0
+  ada/obj/blkc-decode "vectors/$name.blkc" "build/${name}_full.wav" 2> /dev/null || ok=0
   while [ -n "$ranges" ]; do
     skip=${ranges%%:*}; ranges=${ranges#*:}; until=${ranges%%:*}; ranges=${ranges#"$until"}; ranges=${ranges#:}
-    ada/obj/stream_decode --skip "$skip" --until "$until" "vectors/$name.blkc" "build/${name}_range.wav" 2> /dev/null || ok=0
+    ada/obj/blkc-decode --skip "$skip" --until "$until" "vectors/$name.blkc" "build/${name}_range.wav" 2> /dev/null || ok=0
     python3 -I - "build/${name}_full.wav" "build/${name}_range.wav" "$skip" "$until" <<'EOF' || ok=0
 import sys
 def pcm(path):
@@ -130,7 +130,7 @@ for s in build/wav/rec_speech_8k.wav:build/speech_8k_rf64.wav build/wav/rec_spee
          corpus/depth_pink_32f.wav:build/pink_32f.aifc build/wav/rec_speech_8k.wav:build/speech_8k_piped.wav; do
   wav=${s%%:*}; file=${s#*:}; name=$(basename "$file")
   a=$(audio_md5 "$wav" build/source.bin); b=$(audio_md5 "$file" build/container.bin)
-  if [ -n "$a" ] && [ "$a" = "$b" ] && ada/obj/stream_decode build/container.bin "build/back_$name" 2> /dev/null \
+  if [ -n "$a" ] && [ "$a" = "$b" ] && ada/obj/blkc-decode build/container.bin "build/back_$name" 2> /dev/null \
      && cmp -s "$file" "build/back_$name"; then
     echo "  $name: WAV's audio MD5, byte-identical after decoding"
   else
@@ -144,7 +144,7 @@ ffmpeg -v error -y -i corpus/depth_pink_32f.wav -c:a pcm_f64be -f aiff build/pin
 for file in build/pink_64f.wav build/pink_64f.aifc; do
   name=$(basename "$file")
   if ada/obj/codec_main "$file" 0 --stream build/float64.bin | grep -q 'round trip OK' \
-     && ada/obj/stream_decode build/float64.bin "build/back_$name" 2> /dev/null && cmp -s "$file" "build/back_$name"; then
+     && ada/obj/blkc-decode build/float64.bin "build/back_$name" 2> /dev/null && cmp -s "$file" "build/back_$name"; then
     echo "  $name: 64-bit float, byte-identical after decoding"
   else
     echo "  $name: FAILED"; FAIL=1
@@ -222,16 +222,16 @@ ha=$(grep -oE 'hash [0-9a-f]+' <<< "$a"); hh=$(grep -oE 'hash [0-9a-f]+' <<< "$h
 if [ "$ok" = 3 ] && [ "$ha" = "$hh" ] && [ "$ha" = "$hy" ]; then
   echo "  four channels, level 1: three round trips, one stream ($(awk '{print $6}' <<< "$a") bits per sample)"
   ada/obj/codec_main build/four_48k.wav 1 --stream build/four_48k.bin > /dev/null
-  if ada/obj/stream_decode build/four_48k.bin build/four_decoded.wav 2> /dev/null && cmp -s build/four_48k.wav build/four_decoded.wav; then
+  if ada/obj/blkc-decode build/four_48k.bin build/four_decoded.wav 2> /dev/null && cmp -s build/four_48k.wav build/four_decoded.wav; then
     echo "  four channels: decoded from the stream alone, byte-identical file"
   else
-    echo "  four channels: stream_decode FAILED"; FAIL=1
+    echo "  four channels: blkc-decode FAILED"; FAIL=1
   fi
-  ada/obj/stream_encode --level 1 - - < build/four_48k.wav 2> /dev/null | ada/obj/stream_decode - - 2> /dev/null > build/four_piped.wav
+  ada/obj/blkc-encode --level 1 - - < build/four_48k.wav 2> /dev/null | ada/obj/blkc-decode - - 2> /dev/null > build/four_piped.wav
   cmp -s build/four_48k.wav build/four_piped.wav && echo "  through pipes: four channels byte-identical" \
     || { echo "  through pipes: FAILED"; FAIL=1; }
-  ada/obj/stream_encode --level 2 --threads 1 build/four_48k.wav build/four_t1.bin 2> /dev/null
-  ada/obj/stream_encode --level 2 --threads 3 build/four_48k.wav build/four_t3.bin 2> /dev/null
+  ada/obj/blkc-encode --level 2 --threads 1 build/four_48k.wav build/four_t1.bin 2> /dev/null
+  ada/obj/blkc-encode --level 2 --threads 3 build/four_48k.wav build/four_t3.bin 2> /dev/null
   cmp -s build/four_t1.bin build/four_t3.bin && echo "  one thread and three: same stream" \
     || { echo "  one thread and three: FAILED"; FAIL=1; }
 else
@@ -240,8 +240,8 @@ else
 fi
 
 echo "== 7/10  Test vectors"
-vectors/check.sh ada/obj/stream_decode || FAIL=1
-vectors/check.sh ada/obj-release/stream_decode > /dev/null || { echo "  test vectors: release decoder FAILED"; FAIL=1; }
+vectors/check.sh ada/obj/blkc-decode || FAIL=1
+vectors/check.sh ada/obj-release/blkc-decode > /dev/null || { echo "  test vectors: release decoder FAILED"; FAIL=1; }
 
 echo "== 8/10  Fuzzing"
 # Changed copies of every vector through the decoder with checks on; a failing stream is kept as build/fuzz_failure.blkc.
@@ -252,7 +252,7 @@ failed=0 differ=0
 for seed in $(seq 1 20); do
   python3 -I vectors/edge_audio.py "$seed" build/edge.wav > /dev/null
   for level in 0 2 4; do
-    ada/obj/stream_encode --level $level --verify build/edge.wav build/edge.bin 2> /dev/null || failed=$((failed + 1))
+    ada/obj/blkc-encode --level $level --verify build/edge.wav build/edge.bin 2> /dev/null || failed=$((failed + 1))
   done
   if [ "$seed" -le 8 ]; then
     a=$(ada/obj/codec_main build/edge.wav 2 | grep -oE 'round trip OK, hash [0-9a-f]+')
@@ -276,9 +276,9 @@ tarball=$(bash release.sh build/dist 2> /dev/null | tail -1)
 version=$(git describe --tags --match 'v*' --abbrev=8 --always --dirty)
 mkdir -p build/dist/unpacked && tar -xzf "$tarball" -C build/dist/unpacked
 root=$(echo build/dist/unpacked/*)
-if [ -x "$root/bin/stream_encode" ] && [ -f "$root/lib/libblockcodec.so" ] && [ -f "$root/include/blockcodec.h" ] \
+if [ -x "$root/bin/blkc-encode" ] && [ -f "$root/lib/libblockcodec.so" ] && [ -f "$root/include/blockcodec.h" ] \
    && [ -f "$root/share/doc/blockcodec/spec.md" ] && (cd build/dist && sha256sum -c --quiet ./*.sha256) \
-   && "$root/bin/stream_decode" --version | grep -q "^stream_decode $version, format version 2, C API version 1$"; then
+   && "$root/bin/blkc-decode" --version | grep -q "^blkc-decode $version, format version 2, C API version 1$"; then
   echo "  release package: programs, library, header and documents, version $version"
 else
   echo "  release package: FAILED"; FAIL=1

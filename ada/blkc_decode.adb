@@ -1,8 +1,8 @@
---  Decode a stream written by codec_main --stream or stream_encode into the file it came from, from the stream's own
+--  Decode a stream written by codec_main --stream or blkc-encode into the file it came from, from the stream's own
 --  bytes, group by group, so memory does not grow with the audio's length. Frames of a group that cannot be read
 --  are written as zeros and reported. "-" names standard input or standard output. --skip and --until write frames
 --  from the first named up to the second as a WAV file, decoding from the groups those frames need.
---  Usage: stream_decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>, or stream_decode --version
+--  Usage: blkc-decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>, or blkc-decode --version
 --  Exit status: 0 decoded intact, 1 written with damage or with audio that differs from its MD5, 2 not a readable
 --  stream or wrong arguments.
 with Ada.Command_Line;
@@ -18,12 +18,12 @@ with Stream_Format; use Stream_Format;
 with Stream_Reading; use Stream_Reading;
 with Wav_Files;
 
-procedure Stream_Decode is
+procedure Blkc_Decode is
    use Ada.Text_IO;
 
    procedure Fail (Message : String) is
    begin
-      Put_Line (Standard_Error, "stream_decode: " & Message);
+      Put_Line (Standard_Error, "blkc-decode: " & Message);
       Ada.Command_Line.Set_Exit_Status (2);
    end Fail;
 
@@ -127,12 +127,12 @@ procedure Stream_Decode is
 
 begin
    if Ada.Command_Line.Argument_Count = 1 and then Ada.Command_Line.Argument (1) = "--version" then
-      Put_Line ("stream_decode " & Build_Version.Version & ", format version" & Integer'Image (Version) & ", C API version 1");
+      Put_Line ("blkc-decode " & Build_Version.Version & ", format version" & Integer'Image (Version) & ", C API version 1");
       return;
    end if;
    declare
       use Ada.Strings.Unbounded;
-      Usage : constant String := "usage: stream_decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>";
+      Usage : constant String := "usage: blkc-decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>";
       Names : array (1 .. 2) of Unbounded_String;
       Named : Natural := 0;
       Skip : Natural := 0;
@@ -175,6 +175,6 @@ begin
       when Constraint_Error =>
          Fail (Usage);
    end;
-end Stream_Decode;
+end Blkc_Decode;
 
 

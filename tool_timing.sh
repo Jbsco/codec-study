@@ -29,14 +29,14 @@ for wav in build/wav/*.wav; do
       flac*) coded="$work/c.flac"; $method -s -f -o "$coded" "$wav" 2> /dev/null ;;
       wavpack*) coded="$work/c.wv"; $method -q -y "$wav" -o "$coded" 2> /dev/null ;;
       block*parallel) coded="$work/c.bin"; level=${method#block level }
-        ada/obj-release/stream_encode --level "${level%% *}" "$wav" "$coded" 2> /dev/null ;;
-      block*) coded="$work/c.bin"; ada/obj-release/stream_encode --threads 1 --level "${method##* }" "$wav" "$coded" 2> /dev/null ;;
+        ada/obj-release/blkc-encode --level "${level%% *}" "$wav" "$coded" 2> /dev/null ;;
+      block*) coded="$work/c.bin"; ada/obj-release/blkc-encode --threads 1 --level "${method##* }" "$wav" "$coded" 2> /dev/null ;;
     esac
     t1=$(now)
     case $method in
       flac*) flac -s -d -f -o "$work/d.wav" "$coded" 2> /dev/null ;;
       wavpack*) wvunpack -q -y "$coded" -o "$work/d.wav" 2> /dev/null ;;
-      block*) ada/obj-release/stream_decode "$coded" "$work/d.wav" 2> /dev/null ;;
+      block*) ada/obj-release/blkc-decode "$coded" "$work/d.wav" 2> /dev/null ;;
     esac
     t2=$(now)
     if [[ -s $coded && -s $work/d.wav ]] \

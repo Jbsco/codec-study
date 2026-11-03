@@ -1,5 +1,5 @@
 --  Code an audio file into a stream with the block codec. "-" names standard input or standard output.
---  Usage: stream_encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent]
+--  Usage: blkc-encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent]
 --         [--no-pairs] [--threads <n>] [--verify] <in.wav> <out.bin>
 --  --threads sets how many groups are coded at once, every processor when left out; the stream is the same.
 --  --verify decodes the stream before writing it and checks every frame against the audio's MD5.
@@ -20,7 +20,7 @@ with Stream_Writing; use Stream_Writing;
 with System.Multiprocessors;
 with Wav_Files;
 
-procedure Stream_Encode is
+procedure Blkc_Encode is
    use Ada.Text_IO;
    use Ada.Streams;
 
@@ -33,7 +33,7 @@ procedure Stream_Encode is
 
    procedure Fail (Message : String) is
    begin
-      Put_Line (Standard_Error, "stream_encode: " & Message);
+      Put_Line (Standard_Error, "blkc-encode: " & Message);
       Ada.Command_Line.Set_Exit_Status (2);
    end Fail;
 
@@ -59,7 +59,7 @@ procedure Stream_Encode is
    end Value;
 begin
    if Ada.Command_Line.Argument_Count = 1 and then Ada.Command_Line.Argument (1) = "--version" then
-      Put_Line ("stream_encode " & Build_Version.Version & ", format version" & Integer'Image (Version) & ", C API version 1");
+      Put_Line ("blkc-encode " & Build_Version.Version & ", format version" & Integer'Image (Version) & ", C API version 1");
       return;
    end if;
    while I <= Ada.Command_Line.Argument_Count loop
@@ -97,7 +97,7 @@ begin
       I := I + 1;
    end loop;
    if Bad or else Name_Count /= 2 then
-      Fail ("usage: stream_encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent] "
+      Fail ("usage: blkc-encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent] "
             & "[--no-pairs] [--threads <n>] [--verify] <in.wav> <out.bin>");
       return;
    end if;
@@ -154,7 +154,7 @@ begin
                end;
             end if;
             if not Ok then
-               Put_Line (Standard_Error, "stream_encode: " & In_Name & ": verification failed, the stream does not decode to "
+               Put_Line (Standard_Error, "blkc-encode: " & In_Name & ": verification failed, the stream does not decode to "
                          & "the input; nothing written");
                Ada.Command_Line.Set_Exit_Status (1);
                return;
@@ -173,4 +173,4 @@ begin
                 & Input.Rate'Image & " Hz, level" & Opt.Level'Image & "," & Length'Image & " bytes"
                 & (if Verify then ", verified" else ""));
    end;
-end Stream_Encode;
+end Blkc_Encode;

@@ -1,5 +1,5 @@
 --  Mutation fuzzer for the stream decoder. Each iteration takes one of the given streams, changes it at random and
---  decodes it as stream_decode does: header, walker, audio MD5 and the writer, into /dev/null, then seeks to a frame
+--  decodes it as blkc-decode does: header, walker, audio MD5 and the writer, into /dev/null, then seeks to a frame
 --  at random. Some changes rewrite a header or group field and recompute its CRC, so the change reaches the parsers
 --  behind the CRCs. Any exception is a failure: the changed stream is saved as fuzz_failure.blkc and the exit status
 --  is 1. With 0 iterations, each stream is decoded once as given, to replay a saved failure.
@@ -173,7 +173,7 @@ procedure Fuzz_Decode is
       return S;
    end Mutate;
 
-   --  Decode as stream_decode does, into /dev/null.
+   --  Decode as blkc-decode does, into /dev/null.
    procedure Decode (S : Byte_Array_Access) is
       H : Header;
    begin

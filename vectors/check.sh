@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Decode every test vector with a decoder (ada/obj/stream_decode when none is named) and compare its exit status and
+# Decode every test vector with a decoder (ada/obj/blkc-decode when none is named) and compare its exit status and
 # the MD5 of the file it writes with MANIFEST.tsv. The decoder takes <stream> <out.wav>. Exit status 1 on any
 # difference.
 set -uo pipefail
-dec=$(realpath "${1:-$(dirname "$0")/../ada/obj/stream_decode}")
+dec=$(realpath "${1:-$(dirname "$0")/../ada/obj/blkc-decode}")
 cd "$(dirname "$0")" || exit 1
 work=$(mktemp -d -p "${TMPDIR:-/var/tmp}")
 trap 'rm -rf "$work"' EXIT
