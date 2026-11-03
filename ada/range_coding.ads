@@ -38,16 +38,19 @@ package Range_Coding with SPARK_Mode is
    --  Ok is False when the input ends before the five bytes the decoder starts from.
    procedure Start (D : out Decoder; Input : Byte_Array; Pos : in out Natural; Ok : out Boolean)
      with Pre => Valid_Buffer (Input) and then Pos <= Input'Length * 8,
-       Post => Pos <= Input'Length * 8 and then (if Ok then D.Span >= Top);
+       Post => Pos <= Input'Length * 8 and then (if Ok then D.Span >= Top),
+       Inline;
 
    --  Ok is False when the input ends before a byte the decoder needs; the bit is then meaningless.
    procedure Decode_Bit (D : in out Decoder; P : in out Probability; Input : Byte_Array; Pos : in out Natural; Bit : out Boolean;
                          Ok : out Boolean)
      with Pre => Valid_Buffer (Input) and then Pos <= Input'Length * 8 and then D.Span >= Top,
-       Post => Pos <= Input'Length * 8 and then (if Ok then D.Span >= Top);
+       Post => Pos <= Input'Length * 8 and then (if Ok then D.Span >= Top),
+       Inline;
 
    procedure Decode_Direct (D : in out Decoder; Input : Byte_Array; Pos : in out Natural; Bit : out Boolean; Ok : out Boolean)
      with Pre => Valid_Buffer (Input) and then Pos <= Input'Length * 8 and then D.Span >= Top,
-       Post => Pos <= Input'Length * 8 and then (if Ok then D.Span >= Top);
+       Post => Pos <= Input'Length * 8 and then (if Ok then D.Span >= Top),
+       Inline;
 
 end Range_Coding;
