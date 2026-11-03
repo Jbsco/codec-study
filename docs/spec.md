@@ -210,4 +210,4 @@ A decoder checks the header CRC, each group's CRC and each block's CRC:
 
 ## Conformance
 
-A conforming decoder refuses streams whose header is wrong, decodes every intact group to the samples this page defines, handles damage as above, and reads no byte outside the stream. The SPARK decoder in `ada/` is proved free of run-time errors for any input bytes, and the Ada, Haskell and hybrid programs write identical streams at every level.
+A conforming decoder refuses streams whose header is wrong, decodes every intact group to the samples this page defines, handles damage as above, and reads no byte outside the stream. [vectors/](../vectors/README.md) contains streams for every block kind, residual code, stereo mode, container and kind of damage, with what a decoder writes from each, and `vectors/check.sh <decoder>` compares a decoder with them. The SPARK decoder in `ada/` is proved free of run-time errors for any input bytes, and the Ada, Haskell and hybrid programs write identical streams at every level.
