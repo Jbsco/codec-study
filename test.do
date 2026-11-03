@@ -1,16 +1,18 @@
 #!/bin/bash
 # Test gate: the CRC package against its check value and its bitwise form, the float conversions on every 32-bit
 # pattern, a written stream's framing and CRCs against flipped bits, a seek and a damaged group on one stream, the
-# stream decoder on whole, truncated and foreign files, the audio MD5 against FLAC's and against a changed digest,
-# RF64, Wave64, AIFF and 64-bit float input, the three implementations against one another on a short file at every
-# level, and on a four-channel file. Needs gprbuild and GNAT on the PATH (an Alire toolchain), stack, flac with
-# metaflac, ffmpeg and python3.
+# stream decoder on whole, truncated and foreign files, the release programs against the checked ones, the audio MD5
+# against FLAC's and against a changed digest, RF64, Wave64, AIFF and 64-bit float input, the three implementations
+# against one another on a short file at every level, and on a four-channel file. Needs gprbuild and GNAT on the PATH
+# (an Alire toolchain), stack, flac with metaflac, ffmpeg and python3.
 exec >&2
 cd "$(dirname "$0")" || exit 1
 FAIL=0
 
 echo "== 1/6  Build"
 (cd ada && gprbuild -q -P huffman_audio.gpr && gprbuild -q -P codec_lib.gpr) || { echo "  Ada build failed"; exit 1; }
+(cd ada && gprbuild -q -P huffman_audio.gpr -XBUILD=release stream_encode stream_decode) \
+  || { echo "  Ada release build failed"; exit 1; }
 (cd haskell && stack build 2>&1 | grep -E "rror" && exit 1; true) || { echo "  Haskell build failed"; exit 1; }
 echo "  built"
 
@@ -43,6 +45,14 @@ done
 ada/obj/stream_encode --level 1 --tag title=speech build/wav/rec_speech_8k.wav build/speech_8k_tool.bin 2> /dev/null
 cmp -s build/speech_8k.bin build/speech_8k_tool.bin && echo "  stream_encode writes codec_main's stream" \
   || { echo "  stream_encode: FAILED"; FAIL=1; }
+# The release programs, built without run-time checks, write the same stream and the same file, and --verify passes.
+ada/obj-release/stream_encode --level 4 --verify build/wav/rec_speech_8k.wav build/speech_8k_release.bin 2> /dev/null \
+  && ada/obj/stream_encode --level 4 build/wav/rec_speech_8k.wav build/speech_8k_checked.bin 2> /dev/null \
+  && cmp -s build/speech_8k_release.bin build/speech_8k_checked.bin \
+  && ada/obj-release/stream_decode build/speech_8k_release.bin build/speech_8k_release.wav 2> /dev/null \
+  && cmp -s build/wav/rec_speech_8k.wav build/speech_8k_release.wav \
+  && echo "  release programs: same stream, verified, byte-identical file" \
+  || { echo "  release programs: FAILED"; FAIL=1; }
 ours=$(ada/obj/codec_main build/wav/rec_speech_8k.wav 0 | grep -oE 'audio MD5 [0-9a-f]+' | awk '{print $3}')
 [ "$ours" = "$(metaflac --show-md5sum corpus/rec_speech_8k.flac)" ] && echo "  audio MD5 equal to FLAC's" \
   || { echo "  audio MD5 differs from FLAC's"; FAIL=1; }

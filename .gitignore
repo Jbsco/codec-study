@@ -4,6 +4,7 @@ corpus/source/
 build/
 # Ada and Haskell build output
 ada/obj/
+ada/obj-release/
 ada/obj-lib/
 ada/lib/
 haskell/.stack-work/

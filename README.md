@@ -15,7 +15,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `ada/wav_files`: input from WAV, RF64, Wave64 and AIFF, WAV output. `ada/audio_huffman.adb` with `huffman_codes`, `predictors` and `residual_coders`: experiment coders.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
-- `run.sh`, `compare.sh`, `bench.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
+- `run.sh`, `compare.sh`, `bench.sh`, `tool_timing.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, timing against FLAC and WavPack, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
 - `docs/`: one page per compression topic with method, measured effect, decoder cost and where it applies beyond audio; `docs/format.md` lists every field of a block.
 
 ## Corpus
@@ -195,6 +195,31 @@ The encoder codes every node of each group's split tree, up to 15 blocks per gro
 
 Haskell decodes every block that does not reach back before itself in parallel. Pure Haskell times at 16 threads vary between runs, 59.56 s and 40.57 s in two runs of an earlier build, while Ada moved by 0.3 s.
 
+`tool_timing.sh` times `flac`, `wavpack` and the release build of `stream_encode` and `stream_decode`, on one thread, one file at a time. Each tool's decoder writes a WAV file, and its samples are checked against the input's. FLAC does not code 32-bit float, so the table sums every file but the three float ones.
+
+<details>
+<summary><b>Size and time against FLAC and WavPack</b> (11 rows)</summary>
+
+| Method | Bytes | Encode | Decode |
+|---|---|---|---|
+| `flac -0` | 50,031,889 | 0.44 s | 0.47 s |
+| `flac -5` | 45,629,256 | 0.67 s | 0.47 s |
+| `flac -8` | 44,873,757 | 1.49 s | 0.50 s |
+| `wavpack -f` | 52,969,614 | 0.63 s | 0.31 s |
+| `wavpack` | 52,446,880 | 0.97 s | 0.45 s |
+| `wavpack -hh` | 52,082,680 | 1.49 s | 0.75 s |
+| `wavpack -hh -x4` | 43,357,970 | 13.23 s | 0.49 s |
+| `stream_encode --level 0` | 42,436,904 | 3.25 s | 2.06 s |
+| `stream_encode --level 1` | 37,914,752 | 5.38 s | 2.19 s |
+| `stream_encode --level 2` | 37,462,799 | 17.30 s | 4.12 s |
+| `stream_encode --level 4` | 37,109,813 | 120.04 s | 3.98 s |
+
+</details>
+
+Level 0 is smaller than every FLAC and WavPack mode and encodes in 3.25 s, against 1.49 s for `flac -8` and 13.23 s for `wavpack -hh -x4`. Its decoder takes 2.06 s, four times `flac -d`. From level 2 the range decoder doubles that. WavPack without `-x` is larger than `flac -0` here: the 192 kHz recording alone costs 4.9 MB more than with `-x4`.
+
+The release build leaves out run-time checks and assertions and inlines across units at `-O3`. Its streams and decoded files are identical to the checked build's. Over the whole corpus at level 0, release `stream_encode` takes 3.02 s against 5.87 s for the checked build, and `stream_decode` 1.86 s against 3.25 s.
+
 Haskell uses unboxed vectors whose loops fuse, strict unpacked writer state, `countLeadingZeros` for unary and bit-length codes, and decoding from a 32-bit peek. Parallelism comes from sparks over pure functions, so output cannot depend on scheduling. Executables run with `-N -A4m`; a 4 MB allocation area measured faster than 64 MB.
 
 ### Sizes
@@ -258,6 +283,8 @@ GNAT 15.2 and gprbuild 25.0.1 (for example from Alire's toolchains) on the PATH,
     ./run.sh                       # builds everything, runs every coder, writes results/
     ./compare.sh && ./bench.sh     # common lossless tools, and the timing of the three implementations
     ./levels.sh                    # every file at every encoder level, in Ada and Haskell
+    (cd ada && gprbuild -P huffman_audio.gpr -XBUILD=release)   # programs without run-time checks, in ada/obj-release
+    ./tool_timing.sh               # flac, wavpack and the release programs on one thread
     ./tables.sh > results/tables.md
     cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb checksums.adb range_coding.adb block_codec.adb
 
@@ -274,7 +301,7 @@ Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer, 32-bit float, or 64-bit
 | `--no-pairs` | code every channel alone |
 | `--features <out.tsv>` | write each group's features and whether the search split its root |
 
-`stream_encode [--level <0 to 5>] [--tag <key=value>] [--seek-every <seconds>] [--independent] <in.wav> <out.bin>` codes a file into a stream, byte for byte the stream `codec_main --stream` writes. Either program takes `-` for standard input or output.
+`stream_encode [--level <0 to 5>] [--tag <key=value>] [--seek-every <seconds>] [--independent] [--no-pairs] [--verify] <in.wav> <out.bin>` codes a file into a stream, byte for byte the stream `codec_main --stream` writes. Either program takes `-` for standard input or output. With `--verify` it decodes the stream before writing it and checks every frame against the audio MD5. On a mismatch it writes nothing and exits with status 1.
 
 `stream_decode <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). It decodes group by group and keeps only the history later blocks may read, so its memory does not grow with the audio's length.
 
