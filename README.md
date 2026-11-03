@@ -258,6 +258,7 @@ GNAT 15.2 and gprbuild 25.0.1 (for example from Alire's toolchains) on the PATH,
     ./run.sh                       # builds everything, runs every coder, writes results/
     ./compare.sh && ./bench.sh     # common lossless tools, and the timing of the three implementations
     ./levels.sh                    # every file at every encoder level, in Ada and Haskell
+    (cd ada && gprbuild -P huffman_audio.gpr -XBUILD=release)   # programs without run-time checks, in ada/obj-release
     ./tables.sh > results/tables.md
     cd ada && gnatprove -P huffman_audio.gpr --level=2 -u bit_streams.adb canonical_decoding.adb checksums.adb range_coding.adb block_codec.adb
 
