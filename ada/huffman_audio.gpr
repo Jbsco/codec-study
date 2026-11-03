@@ -8,7 +8,8 @@ project Huffman_Audio is
       when "check" => for Object_Dir use "obj";
       when "release" => for Object_Dir use "obj-release";
    end case;
-   for Main use ("audio_huffman.adb", "codec_main.adb", "checksums_test.adb", "corrupt_test.adb", "stream_decode.adb", "float_bits_test.adb", "stream_encode.adb");
+   for Main use ("audio_huffman.adb", "codec_main.adb", "checksums_test.adb", "corrupt_test.adb", "stream_decode.adb", "float_bits_test.adb", "stream_encode.adb",
+                 "fuzz_decode.adb");
 
    package Compiler is
       case Build is
