@@ -198,26 +198,29 @@ Haskell decodes every block that does not reach back before itself in parallel. 
 `tool_timing.sh` times `flac`, `wavpack` and the release build of `stream_encode` and `stream_decode`, on one thread, one file at a time. Each tool's decoder writes a WAV file, and its samples are checked against the input's. FLAC does not code 32-bit float, so the table sums every file but the three float ones.
 
 <details>
-<summary><b>Size and time against FLAC and WavPack</b> (12 rows)</summary>
+<summary><b>Size and time against FLAC and WavPack</b> (13 rows)</summary>
 
 | Method | Bytes | Encode | Decode |
 |---|---|---|---|
-| `flac -0` | 50,031,889 | 0.41 s | 0.43 s |
-| `flac -5` | 45,629,256 | 0.63 s | 0.44 s |
-| `flac -8` | 44,873,757 | 1.34 s | 0.45 s |
-| `wavpack -f` | 52,969,614 | 0.48 s | 0.27 s |
-| `wavpack` | 52,446,880 | 0.59 s | 0.32 s |
-| `wavpack -hh` | 52,082,680 | 1.06 s | 0.51 s |
-| `wavpack -hh -x4` | 43,358,298 | 11.66 s | 0.43 s |
-| `stream_encode --level 0` | 42,436,904 | 2.58 s | 1.16 s |
-| `stream_encode --level 1` | 37,914,752 | 4.29 s | 1.35 s |
-| `stream_encode --level 2` | 37,462,799 | 14.06 s | 2.23 s |
-| `stream_encode --level 4` | 37,109,813 | 101.36 s | 2.15 s |
-| `stream_encode --level 4`, every processor | 37,109,813 | 13.57 s | 2.19 s |
+| `flac -0` | 50,031,889 | 0.42 s | 0.46 s |
+| `flac -5` | 45,629,256 | 0.67 s | 0.48 s |
+| `flac -8` | 44,873,757 | 1.45 s | 0.48 s |
+| `wavpack -f` | 52,969,614 | 0.59 s | 0.32 s |
+| `wavpack` | 52,446,880 | 0.72 s | 0.37 s |
+| `wavpack -hh` | 52,082,680 | 1.10 s | 0.57 s |
+| `wavpack -hh -x4` | 43,358,134 | 12.26 s | 0.65 s |
+| `stream_encode --level 0` | 42,436,904 | 2.78 s | 1.23 s |
+| `stream_encode --level 1` | 37,914,752 | 4.72 s | 1.42 s |
+| `stream_encode --level 2` | 37,462,799 | 15.54 s | 2.32 s |
+| `stream_encode --level 4` | 37,109,813 | 110.49 s | 2.58 s |
+| `stream_encode --level 4`, every processor | 37,109,813 | 15.98 s | 2.34 s |
+| `stream_encode --level 5`, every processor | 36,886,433 | 96.32 s | 9.48 s |
 
 </details>
 
-Level 0 is smaller than every FLAC and WavPack mode and encodes in 2.58 s, against 1.34 s for `flac -8` and 11.66 s for `wavpack -hh -x4`. Its decoder takes 1.16 s, against 0.45 s for `flac -d` on `flac -8` streams. From level 2 the range decoder doubles that. Coding groups on all 16 threads, level 4 encodes in 13.57 s against 101.36 s on one, to the same bytes. WavPack without `-x` is larger than `flac -0` here: the 192 kHz recording alone costs 4.9 MB more than with `-x4`.
+Level 0 is smaller than every FLAC and WavPack mode and encodes in 2.78 s, against 1.45 s for `flac -8` and 12.26 s for `wavpack -hh -x4`. Its decoder takes 1.23 s, against 0.48 s for `flac -d` on `flac -8` streams. From level 2 the range decoder doubles that.
+
+Coding groups on all 16 threads, level 4 encodes in 15.98 s against 110.49 s on one, to the same bytes. Level 5 is 0.6% smaller than level 4 and decodes in 9.48 s, about four times as long, since its adaptive filter does up to 256 multiply-adds per sample where it is kept. WavPack without `-x` is larger than `flac -0` here: the 192 kHz recording alone costs 4.9 MB more than with `-x4`.
 
 The release build leaves out run-time checks and assertions and inlines across units at `-O3`. Its streams and decoded files are identical to the checked build's. Over the whole corpus at level 0 on one thread, best of three runs, release `stream_encode` takes 2.51 s against 3.54 s for the checked build, and `stream_decode` 1.32 s against 1.88 s.
 
