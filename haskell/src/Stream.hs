@@ -11,7 +11,8 @@
 -- segment, from one seek point to the next, so a decoder can start at any seek point. Groups encode in parallel
 -- with any block coder of the same format. Blocks that need no earlier samples decode in parallel; then the
 -- leaves decode the rest in order. A decoder checks every CRC and reports what fails by position.
-module Stream (Prepared (..), Level (..), Container (..), levels, prepare, container, encodeStream, decodeStream) where
+module Stream (Prepared (..), Level (..), Container (..), levels, prepare, container, defaultSeekEvery, encodeStream,
+               decodeStream) where
 
 import Control.DeepSeq (NFData (..))
 import Control.Monad (forM_)
@@ -110,6 +111,11 @@ data Container = Container { cIndependent :: !Bool, cSeekEvery :: !Int }
 
 container :: Container
 container = Container False 10
+
+-- | Seconds between seek points at a level: 1 at level 5, whose adaptive stage trains on the samples before each
+-- block, so a seek decodes from the seek point, and 10 at the other levels.
+defaultSeekEvery :: Int -> Int
+defaultSeekEvery level = if level == 5 then 1 else 10
 
 magic :: S.Vector Word8
 magic = S.fromList [0x42, 0x4C, 0x4B, 0x43]

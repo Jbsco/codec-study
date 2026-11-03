@@ -11,12 +11,16 @@ package Stream_Writing is
    Max_Tags : constant := 64;
    type Tag_List is array (1 .. Max_Tags) of Ada.Strings.Unbounded.Unbounded_String;
 
-   --  The level, 0 to 5; seconds between seek points, 0 for one segment; whether every group is a segment; whether
-   --  channel pairs may take stereo modes; the tags; a file for each group's features, or null; and how many groups
-   --  are coded at once.
+   --  Seconds between seek points when none are asked for: 1 at level 5, whose adaptive stage trains on the samples
+   --  before each block, so a seek decodes from the seek point, and 10 at the other levels.
+   function Default_Seek_Every (Level : Natural) return Natural is (if Level = 5 then 1 else 10);
+
+   --  The level, 0 to 5; seconds between seek points, 0 for one segment, -1 for the level's default; whether every
+   --  group is a segment; whether channel pairs may take stereo modes; the tags; a file for each group's features,
+   --  or null; and how many groups are coded at once.
    type Options is record
       Level : Natural range 0 .. 5 := 4;
-      Seek_Every : Natural := 10;
+      Seek_Every : Integer range -1 .. 86_400 := -1;
       Independent : Boolean := False;
       Pairs : Boolean := True;
       Tag_Count : Natural range 0 .. Max_Tags := 0;

@@ -241,7 +241,7 @@ package body Stream_Writing is
       Pairs : constant Natural := Channels / 2;
       Signals : constant Natural := Channels + 2 * Pairs;
       Independent : constant Boolean := Opt.Independent;
-      Seek_Every : constant Natural := Opt.Seek_Every;
+      Seek_Every : constant Natural := (if Opt.Seek_Every < 0 then Default_Seek_Every (Opt.Level) else Opt.Seek_Every);
       Table_Span : constant Natural :=
         (if Seek_Every = 0 then 0 else (Seek_Every * (if Rate > 0 then Rate else 44100) + Max_Block - 1) / Max_Block);
       Segment_Span : constant Natural := (if Independent then 1 else Table_Span);
