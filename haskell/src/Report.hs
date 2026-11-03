@@ -26,7 +26,7 @@ blockLine name enc dec level audio = do
   coded0 <- evaluate (force (pCoded p))
   let total = pFrames p * length coded0
   t0 <- getMonotonicTime
-  stream <- evaluate (force (encodeStream enc (levels !! level) container p))
+  stream <- evaluate (force (encodeStream enc (levels !! level) container { cSeekEvery = defaultSeekEvery level } p))
   t1 <- getMonotonicTime
   (out, badCrcs) <- evaluate (force (decodeStream dec stream))
   t2 <- getMonotonicTime

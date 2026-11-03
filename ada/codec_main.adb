@@ -72,7 +72,7 @@ begin
                    and then (Ada.Command_Line.Argument (2)'Length < 2 or else Ada.Command_Line.Argument (2) (1 .. 2) /= "--")
                  then Natural'Value (Ada.Command_Line.Argument (2)) else 4);
    Opt.Independent := Option ("--independent") > 0;
-   Opt.Seek_Every := Option_Value ("--seek-every", 10);
+   Opt.Seek_Every := Option_Value ("--seek-every", Default_Seek_Every (Opt.Level));
    Opt.Pairs := Option ("--no-pairs") = 0;
    for I in 2 .. Ada.Command_Line.Argument_Count - 1 loop
       if Ada.Command_Line.Argument (I) = "--tag" then

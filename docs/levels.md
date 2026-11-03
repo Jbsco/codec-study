@@ -26,7 +26,9 @@ Whole corpus, single runs on a typical workstation (AMD Ryzen 7 7700X):
 | 2 | 7.118 | 42.37 MB | 33.7 s | 6.13 s | 6.12 s |
 | 3 | 7.086 | 42.08 MB | 101.4 s | 24.11 s | 6.71 s |
 | 4 | 7.059 | 41.97 MB | 181.3 s | 63.13 s | 5.68 s |
-| 5 | 7.046 | 41.71 MB | 1876.7 s | 994.24 s | 546.53 s |
+| 5 | 7.072 | 41.80 MB | 1876.7 s | 994.24 s | 546.53 s |
+
+Level 5's sizes are measured with a seek point every second, its default, and its times come from the run before that change.
 
 Level 1 encodes the corpus 16 times faster than level 4 for 2.2 percent more bytes; one estimated order keeps most of linear prediction's gain. Level 3 comes within 0.3 percent of level 4 in 56 percent of its time.
 
