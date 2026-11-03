@@ -104,19 +104,12 @@ package body Block_Codec with SPARK_Mode is
       return B;
    end Log_Floor;
 
-   function Bit_Length (U : Unsigned_64) return Natural with SPARK_Mode => Off is
-      Steps : constant array (1 .. 6) of Natural := [32, 16, 8, 4, 2, 1];
-      V : Unsigned_64 := U;
-      Bits : Natural := 0;
-   begin
-      for Step of Steps loop
-         if Shift_Right (V, Step) /= 0 then
-            V := Shift_Right (V, Step);
-            Bits := Bits + Step;
-         end if;
-      end loop;
-      return Bits + Natural (V);
-   end Bit_Length;
+   function Leading_Zeros (U : Unsigned_64) return Integer
+     with Import, Convention => Intrinsic, External_Name => "__builtin_clzll";
+
+   function Bit_Length (U : Unsigned_64) return Natural is
+     (if U = 0 then 0 else 64 - Leading_Zeros (U))
+     with SPARK_Mode => Off;
 
    --  V divided by 2**S, rounded down, by logical shifts.
    function Shift_Down (V : Long_Long_Integer; S : Natural) return Long_Long_Integer is
