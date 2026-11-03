@@ -42,10 +42,10 @@ package body Block_Codec with SPARK_Mode is
    --  residuals, trained on the Warm_Up (0, 256, 1024 or 4096) residuals of the samples before the block.
    Tap_Choices : constant array (0 .. 3) of Positive := [16, 32, 64, 256];
    Warm_Up_Choices : constant array (0 .. 3) of Natural := [0, 256, 1024, 4096];
-   subtype Weight is Long_Long_Integer range -Lms_Weight_Limit .. Lms_Weight_Limit;
+   subtype Weight is Integer range -Lms_Weight_Limit .. Lms_Weight_Limit;
    type Weight_Array is array (1 .. Max_Taps) of Weight;
    subtype Lms_Residual is Long_Long_Integer range -(2**37) .. 2**37;
-   subtype Unit_Sign is Long_Long_Integer range -1 .. 1;
+   subtype Unit_Sign is Integer range -1 .. 1;
 
    --  The last Taps residuals, newest first, and their signs, each held twice in a ring of 2 * Taps entries so the
    --  history is always one slice: entry J is Values (Head + J - 1).
@@ -71,7 +71,7 @@ package body Block_Codec with SPARK_Mode is
    begin
       for J in 1 .. Taps loop
          pragma Loop_Invariant (Sum in -(Long_Long_Integer (J - 1) * 2**52) .. Long_Long_Integer (J - 1) * 2**52);
-         Sum := Sum + W (J) * H.Values (H.Head + J - 1);
+         Sum := Sum + Long_Long_Integer (W (J)) * H.Values (H.Head + J - 1);
       end loop;
       return Sum;
    end Lms_Prediction;
@@ -80,19 +80,18 @@ package body Block_Codec with SPARK_Mode is
      with Pre => Taps <= Max_Taps and then H.Head < Taps,
        Post => H.Head < Taps
    is
-      Step : constant Long_Long_Integer := Lms_Step * Sign (E);
+      Step : constant Integer := Lms_Step * Integer (Sign (E));
    begin
       if Step /= 0 then
          for J in 1 .. Taps loop
-            W (J) := Long_Long_Integer'Max (-Lms_Weight_Limit,
-                                            Long_Long_Integer'Min (Lms_Weight_Limit, W (J) + Step * H.Signs (H.Head + J - 1)));
+            W (J) := Integer'Max (-Lms_Weight_Limit, Integer'Min (Lms_Weight_Limit, W (J) + Step * H.Signs (H.Head + J - 1)));
          end loop;
       end if;
       H.Head := (if H.Head = 0 then Taps - 1 else H.Head - 1);
       H.Values (H.Head) := Input;
       H.Values (H.Head + Taps) := Input;
-      H.Signs (H.Head) := Sign (Input);
-      H.Signs (H.Head + Taps) := Sign (Input);
+      H.Signs (H.Head) := Integer (Sign (Input));
+      H.Signs (H.Head + Taps) := Integer (Sign (Input));
    end Lms_Update;
 
    function Zigzag (V : Long_Long_Integer) return Unsigned_64 is
