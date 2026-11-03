@@ -16,7 +16,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
 - `run.sh`, `compare.sh`, `bench.sh`, `tool_timing.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, timing against FLAC and WavPack, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
-- `docs/`: one page per compression topic with method, measured effect, decoder cost and where it applies beyond audio; `docs/format.md` lists every field of a block.
+- `docs/`: one page per compression topic with method, measured effect, decoder cost and where it applies beyond audio; `docs/format.md` lists every field of a block, and `docs/spec.md` defines format version 2 for a decoder.
 
 ## Corpus
 
@@ -48,7 +48,7 @@ Generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the express
 
 ## Block codec
 
-A block codes 1 to 4096 samples of one signal, as one constant value or as a predictor and a residual code. Shared low bits are removed first. `docs/format.md` lists every field.
+A block codes 1 to 4096 samples of one signal, as one constant value or as a predictor and a residual code. Shared low bits are removed first. `docs/format.md` lists every field, and `docs/spec.md` gives every decoding rule.
 
 - Predictors: polynomial order 0 to 4, tiers of pairs, and a delay to an exact repeat of the block's first 32 samples, within the block or in the 16,384 samples before it. Linear prediction runs at order 1 to 32 and a coefficient precision of 5 to 15 bits, with an adaptive sign-sign LMS stage after it at level 5.
 - Residual codes: Rice; run-length Huffman after JPEG's AC symbols, with a canonical code table per block; an adaptive binary code through LZMA's range coder, with a probability per context, tried from level 2 up.

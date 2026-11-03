@@ -4,6 +4,7 @@ One page per aspect of the block codec, each with the method, its measured effec
 
 | Page | Topic | Effect on the corpus |
 |---|---|---|
+| [spec.md](spec.md) | format version 2, frozen: every field and decoding rule, damage handling, conformance | the definition a decoder follows |
 | [format.md](format.md) | every field of a block: predictors, residual codes, the encoder's choice | the format every level writes |
 | [entropy-coding.md](entropy-coding.md) | Rice codes, run-length Huffman codes, the prefix-code floor, the parameter search | base of every block; silence 1.00 to 0.01 bits per sample with constant blocks |
 | [prediction.md](prediction.md) | polynomial, tiered, linear (per-block order) and adaptive prediction | 7.98 to 7.60 bits per sample from linear prediction alone |
@@ -15,5 +16,5 @@ One page per aspect of the block codec, each with the method, its measured effec
 | [integrity.md](integrity.md) | CRC-16 per block, per group and of the header, what damage it finds, finding the next group again | 0.003 bits per sample |
 | [container.md](container.md) | the header, metadata, framed groups, seek points and segments; what framing and seeking cost | 15 bytes per group, 0.28 percent at level 4 |
 | [float.md](float.md) | float samples as integers or as ordered bit patterns | float orchestra costs what the integer file costs |
-| [decoder-cost.md](decoder-cost.md) | code size, memory, operations per sample, proof, parallel decoding | decoder 7.7 KB on a Cortex-M4; 629 proved checks |
+| [decoder-cost.md](decoder-cost.md) | code size, memory, operations per sample, proof, parallel decoding | decoder 7.7 KB on a Cortex-M4, proved free of run-time errors |
 | [learned-decisions.md](learned-decisions.md) | a gate network for an encoder decision, and why a rule won | the split decision is 4.9 percent of roots; a 2-bit spread rule matches the network |
