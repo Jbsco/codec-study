@@ -17,6 +17,8 @@ Blocks later in the same segment that read lost samples decode to wrong values w
 - `corrupt_test` on a written stream: every CRC matches as written, groups are contiguous and end at the file's end, and every seek point names a group. A flipped bit in the header fails the header CRC. A flipped bit in group 0's length fails that group's CRC, and group 1 is found again by its sync word and CRC at its own offset. A flipped bit in block 0 fails block 0's CRC and leaves block 1's and group 0's matching. Every check passes on a 40-group mono stream.
 - `codec_main rec_speech_8k.wav 1 --independent --flip 3 2` (a bit of group 3's length): 1 group failed, 4096 frames lost, 0 samples wrong outside them, and a seek to frame 100000 after the damage still matches. Without `--independent` the groups after it in the same 10 s segment read the lost samples and decode wrong until the next seek point.
 - Proof: the `Checksums` package proves at gnatprove level 2 with the decoder, no check unproved.
+- `fuzz_decode` changes copies of the test vectors at random and decodes each as `stream_decode` does, with run-time checks and assertions on. Changes include header and group fields with their CRCs recomputed, so the change reaches the parsers. It found two faults that only damaged streams reach. A stereo mode rebuilt a channel outside its depth from damaged blocks, which handed later blocks history outside the proved decoder's precondition. A resync to a group at frame 0 asked to zero an empty range. Both are fixed, and their streams are regression vectors.
+- After the fixes, 50,000 changed streams from one seed raised no exception: 6,345 refused, 4,294 intact, 39,305 decoded around damage, 56 skipped for claiming over 2^18 frames.
 
 ## Cost
 

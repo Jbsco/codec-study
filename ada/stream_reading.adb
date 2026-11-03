@@ -299,13 +299,22 @@ package body Stream_Reading is
                         A : constant Long_Long_Integer := Work.Got (2 * Pr - 1) (K);
                         B : constant Long_Long_Integer := Work.Got (2 * Pr) (K);
                         Sum : constant Long_Long_Integer := 2 * A + B mod 2;
+                        Left, Right : Long_Long_Integer;
                      begin
                         case L (I).Modes (Pr) is
-                           when 0 => Buf (2 * Pr - 1) (First + K) := A; Buf (2 * Pr) (First + K) := B;
-                           when 1 => Buf (2 * Pr - 1) (First + K) := A; Buf (2 * Pr) (First + K) := A - B;
-                           when 2 => Buf (2 * Pr - 1) (First + K) := A + B; Buf (2 * Pr) (First + K) := B;
-                           when others => Buf (2 * Pr - 1) (First + K) := (Sum + B) / 2; Buf (2 * Pr) (First + K) := (Sum - B) / 2;
+                           when 0 => Left := A; Right := B;
+                           when 1 => Left := A; Right := A - B;
+                           when 2 => Left := A + B; Right := B;
+                           when others => Left := (Sum + B) / 2; Right := (Sum - B) / 2;
                         end case;
+                        --  A sample that damaged blocks rebuild outside the channel's depth is zeroed.
+                        if not In_Range (Left, Coded_Depth (H)) or else not In_Range (Right, Coded_Depth (H)) then
+                           D.Blocks_Ok := False;
+                           Left := (if In_Range (Left, Coded_Depth (H)) then Left else 0);
+                           Right := (if In_Range (Right, Coded_Depth (H)) then Right else 0);
+                        end if;
+                        Buf (2 * Pr - 1) (First + K) := Left;
+                        Buf (2 * Pr) (First + K) := Right;
                      end;
                   end loop;
                   for C in 2 * Pairs + 1 .. H.Channels loop
@@ -531,7 +540,9 @@ package body Stream_Reading is
                   Lose (W, W.Filled, W.H.Frames - 1);
                   W.Filled := W.H.Frames;
                else
-                  Lose (W, W.Filled, Group_First - 1);
+                  if Group_First > W.Filled then
+                     Lose (W, W.Filled, Group_First - 1);
+                  end if;
                   W.Filled := Group_First;
                end if;
             end if;
@@ -544,5 +555,14 @@ package body Stream_Reading is
      (if F >= W.Base and then F <= W.Base + Window - 1 then W.Buf (C) (F) else 0);
 
    function Report (W : Walker) return Damage is (W.D);
+
+   procedure Stop (W : in out Walker) is
+   begin
+      for C in 1 .. W.H.Channels loop
+         Free (W.Buf (C));
+         Free (W.Work.Got (C));
+      end loop;
+      Free (W.Work.Derived);
+   end Stop;
 
 end Stream_Reading;
