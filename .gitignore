@@ -5,6 +5,7 @@ build/
 # Ada and Haskell build output
 ada/obj/
 ada/obj-release/
+dist/
 ada/obj-lib/
 ada/lib/
 haskell/.stack-work/
