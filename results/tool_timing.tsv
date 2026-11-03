@@ -1,441 +1,481 @@
 method	file	bytes	encode_s	decode_s	status
-flac -0	depth_pink_24	1174991	0.007	0.006	ok
-flac -5	depth_pink_24	1167453	0.008	0.007	ok
+flac -0	depth_pink_24	1174991	0.015	0.013	ok
+flac -5	depth_pink_24	1167453	0.013	0.011	ok
 flac -8	depth_pink_24	1167446	0.013	0.007	ok
-wavpack -f	depth_pink_24	1158164	0.010	0.007	ok
-wavpack	depth_pink_24	1154050	0.012	0.008	ok
-wavpack -hh	depth_pink_24	1150554	0.020	0.010	ok
-wavpack -hh -x4	depth_pink_24	1148922	0.128	0.006	ok
-block level 0	depth_pink_24	1159187	0.033	0.018	ok
-block level 1	depth_pink_24	1159187	0.063	0.017	ok
-block level 2	depth_pink_24	1154760	0.242	0.049	ok
-block level 4	depth_pink_24	1150656	0.942	0.054	ok
+wavpack -f	depth_pink_24	1158164	0.010	0.005	ok
+wavpack	depth_pink_24	1154050	0.010	0.007	ok
+wavpack -hh	depth_pink_24	1150554	0.015	0.009	ok
+wavpack -hh -x4	depth_pink_24	1148922	0.105	0.005	ok
+block level 0	depth_pink_24	1159187	0.042	0.019	ok
+block level 1	depth_pink_24	1159187	0.060	0.017	ok
+block level 2	depth_pink_24	1154760	0.322	0.060	ok
+block level 4	depth_pink_24	1150656	0.981	0.049	ok
+block level 4 parallel	depth_pink_24	1150656	0.132	0.049	ok
 flac -0	depth_pink_32f	0	0.001	0.002	unsupported
 flac -5	depth_pink_32f	0	0.001	0.001	unsupported
 flac -8	depth_pink_32f	0	0.001	0.001	unsupported
-wavpack -f	depth_pink_32f	1422162	0.009	0.007	ok
-wavpack	depth_pink_32f	1418046	0.012	0.007	ok
-wavpack -hh	depth_pink_32f	1414554	0.018	0.010	ok
-wavpack -hh -x4	depth_pink_32f	1412930	0.107	0.008	ok
-block level 0	depth_pink_32f	1524348	0.042	0.024	ok
-block level 1	depth_pink_32f	1524348	0.061	0.024	ok
-block level 2	depth_pink_32f	1524312	0.277	0.024	ok
-block level 4	depth_pink_32f	1524312	0.945	0.024	ok
+wavpack -f	depth_pink_32f	1422162	0.009	0.006	ok
+wavpack	depth_pink_32f	1418046	0.011	0.007	ok
+wavpack -hh	depth_pink_32f	1414554	0.019	0.010	ok
+wavpack -hh -x4	depth_pink_32f	1412930	0.105	0.007	ok
+block level 0	depth_pink_32f	1524348	0.050	0.023	ok
+block level 1	depth_pink_32f	1524348	0.069	0.023	ok
+block level 2	depth_pink_32f	1524312	0.270	0.023	ok
+block level 4	depth_pink_32f	1524312	0.920	0.023	ok
+block level 4 parallel	depth_pink_32f	1524312	0.168	0.024	ok
 flac -0	depth_pink_32	1615991	0.007	0.007	ok
 flac -5	depth_pink_32	1608453	0.009	0.007	ok
-flac -8	depth_pink_32	1608446	0.021	0.007	ok
+flac -8	depth_pink_32	1608446	0.020	0.007	ok
 wavpack -f	depth_pink_32	1599422	0.008	0.006	ok
-wavpack	depth_pink_32	1595304	0.011	0.006	ok
-wavpack -hh	depth_pink_32	1591812	0.018	0.010	ok
-wavpack -hh -x4	depth_pink_32	1590192	0.106	0.006	ok
-block level 0	depth_pink_32	1600187	0.035	0.019	ok
-block level 1	depth_pink_32	1600187	0.055	0.019	ok
-block level 2	depth_pink_32	1598784	0.285	0.065	ok
-block level 4	depth_pink_32	1593355	1.173	0.065	ok
-flac -0	depth_pink_8	293011	0.004	0.004	ok
-flac -5	depth_pink_8	285631	0.006	0.005	ok
-flac -8	depth_pink_8	285590	0.010	0.005	ok
-wavpack -f	depth_pink_8	276904	0.007	0.005	ok
-wavpack	depth_pink_8	273110	0.009	0.005	ok
+wavpack	depth_pink_32	1595304	0.010	0.006	ok
+wavpack -hh	depth_pink_32	1591812	0.017	0.009	ok
+wavpack -hh -x4	depth_pink_32	1590192	0.103	0.006	ok
+block level 0	depth_pink_32	1600187	0.044	0.019	ok
+block level 1	depth_pink_32	1600187	0.064	0.019	ok
+block level 2	depth_pink_32	1598784	0.369	0.080	ok
+block level 4	depth_pink_32	1593355	1.403	0.080	ok
+block level 4 parallel	depth_pink_32	1593355	0.220	0.082	ok
+flac -0	depth_pink_8	293011	0.005	0.008	ok
+flac -5	depth_pink_8	285631	0.007	0.006	ok
+flac -8	depth_pink_8	285590	0.012	0.006	ok
+wavpack -f	depth_pink_8	276904	0.006	0.004	ok
+wavpack	depth_pink_8	273110	0.008	0.004	ok
 wavpack -hh	depth_pink_8	271050	0.013	0.007	ok
 wavpack -hh -x4	depth_pink_8	267362	0.100	0.005	ok
-block level 0	depth_pink_8	277156	0.026	0.013	ok
-block level 1	depth_pink_8	277139	0.055	0.018	ok
-block level 2	depth_pink_8	272056	0.166	0.025	ok
-block level 4	depth_pink_8	270005	0.835	0.019	ok
-flac -0	depth_sine_12in16	213053	0.008	0.007	ok
-flac -5	depth_sine_12in16	136219	0.012	0.010	ok
-flac -8	depth_sine_12in16	136219	0.012	0.007	ok
-wavpack -f	depth_sine_12in16	193046	0.014	0.006	ok
-wavpack	depth_sine_12in16	189784	0.019	0.008	ok
-wavpack -hh	depth_sine_12in16	193100	0.038	0.017	ok
-wavpack -hh -x4	depth_sine_12in16	163966	0.106	0.007	ok
-block level 0	depth_sine_12in16	5876	0.018	0.008	ok
-block level 1	depth_sine_12in16	4922	0.034	0.009	ok
-block level 2	depth_sine_12in16	3838	0.094	0.009	ok
-block level 4	depth_sine_12in16	3652	0.769	0.013	ok
-flac -0	depth_sine_24	709155	0.006	0.007	ok
-flac -5	depth_sine_24	600087	0.008	0.007	ok
-flac -8	depth_sine_24	477179	0.012	0.007	ok
-wavpack -f	depth_sine_24	752146	0.007	0.004	ok
-wavpack	depth_sine_24	772782	0.008	0.005	ok
-wavpack -hh	depth_sine_24	780898	0.014	0.009	ok
-wavpack -hh -x4	depth_sine_24	418778	0.137	0.007	ok
-block level 0	depth_sine_24	3907	0.019	0.010	ok
-block level 1	depth_sine_24	3907	0.030	0.009	ok
-block level 2	depth_sine_24	3907	0.080	0.010	ok
-block level 4	depth_sine_24	3274	0.678	0.009	ok
+block level 0	depth_pink_8	277156	0.037	0.013	ok
+block level 1	depth_pink_8	277139	0.051	0.014	ok
+block level 2	depth_pink_8	272056	0.123	0.018	ok
+block level 4	depth_pink_8	270005	1.004	0.025	ok
+block level 4 parallel	depth_pink_8	270005	0.179	0.028	ok
+flac -0	depth_sine_12in16	213053	0.006	0.006	ok
+flac -5	depth_sine_12in16	136219	0.007	0.007	ok
+flac -8	depth_sine_12in16	136219	0.013	0.007	ok
+wavpack -f	depth_sine_12in16	193046	0.019	0.014	ok
+wavpack	depth_sine_12in16	189784	0.013	0.007	ok
+wavpack -hh	depth_sine_12in16	193100	0.032	0.013	ok
+wavpack -hh -x4	depth_sine_12in16	163966	0.281	0.016	ok
+block level 0	depth_sine_12in16	5876	0.028	0.007	ok
+block level 1	depth_sine_12in16	4922	0.044	0.009	ok
+block level 2	depth_sine_12in16	3838	0.104	0.009	ok
+block level 4	depth_sine_12in16	3652	0.732	0.013	ok
+block level 4 parallel	depth_sine_12in16	3652	0.196	0.012	ok
+flac -0	depth_sine_24	709155	0.010	0.009	ok
+flac -5	depth_sine_24	600087	0.009	0.008	ok
+flac -8	depth_sine_24	477179	0.015	0.008	ok
+wavpack -f	depth_sine_24	752146	0.017	0.007	ok
+wavpack	depth_sine_24	772782	0.021	0.014	ok
+wavpack -hh	depth_sine_24	780898	0.044	0.016	ok
+wavpack -hh -x4	depth_sine_24	409326	0.237	0.010	ok
+block level 0	depth_sine_24	3907	0.038	0.013	ok
+block level 1	depth_sine_24	3907	0.053	0.013	ok
+block level 2	depth_sine_24	3907	0.137	0.013	ok
+block level 4	depth_sine_24	3274	0.554	0.008	ok
+block level 4 parallel	depth_sine_24	3274	0.076	0.009	ok
 flac -0	depth_sine_32f	0	0.002	0.002	unsupported
-flac -5	depth_sine_32f	0	0.001	0.001	unsupported
+flac -5	depth_sine_32f	0	0.002	0.002	unsupported
 flac -8	depth_sine_32f	0	0.001	0.002	unsupported
-wavpack -f	depth_sine_32f	901828	0.009	0.006	ok
-wavpack	depth_sine_32f	922268	0.010	0.006	ok
-wavpack -hh	depth_sine_32f	930868	0.016	0.008	ok
-wavpack -hh -x4	depth_sine_32f	532756	0.152	0.008	ok
-block level 0	depth_sine_32f	88244	0.022	0.010	ok
-block level 1	depth_sine_32f	88244	0.040	0.011	ok
-block level 2	depth_sine_32f	49514	0.177	0.021	ok
-block level 4	depth_sine_32f	19925	0.867	0.010	ok
-flac -0	depth_sine_32	1150155	0.007	0.007	ok
-flac -5	depth_sine_32	950556	0.009	0.007	ok
-flac -8	depth_sine_32	928267	0.023	0.007	ok
-wavpack -f	depth_sine_32	1193562	0.008	0.005	ok
-wavpack	depth_sine_32	1214042	0.009	0.005	ok
-wavpack -hh	depth_sine_32	1222962	0.014	0.008	ok
-wavpack -hh -x4	depth_sine_32	813258	0.140	0.007	ok
-block level 0	depth_sine_32	8728	0.020	0.010	ok
-block level 1	depth_sine_32	8728	0.033	0.010	ok
-block level 2	depth_sine_32	6629	0.086	0.011	ok
-block level 4	depth_sine_32	6067	0.446	0.010	ok
+wavpack -f	depth_sine_32f	901828	0.008	0.005	ok
+wavpack	depth_sine_32f	922268	0.009	0.006	ok
+wavpack -hh	depth_sine_32f	930868	0.014	0.008	ok
+wavpack -hh -x4	depth_sine_32f	532756	0.287	0.019	ok
+block level 0	depth_sine_32f	88244	0.044	0.014	ok
+block level 1	depth_sine_32f	88244	0.069	0.015	ok
+block level 2	depth_sine_32f	49514	0.183	0.014	ok
+block level 4	depth_sine_32f	19925	1.088	0.015	ok
+block level 4 parallel	depth_sine_32f	19925	0.157	0.014	ok
+flac -0	depth_sine_32	1150155	0.008	0.009	ok
+flac -5	depth_sine_32	950556	0.018	0.013	ok
+flac -8	depth_sine_32	928267	0.032	0.008	ok
+wavpack -f	depth_sine_32	1193562	0.014	0.010	ok
+wavpack	depth_sine_32	1214042	0.017	0.009	ok
+wavpack -hh	depth_sine_32	1222962	0.015	0.007	ok
+wavpack -hh -x4	depth_sine_32	813258	0.129	0.006	ok
+block level 0	depth_sine_32	8728	0.029	0.009	ok
+block level 1	depth_sine_32	8728	0.043	0.009	ok
+block level 2	depth_sine_32	6629	0.094	0.010	ok
+block level 4	depth_sine_32	6067	0.451	0.010	ok
+block level 4 parallel	depth_sine_32	6067	0.077	0.011	ok
 flac -0	depth_sine_8	146491	0.004	0.004	ok
 flac -5	depth_sine_8	142690	0.005	0.004	ok
-flac -8	depth_sine_8	142690	0.009	0.005	ok
-wavpack -f	depth_sine_8	166018	0.006	0.004	ok
-wavpack	depth_sine_8	155994	0.008	0.005	ok
-wavpack -hh	depth_sine_8	157652	0.014	0.007	ok
-wavpack -hh -x4	depth_sine_8	118938	0.074	0.006	ok
-block level 0	depth_sine_8	2997	0.016	0.007	ok
-block level 1	depth_sine_8	2997	0.034	0.007	ok
-block level 2	depth_sine_8	2997	0.099	0.007	ok
-block level 4	depth_sine_8	2847	0.549	0.007	ok
+flac -8	depth_sine_8	142690	0.009	0.004	ok
+wavpack -f	depth_sine_8	166018	0.005	0.003	ok
+wavpack	depth_sine_8	155994	0.006	0.004	ok
+wavpack -hh	depth_sine_8	157652	0.011	0.006	ok
+wavpack -hh -x4	depth_sine_8	118938	0.072	0.006	ok
+block level 0	depth_sine_8	2997	0.025	0.007	ok
+block level 1	depth_sine_8	2997	0.044	0.007	ok
+block level 2	depth_sine_8	2997	0.105	0.007	ok
+block level 4	depth_sine_8	2847	0.532	0.007	ok
+block level 4 parallel	depth_sine_8	2847	0.085	0.007	ok
 flac -0	rate_pink_16000	271457	0.003	0.003	ok
 flac -5	rate_pink_16000	268756	0.003	0.003	ok
-flac -8	rate_pink_16000	268731	0.006	0.004	ok
-wavpack -f	rate_pink_16000	260016	0.005	0.003	ok
-wavpack	rate_pink_16000	258534	0.006	0.004	ok
-wavpack -hh	rate_pink_16000	257176	0.009	0.005	ok
-wavpack -hh -x4	rate_pink_16000	256542	0.066	0.004	ok
-block level 0	rate_pink_16000	260656	0.013	0.007	ok
-block level 1	rate_pink_16000	260656	0.021	0.007	ok
-block level 2	rate_pink_16000	259024	0.071	0.015	ok
-block level 4	rate_pink_16000	257241	0.351	0.019	ok
-flac -0	rate_pink_192000	3167768	0.022	0.021	ok
-flac -5	rate_pink_192000	3134652	0.028	0.022	ok
-flac -8	rate_pink_192000	3134520	0.051	0.022	ok
-wavpack -f	rate_pink_192000	3119744	0.053	0.030	ok
-wavpack	rate_pink_192000	3101654	0.084	0.035	ok
-wavpack -hh	rate_pink_192000	3085286	0.159	0.046	ok
-wavpack -hh -x4	rate_pink_192000	3076738	0.578	0.048	ok
-block level 0	rate_pink_192000	3126420	0.167	0.082	ok
-block level 1	rate_pink_192000	3126420	0.196	0.055	ok
-block level 2	rate_pink_192000	3106819	0.997	0.179	ok
-block level 4	rate_pink_192000	3087801	4.610	0.145	ok
-flac -0	rate_pink_8000	139848	0.003	0.002	ok
-flac -5	rate_pink_8000	138526	0.003	0.002	ok
-flac -8	rate_pink_8000	138514	0.004	0.003	ok
-wavpack -f	rate_pink_8000	130156	0.005	0.004	ok
-wavpack	rate_pink_8000	129432	0.005	0.004	ok
-wavpack -hh	rate_pink_8000	128718	0.008	0.006	ok
-wavpack -hh -x4	rate_pink_8000	128336	0.058	0.003	ok
-block level 0	rate_pink_8000	130372	0.009	0.005	ok
-block level 1	rate_pink_8000	130372	0.014	0.005	ok
-block level 2	rate_pink_8000	129551	0.052	0.010	ok
-block level 4	rate_pink_8000	128764	0.215	0.010	ok
-flac -0	rate_pink_96000	1587947	0.012	0.011	ok
-flac -5	rate_pink_96000	1571307	0.015	0.012	ok
-flac -8	rate_pink_96000	1571241	0.026	0.012	ok
-wavpack -f	rate_pink_96000	1560806	0.034	0.015	ok
-wavpack	rate_pink_96000	1551750	0.035	0.016	ok
-wavpack -hh	rate_pink_96000	1542324	0.060	0.017	ok
-wavpack -hh -x4	rate_pink_96000	1538280	0.310	0.024	ok
-block level 0	rate_pink_96000	1563158	0.083	0.040	ok
-block level 1	rate_pink_96000	1563158	0.148	0.042	ok
-block level 2	rate_pink_96000	1553504	0.436	0.072	ok
-block level 4	rate_pink_96000	1544625	1.697	0.075	ok
+flac -8	rate_pink_16000	268731	0.005	0.003	ok
+wavpack -f	rate_pink_16000	260016	0.004	0.003	ok
+wavpack	rate_pink_16000	258534	0.006	0.003	ok
+wavpack -hh	rate_pink_16000	257176	0.009	0.004	ok
+wavpack -hh -x4	rate_pink_16000	256542	0.064	0.003	ok
+block level 0	rate_pink_16000	260656	0.021	0.006	ok
+block level 1	rate_pink_16000	260656	0.028	0.006	ok
+block level 2	rate_pink_16000	259024	0.079	0.013	ok
+block level 4	rate_pink_16000	257241	0.289	0.014	ok
+block level 4 parallel	rate_pink_16000	257241	0.050	0.014	ok
+flac -0	rate_pink_192000	3167768	0.016	0.015	ok
+flac -5	rate_pink_192000	3134652	0.021	0.016	ok
+flac -8	rate_pink_192000	3134520	0.038	0.016	ok
+wavpack -f	rate_pink_192000	3119744	0.018	0.009	ok
+wavpack	rate_pink_192000	3101654	0.022	0.010	ok
+wavpack -hh	rate_pink_192000	3085286	0.039	0.016	ok
+wavpack -hh -x4	rate_pink_192000	3076738	0.328	0.012	ok
+block level 0	rate_pink_192000	3126420	0.119	0.054	ok
+block level 1	rate_pink_192000	3126420	0.203	0.054	ok
+block level 2	rate_pink_192000	3106819	0.804	0.138	ok
+block level 4	rate_pink_192000	3087801	3.260	0.145	ok
+block level 4 parallel	rate_pink_192000	3087801	0.432	0.142	ok
+flac -0	rate_pink_8000	139848	0.002	0.002	ok
+flac -5	rate_pink_8000	138526	0.002	0.002	ok
+flac -8	rate_pink_8000	138514	0.003	0.002	ok
+wavpack -f	rate_pink_8000	130156	0.003	0.002	ok
+wavpack	rate_pink_8000	129432	0.004	0.003	ok
+wavpack -hh	rate_pink_8000	128718	0.006	0.003	ok
+wavpack -hh -x4	rate_pink_8000	128336	0.046	0.003	ok
+block level 0	rate_pink_8000	130372	0.017	0.004	ok
+block level 1	rate_pink_8000	130372	0.020	0.004	ok
+block level 2	rate_pink_8000	129551	0.045	0.008	ok
+block level 4	rate_pink_8000	128764	0.149	0.008	ok
+block level 4 parallel	rate_pink_8000	128764	0.032	0.008	ok
+flac -0	rate_pink_96000	1587947	0.009	0.008	ok
+flac -5	rate_pink_96000	1571307	0.011	0.009	ok
+flac -8	rate_pink_96000	1571241	0.020	0.009	ok
+wavpack -f	rate_pink_96000	1560806	0.010	0.006	ok
+wavpack	rate_pink_96000	1551750	0.013	0.007	ok
+wavpack -hh	rate_pink_96000	1542324	0.023	0.009	ok
+wavpack -hh -x4	rate_pink_96000	1538280	0.193	0.008	ok
+block level 0	rate_pink_96000	1563158	0.067	0.028	ok
+block level 1	rate_pink_96000	1563158	0.107	0.028	ok
+block level 2	rate_pink_96000	1553504	0.404	0.069	ok
+block level 4	rate_pink_96000	1544625	1.650	0.071	ok
+block level 4 parallel	rate_pink_96000	1544625	0.216	0.072	ok
 flac -0	rate_sine_16000	220261	0.003	0.003	ok
-flac -5	rate_sine_16000	105624	0.003	0.003	ok
-flac -8	rate_sine_16000	65401	0.005	0.003	ok
+flac -5	rate_sine_16000	105624	0.003	0.002	ok
+flac -8	rate_sine_16000	65401	0.005	0.002	ok
 wavpack -f	rate_sine_16000	180370	0.004	0.003	ok
-wavpack	rate_sine_16000	150222	0.005	0.003	ok
+wavpack	rate_sine_16000	150222	0.004	0.003	ok
 wavpack -hh	rate_sine_16000	82104	0.007	0.004	ok
-wavpack -hh -x4	rate_sine_16000	848	0.040	0.003	ok
-block level 0	rate_sine_16000	1119	0.008	0.004	ok
-block level 1	rate_sine_16000	1119	0.014	0.005	ok
-block level 2	rate_sine_16000	1119	0.035	0.005	ok
-block level 4	rate_sine_16000	1119	0.179	0.004	ok
-flac -0	rate_sine_192000	576517	0.013	0.017	ok
-flac -5	rate_sine_192000	556151	0.021	0.016	ok
-flac -8	rate_sine_192000	556151	0.037	0.017	ok
-wavpack -f	rate_sine_192000	1522752	0.016	0.008	ok
-wavpack	rate_sine_192000	1545884	0.023	0.009	ok
-wavpack -hh	rate_sine_192000	1450678	0.037	0.017	ok
-wavpack -hh -x4	rate_sine_192000	672778	0.282	0.014	ok
-block level 0	rate_sine_192000	11648	0.067	0.028	ok
-block level 1	rate_sine_192000	11648	0.144	0.028	ok
-block level 2	rate_sine_192000	11648	0.432	0.026	ok
-block level 4	rate_sine_192000	11523	2.364	0.028	ok
+wavpack -hh -x4	rate_sine_16000	848	0.038	0.002	ok
+block level 0	rate_sine_16000	1119	0.017	0.004	ok
+block level 1	rate_sine_16000	1119	0.023	0.004	ok
+block level 2	rate_sine_16000	1119	0.044	0.004	ok
+block level 4	rate_sine_16000	1119	0.178	0.004	ok
+block level 4 parallel	rate_sine_16000	1119	0.038	0.004	ok
+flac -0	rate_sine_192000	576517	0.012	0.016	ok
+flac -5	rate_sine_192000	556151	0.018	0.015	ok
+flac -8	rate_sine_192000	556151	0.034	0.015	ok
+wavpack -f	rate_sine_192000	1522752	0.014	0.006	ok
+wavpack	rate_sine_192000	1545884	0.019	0.008	ok
+wavpack -hh	rate_sine_192000	1450678	0.034	0.014	ok
+wavpack -hh -x4	rate_sine_192000	672778	0.262	0.017	ok
+block level 0	rate_sine_192000	11648	0.073	0.026	ok
+block level 1	rate_sine_192000	11648	0.145	0.026	ok
+block level 2	rate_sine_192000	11648	0.398	0.025	ok
+block level 4	rate_sine_192000	11523	2.182	0.026	ok
+block level 4 parallel	rate_sine_192000	11523	0.307	0.026	ok
 flac -0	rate_sine_8000	149144	0.002	0.002	ok
-flac -5	rate_sine_8000	55273	0.003	0.002	ok
+flac -5	rate_sine_8000	55273	0.002	0.002	ok
 flac -8	rate_sine_8000	42416	0.003	0.002	ok
-wavpack -f	rate_sine_8000	122658	0.004	0.002	ok
-wavpack	rate_sine_8000	105620	0.003	0.003	ok
-wavpack -hh	rate_sine_8000	1272	0.005	0.003	ok
-wavpack -hh -x4	rate_sine_8000	316	0.034	0.002	ok
-block level 0	rate_sine_8000	626	0.005	0.003	ok
-block level 1	rate_sine_8000	626	0.007	0.003	ok
-block level 2	rate_sine_8000	626	0.016	0.003	ok
-block level 4	rate_sine_8000	626	0.090	0.003	ok
-flac -0	rate_sine_96000	426524	0.007	0.009	ok
+wavpack -f	rate_sine_8000	122658	0.003	0.003	ok
+wavpack	rate_sine_8000	105620	0.004	0.003	ok
+wavpack -hh	rate_sine_8000	1272	0.004	0.003	ok
+wavpack -hh -x4	rate_sine_8000	316	0.033	0.002	ok
+block level 0	rate_sine_8000	626	0.014	0.003	ok
+block level 1	rate_sine_8000	626	0.017	0.003	ok
+block level 2	rate_sine_8000	626	0.026	0.003	ok
+block level 4	rate_sine_8000	626	0.097	0.003	ok
+block level 4 parallel	rate_sine_8000	626	0.026	0.003	ok
+flac -0	rate_sine_96000	426524	0.007	0.008	ok
 flac -5	rate_sine_96000	414987	0.010	0.008	ok
-flac -8	rate_sine_96000	414889	0.019	0.008	ok
+flac -8	rate_sine_96000	414889	0.018	0.008	ok
 wavpack -f	rate_sine_96000	539558	0.008	0.005	ok
 wavpack	rate_sine_96000	541788	0.010	0.006	ok
-wavpack -hh	rate_sine_96000	558428	0.020	0.008	ok
-wavpack -hh -x4	rate_sine_96000	479106	0.168	0.006	ok
-block level 0	rate_sine_96000	5916	0.034	0.014	ok
-block level 1	rate_sine_96000	5916	0.069	0.014	ok
-block level 2	rate_sine_96000	5916	0.206	0.014	ok
-block level 4	rate_sine_96000	5916	1.136	0.014	ok
-flac -0	rec_electronic	4411305	0.020	0.020	ok
-flac -5	rec_electronic	4127438	0.033	0.022	ok
-flac -8	rec_electronic	4120410	0.076	0.023	ok
-wavpack -f	rec_electronic	4150640	0.022	0.011	ok
+wavpack -hh	rate_sine_96000	558428	0.019	0.008	ok
+wavpack -hh -x4	rate_sine_96000	479106	0.165	0.005	ok
+block level 0	rate_sine_96000	5916	0.043	0.014	ok
+block level 1	rate_sine_96000	5916	0.079	0.014	ok
+block level 2	rate_sine_96000	5916	0.211	0.014	ok
+block level 4	rate_sine_96000	5916	1.121	0.014	ok
+block level 4 parallel	rate_sine_96000	5916	0.160	0.015	ok
+flac -0	rec_electronic	4411305	0.019	0.018	ok
+flac -5	rec_electronic	4127438	0.031	0.020	ok
+flac -8	rec_electronic	4120410	0.070	0.021	ok
+wavpack -f	rec_electronic	4150640	0.018	0.010	ok
 wavpack	rec_electronic	4130634	0.028	0.015	ok
-wavpack -hh	rec_electronic	4113156	0.061	0.030	ok
-wavpack -hh -x4	rec_electronic	4102174	0.848	0.023	ok
-block level 0	rec_electronic	4407857	0.115	0.065	ok
-block level 1	rec_electronic	4134935	0.201	0.080	ok
-block level 2	rec_electronic	4104912	0.940	0.242	ok
-block level 4	rec_electronic	4087436	7.619	0.174	ok
+wavpack -hh	rec_electronic	4113156	0.057	0.029	ok
+wavpack -hh -x4	rec_electronic	4102174	0.706	0.022	ok
+block level 0	rec_electronic	4407857	0.120	0.063	ok
+block level 1	rec_electronic	4134935	0.200	0.078	ok
+block level 2	rec_electronic	4104912	0.853	0.181	ok
+block level 4	rec_electronic	4087436	6.405	0.172	ok
+block level 4 parallel	rec_electronic	4087436	0.865	0.175	ok
 flac -0	rec_orchestra_f32	0	0.001	0.001	unsupported
 flac -5	rec_orchestra_f32	0	0.001	0.001	unsupported
-flac -8	rec_orchestra_f32	0	0.001	0.001	unsupported
-wavpack -f	rec_orchestra_f32	3345518	0.020	0.015	ok
-wavpack	rec_orchestra_f32	3329624	0.029	0.018	ok
-wavpack -hh	rec_orchestra_f32	3318144	0.050	0.025	ok
-wavpack -hh -x4	rec_orchestra_f32	3313912	0.559	0.022	ok
-block level 0	rec_orchestra_f32	3446796	0.185	0.082	ok
-block level 1	rec_orchestra_f32	3349326	0.281	0.109	ok
-block level 2	rec_orchestra_f32	3328812	0.920	0.203	ok
-block level 4	rec_orchestra_f32	3316544	6.831	0.179	ok
-flac -0	rec_orchestra	3456860	0.019	0.021	ok
-flac -5	rec_orchestra	3338794	0.034	0.023	ok
-flac -8	rec_orchestra	3337926	0.075	0.022	ok
-wavpack -f	rec_orchestra	3345058	0.020	0.012	ok
+flac -8	rec_orchestra_f32	0	0.001	0.002	unsupported
+wavpack -f	rec_orchestra_f32	3345518	0.020	0.012	ok
+wavpack	rec_orchestra_f32	3329624	0.025	0.015	ok
+wavpack -hh	rec_orchestra_f32	3318144	0.048	0.025	ok
+wavpack -hh -x4	rec_orchestra_f32	3313912	0.540	0.022	ok
+block level 0	rec_orchestra_f32	3446796	0.177	0.076	ok
+block level 1	rec_orchestra_f32	3349326	0.272	0.101	ok
+block level 2	rec_orchestra_f32	3328812	0.893	0.193	ok
+block level 4	rec_orchestra_f32	3316544	6.678	0.169	ok
+block level 4 parallel	rec_orchestra_f32	3316544	0.836	0.171	ok
+flac -0	rec_orchestra	3456860	0.020	0.020	ok
+flac -5	rec_orchestra	3338794	0.033	0.021	ok
+flac -8	rec_orchestra	3337926	0.075	0.021	ok
+wavpack -f	rec_orchestra	3345058	0.019	0.010	ok
 wavpack	rec_orchestra	3329166	0.024	0.012	ok
-wavpack -hh	rec_orchestra	3317930	0.043	0.023	ok
-wavpack -hh -x4	rec_orchestra	3313682	0.571	0.025	ok
-block level 0	rec_orchestra	3446792	0.135	0.067	ok
-block level 1	rec_orchestra	3349322	0.212	0.087	ok
-block level 2	rec_orchestra	3328808	0.848	0.173	ok
-block level 4	rec_orchestra	3316540	7.306	0.160	ok
-flac -0	rec_piano_96k	3313399	0.035	0.040	ok
-flac -5	rec_piano_96k	3096061	0.065	0.042	ok
-flac -8	rec_piano_96k	3071311	0.159	0.044	ok
+wavpack -hh	rec_orchestra	3317930	0.043	0.021	ok
+wavpack -hh -x4	rec_orchestra	3313682	0.541	0.019	ok
+block level 0	rec_orchestra	3446792	0.125	0.058	ok
+block level 1	rec_orchestra	3349322	0.219	0.083	ok
+block level 2	rec_orchestra	3328808	0.844	0.169	ok
+block level 4	rec_orchestra	3316540	6.628	0.149	ok
+block level 4 parallel	rec_orchestra	3316540	0.802	0.151	ok
+flac -0	rec_piano_96k	3313399	0.033	0.037	ok
+flac -5	rec_piano_96k	3096061	0.063	0.039	ok
+flac -8	rec_piano_96k	3071311	0.157	0.043	ok
 wavpack -f	rec_piano_96k	3693756	0.033	0.018	ok
-wavpack	rec_piano_96k	3316342	0.042	0.022	ok
-wavpack -hh	rec_piano_96k	3206882	0.076	0.039	ok
-wavpack -hh -x4	rec_piano_96k	3034106	1.308	0.039	ok
-block level 0	rec_piano_96k	3303516	0.214	0.119	ok
-block level 1	rec_piano_96k	3226306	0.378	0.143	ok
-block level 2	rec_piano_96k	3188689	1.207	0.213	ok
-block level 4	rec_piano_96k	3027598	13.687	0.200	ok
-flac -0	rec_piano	954302	0.016	0.019	ok
-flac -5	rec_piano	841883	0.030	0.019	ok
-flac -8	rec_piano	835209	0.066	0.020	ok
-wavpack -f	rec_piano	1053356	0.019	0.010	ok
-wavpack	rec_piano	920672	0.024	0.013	ok
-wavpack -hh	rec_piano	885916	0.051	0.023	ok
-wavpack -hh -x4	rec_piano	834916	0.582	0.022	ok
-block level 0	rec_piano	943493	0.103	0.050	ok
-block level 1	rec_piano	867122	0.179	0.068	ok
-block level 2	rec_piano	851406	0.491	0.075	ok
-block level 4	rec_piano	808884	5.594	0.069	ok
+wavpack	rec_piano_96k	3316342	0.043	0.023	ok
+wavpack -hh	rec_piano_96k	3206882	0.075	0.038	ok
+wavpack -hh -x4	rec_piano_96k	3034106	1.294	0.039	ok
+block level 0	rec_piano_96k	3303516	0.224	0.116	ok
+block level 1	rec_piano_96k	3226306	0.381	0.140	ok
+block level 2	rec_piano_96k	3188689	1.190	0.207	ok
+block level 4	rec_piano_96k	3027598	12.077	0.190	ok
+block level 4 parallel	rec_piano_96k	3027598	1.566	0.194	ok
+flac -0	rec_piano	954302	0.016	0.018	ok
+flac -5	rec_piano	841883	0.029	0.018	ok
+flac -8	rec_piano	835209	0.064	0.019	ok
+wavpack -f	rec_piano	1053356	0.016	0.009	ok
+wavpack	rec_piano	920672	0.022	0.012	ok
+wavpack -hh	rec_piano	885916	0.048	0.022	ok
+wavpack -hh -x4	rec_piano	835098	0.564	0.020	ok
+block level 0	rec_piano	943493	0.108	0.048	ok
+block level 1	rec_piano	867122	0.182	0.066	ok
+block level 2	rec_piano	851406	0.486	0.074	ok
+block level 4	rec_piano	808884	5.341	0.067	ok
+block level 4 parallel	rec_piano	808884	0.689	0.069	ok
 flac -0	rec_room	3362585	0.019	0.020	ok
-flac -5	rec_room	3237955	0.033	0.022	ok
-flac -8	rec_room	3235917	0.181	0.022	ok
-wavpack -f	rec_room	3246428	0.020	0.011	ok
-wavpack	rec_room	3232090	0.024	0.013	ok
-wavpack -hh	rec_room	3213258	0.042	0.022	ok
-wavpack -hh -x4	rec_room	3209470	0.513	0.072	ok
-block level 0	rec_room	3354356	0.169	0.080	ok
-block level 1	rec_room	3238700	0.283	0.083	ok
-block level 2	rec_room	3219357	0.945	0.218	ok
-block level 4	rec_room	3212744	8.350	0.156	ok
+flac -5	rec_room	3237955	0.033	0.021	ok
+flac -8	rec_room	3235917	0.075	0.022	ok
+wavpack -f	rec_room	3246428	0.019	0.010	ok
+wavpack	rec_room	3232090	0.022	0.011	ok
+wavpack -hh	rec_room	3213258	0.038	0.020	ok
+wavpack -hh -x4	rec_room	3209470	0.497	0.018	ok
+block level 0	rec_room	3354356	0.125	0.056	ok
+block level 1	rec_room	3238700	0.221	0.081	ok
+block level 2	rec_room	3219357	0.818	0.160	ok
+block level 4	rec_room	3212744	6.628	0.150	ok
+block level 4 parallel	rec_room	3212744	0.782	0.151	ok
 flac -0	rec_speech_16k	417127	0.004	0.004	ok
 flac -5	rec_speech_16k	380287	0.005	0.004	ok
-flac -8	rec_speech_16k	378411	0.011	0.008	ok
-wavpack -f	rec_speech_16k	380346	0.011	0.006	ok
-wavpack	rec_speech_16k	369002	0.016	0.006	ok
-wavpack -hh	rec_speech_16k	361802	0.026	0.011	ok
-wavpack -hh -x4	rec_speech_16k	361134	0.219	0.017	ok
-block level 0	rec_speech_16k	420009	0.029	0.016	ok
-block level 1	rec_speech_16k	375397	0.052	0.021	ok
-block level 2	rec_speech_16k	366538	0.199	0.032	ok
-block level 4	rec_speech_16k	364091	0.903	0.029	ok
-flac -0	rec_speech_8k	80504	0.003	0.003	ok
-flac -5	rec_speech_8k	78075	0.004	0.003	ok
-flac -8	rec_speech_8k	77668	0.006	0.003	ok
-wavpack -f	rec_speech_8k	71156	0.008	0.004	ok
+flac -8	rec_speech_16k	378411	0.008	0.004	ok
+wavpack -f	rec_speech_16k	380346	0.006	0.004	ok
+wavpack	rec_speech_16k	369002	0.007	0.004	ok
+wavpack -hh	rec_speech_16k	361802	0.012	0.006	ok
+wavpack -hh -x4	rec_speech_16k	361134	0.168	0.006	ok
+block level 0	rec_speech_16k	420009	0.030	0.011	ok
+block level 1	rec_speech_16k	375397	0.045	0.014	ok
+block level 2	rec_speech_16k	366538	0.129	0.024	ok
+block level 4	rec_speech_16k	364091	0.569	0.021	ok
+block level 4 parallel	rec_speech_16k	364091	0.085	0.021	ok
+flac -0	rec_speech_8k	80504	0.003	0.002	ok
+flac -5	rec_speech_8k	78075	0.003	0.002	ok
+flac -8	rec_speech_8k	77668	0.005	0.003	ok
+wavpack -f	rec_speech_8k	71156	0.005	0.003	ok
 wavpack	rec_speech_8k	67798	0.006	0.003	ok
-wavpack -hh	rec_speech_8k	67816	0.012	0.006	ok
-wavpack -hh -x4	rec_speech_8k	66404	0.109	0.005	ok
-block level 0	rec_speech_8k	78376	0.012	0.006	ok
-block level 1	rec_speech_8k	73062	0.019	0.007	ok
-block level 2	rec_speech_8k	67059	0.047	0.009	ok
-block level 4	rec_speech_8k	65050	0.261	0.007	ok
-flac -0	rec_speech	3923031	0.021	0.026	ok
-flac -5	rec_speech	3778733	0.042	0.041	ok
-flac -8	rec_speech	3768420	0.115	0.032	ok
-wavpack -f	rec_speech	3866596	0.072	0.025	ok
-wavpack	rec_speech	3791466	0.092	0.034	ok
-wavpack -hh	rec_speech	3729716	0.102	0.070	ok
-wavpack -hh -x4	rec_speech	3725354	1.005	0.022	ok
-block level 0	rec_speech	3923770	0.122	0.060	ok
-block level 1	rec_speech	3763673	0.219	0.087	ok
-block level 2	rec_speech	3743651	1.197	0.245	ok
-block level 4	rec_speech	3731253	8.635	0.176	ok
-flac -0	rec_vinyl_192k	8759646	0.068	0.079	ok
-flac -5	rec_vinyl_192k	6612698	0.126	0.082	ok
-flac -8	rec_vinyl_192k	6144307	0.325	0.087	ok
-wavpack -f	rec_vinyl_192k	11263928	0.064	0.035	ok
-wavpack	rec_vinyl_192k	10883676	0.082	0.043	ok
-wavpack -hh	rec_vinyl_192k	10882306	0.140	0.076	ok
-wavpack -hh -x4	rec_vinyl_192k	5987280	2.644	0.076	ok
-block level 0	rec_vinyl_192k	8748856	0.419	0.251	ok
-block level 1	rec_vinyl_192k	5656220	0.761	0.298	ok
-block level 2	rec_vinyl_192k	5543557	2.714	0.431	ok
-block level 4	rec_vinyl_192k	5520549	26.896	0.398	ok
+wavpack -hh	rec_speech_8k	67816	0.010	0.005	ok
+wavpack -hh -x4	rec_speech_8k	66404	0.104	0.004	ok
+block level 0	rec_speech_8k	78376	0.022	0.007	ok
+block level 1	rec_speech_8k	73062	0.028	0.008	ok
+block level 2	rec_speech_8k	67059	0.056	0.008	ok
+block level 4	rec_speech_8k	65050	0.265	0.007	ok
+block level 4 parallel	rec_speech_8k	65050	0.046	0.007	ok
+flac -0	rec_speech	3923031	0.019	0.020	ok
+flac -5	rec_speech	3778733	0.032	0.022	ok
+flac -8	rec_speech	3768420	0.082	0.023	ok
+wavpack -f	rec_speech	3866596	0.022	0.011	ok
+wavpack	rec_speech	3791466	0.027	0.013	ok
+wavpack -hh	rec_speech	3729716	0.042	0.022	ok
+wavpack -hh -x4	rec_speech	3725350	0.607	0.022	ok
+block level 0	rec_speech	3923770	0.124	0.058	ok
+block level 1	rec_speech	3763673	0.219	0.085	ok
+block level 2	rec_speech	3743651	0.868	0.178	ok
+block level 4	rec_speech	3731253	7.084	0.169	ok
+block level 4 parallel	rec_speech	3731253	0.836	0.171	ok
+flac -0	rec_vinyl_192k	8759646	0.065	0.075	ok
+flac -5	rec_vinyl_192k	6612698	0.124	0.080	ok
+flac -8	rec_vinyl_192k	6144307	0.331	0.085	ok
+wavpack -f	rec_vinyl_192k	11263928	0.065	0.034	ok
+wavpack	rec_vinyl_192k	10883676	0.080	0.042	ok
+wavpack -hh	rec_vinyl_192k	10882306	0.144	0.074	ok
+wavpack -hh -x4	rec_vinyl_192k	5987280	2.591	0.074	ok
+block level 0	rec_vinyl_192k	8748856	0.421	0.246	ok
+block level 1	rec_vinyl_192k	5656220	0.752	0.289	ok
+block level 2	rec_vinyl_192k	5543557	2.515	0.395	ok
+block level 4	rec_vinyl_192k	5520549	26.099	0.388	ok
+block level 4 parallel	rec_vinyl_192k	5520549	3.361	0.400	ok
 flac -0	signal_brown	1300418	0.008	0.008	ok
 flac -5	signal_brown	1293720	0.011	0.008	ok
-flac -8	signal_brown	1293718	0.019	0.008	ok
-wavpack -f	signal_brown	1270954	0.011	0.006	ok
+flac -8	signal_brown	1293718	0.018	0.008	ok
+wavpack -f	signal_brown	1270954	0.010	0.005	ok
 wavpack	signal_brown	1263774	0.013	0.007	ok
-wavpack -hh	signal_brown	1264674	0.022	0.011	ok
-wavpack -hh -x4	signal_brown	1251216	0.165	0.007	ok
-block level 0	signal_brown	1272344	0.055	0.034	ok
-block level 1	signal_brown	1272344	0.093	0.034	ok
-block level 2	signal_brown	1259722	0.348	0.059	ok
-block level 4	signal_brown	1259441	1.438	0.061	ok
+wavpack -hh	signal_brown	1264674	0.022	0.010	ok
+wavpack -hh -x4	signal_brown	1251216	0.161	0.006	ok
+block level 0	signal_brown	1272344	0.068	0.034	ok
+block level 1	signal_brown	1272344	0.101	0.033	ok
+block level 2	signal_brown	1259722	0.361	0.060	ok
+block level 4	signal_brown	1259441	1.506	0.063	ok
+block level 4 parallel	signal_brown	1259441	0.212	0.062	ok
 flac -0	signal_chord	319379	0.007	0.008	ok
-flac -5	signal_chord	310465	0.010	0.008	ok
-flac -8	signal_chord	310465	0.018	0.008	ok
-wavpack -f	signal_chord	564886	0.012	0.006	ok
-wavpack	signal_chord	570778	0.013	0.007	ok
-wavpack -hh	signal_chord	559642	0.027	0.013	ok
-wavpack -hh -x4	signal_chord	376982	0.281	0.014	ok
-block level 0	signal_chord	297088	0.046	0.024	ok
-block level 1	signal_chord	207068	0.085	0.032	ok
-block level 2	signal_chord	156997	0.250	0.034	ok
-block level 4	signal_chord	154053	1.303	0.029	ok
-flac -0	signal_dither	238834	0.007	0.009	ok
-flac -5	signal_dither	232402	0.009	0.007	ok
-flac -8	signal_dither	232402	0.016	0.008	ok
-wavpack -f	signal_dither	246218	0.010	0.005	ok
+flac -5	signal_chord	310465	0.012	0.008	ok
+flac -8	signal_chord	310465	0.019	0.008	ok
+wavpack -f	signal_chord	564886	0.011	0.006	ok
+wavpack	signal_chord	570778	0.014	0.008	ok
+wavpack -hh	signal_chord	559642	0.029	0.014	ok
+wavpack -hh -x4	signal_chord	376982	0.285	0.015	ok
+block level 0	signal_chord	297088	0.055	0.026	ok
+block level 1	signal_chord	207068	0.099	0.034	ok
+block level 2	signal_chord	156997	0.262	0.035	ok
+block level 4	signal_chord	154053	1.335	0.029	ok
+block level 4 parallel	signal_chord	154053	0.194	0.030	ok
+flac -0	signal_dither	238834	0.007	0.008	ok
+flac -5	signal_dither	232402	0.010	0.008	ok
+flac -8	signal_dither	232402	0.017	0.007	ok
+wavpack -f	signal_dither	246218	0.011	0.007	ok
 wavpack	signal_dither	246834	0.015	0.008	ok
-wavpack -hh	signal_dither	248620	0.027	0.015	ok
-wavpack -hh -x4	signal_dither	245760	0.176	0.005	ok
-block level 0	signal_dither	196412	0.062	0.022	ok
-block level 1	signal_dither	196412	0.090	0.023	ok
-block level 2	signal_dither	196412	0.227	0.023	ok
-block level 4	signal_dither	196412	1.615	0.022	ok
-flac -0	signal_fm	412364	0.007	0.008	ok
+wavpack -hh	signal_dither	248620	0.026	0.016	ok
+wavpack -hh -x4	signal_dither	245760	0.179	0.005	ok
+block level 0	signal_dither	196412	0.073	0.023	ok
+block level 1	signal_dither	196412	0.100	0.022	ok
+block level 2	signal_dither	196412	0.232	0.022	ok
+block level 4	signal_dither	196412	1.570	0.022	ok
+block level 4 parallel	signal_dither	196412	0.208	0.022	ok
+flac -0	signal_fm	412364	0.008	0.009	ok
 flac -5	signal_fm	362981	0.011	0.008	ok
 flac -8	signal_fm	351575	0.018	0.008	ok
-wavpack -f	signal_fm	631808	0.009	0.005	ok
-wavpack	signal_fm	662888	0.012	0.006	ok
-wavpack -hh	signal_fm	663238	0.025	0.011	ok
-wavpack -hh -x4	signal_fm	507822	0.273	0.011	ok
-block level 0	signal_fm	12530	0.032	0.015	ok
-block level 1	signal_fm	9881	0.069	0.014	ok
-block level 2	signal_fm	8367	0.211	0.015	ok
-block level 4	signal_fm	7684	1.366	0.014	ok
-flac -0	signal_impulses	46588	0.006	0.007	ok
+wavpack -f	signal_fm	631808	0.011	0.005	ok
+wavpack	signal_fm	662888	0.013	0.006	ok
+wavpack -hh	signal_fm	663238	0.023	0.012	ok
+wavpack -hh -x4	signal_fm	507822	0.292	0.013	ok
+block level 0	signal_fm	12530	0.042	0.015	ok
+block level 1	signal_fm	9881	0.078	0.014	ok
+block level 2	signal_fm	8367	0.218	0.014	ok
+block level 4	signal_fm	7684	1.486	0.014	ok
+block level 4 parallel	signal_fm	7684	0.191	0.015	ok
+flac -0	signal_impulses	46588	0.006	0.006	ok
 flac -5	signal_impulses	113588	0.009	0.007	ok
-flac -8	signal_impulses	113588	0.015	0.009	ok
+flac -8	signal_impulses	113588	0.014	0.007	ok
 wavpack -f	signal_impulses	3738	0.006	0.004	ok
-wavpack	signal_impulses	3898	0.008	0.006	ok
-wavpack -hh	signal_impulses	4298	0.013	0.008	ok
-wavpack -hh -x4	signal_impulses	3658	0.070	0.003	ok
-block level 0	signal_impulses	7502	0.028	0.014	ok
-block level 1	signal_impulses	7502	0.044	0.014	ok
-block level 2	signal_impulses	7140	0.067	0.014	ok
-block level 4	signal_impulses	7140	0.086	0.015	ok
-flac -0	signal_pink	1459589	0.008	0.008	ok
+wavpack	signal_impulses	3898	0.009	0.005	ok
+wavpack -hh	signal_impulses	4298	0.013	0.012	ok
+wavpack -hh -x4	signal_impulses	3658	0.238	0.003	ok
+block level 0	signal_impulses	7502	0.038	0.014	ok
+block level 1	signal_impulses	7502	0.054	0.015	ok
+block level 2	signal_impulses	7140	0.074	0.015	ok
+block level 4	signal_impulses	7140	0.093	0.015	ok
+block level 4 parallel	signal_impulses	7140	0.029	0.015	ok
+flac -0	signal_pink	1459589	0.009	0.009	ok
 flac -5	signal_pink	1444270	0.012	0.009	ok
-flac -8	signal_pink	1444216	0.020	0.008	ok
-wavpack -f	signal_pink	1434230	0.010	0.006	ok
-wavpack	signal_pink	1425934	0.012	0.007	ok
-wavpack -hh	signal_pink	1419158	0.022	0.010	ok
-wavpack -hh -x4	signal_pink	1415298	0.173	0.007	ok
-block level 0	signal_pink	1436153	0.054	0.027	ok
-block level 1	signal_pink	1436153	0.092	0.027	ok
-block level 2	signal_pink	1427292	0.384	0.066	ok
-block level 4	signal_pink	1419155	1.574	0.067	ok
-flac -0	signal_sawtooth	1417967	0.008	0.008	ok
-flac -5	signal_sawtooth	1411395	0.011	0.007	ok
-flac -8	signal_sawtooth	1411395	0.019	0.007	ok
-wavpack -f	signal_sawtooth	829766	0.008	0.004	ok
-wavpack	signal_sawtooth	923850	0.011	0.006	ok
-wavpack -hh	signal_sawtooth	1311700	0.021	0.012	ok
-wavpack -hh -x4	signal_sawtooth	909710	0.147	0.009	ok
-block level 0	signal_sawtooth	6954	0.031	0.013	ok
-block level 1	signal_sawtooth	6954	0.066	0.013	ok
-block level 2	signal_sawtooth	6428	0.209	0.013	ok
-block level 4	signal_sawtooth	5982	1.080	0.013	ok
+flac -8	signal_pink	1444216	0.025	0.011	ok
+wavpack -f	signal_pink	1434230	0.027	0.013	ok
+wavpack	signal_pink	1425934	0.022	0.010	ok
+wavpack -hh	signal_pink	1419158	0.054	0.017	ok
+wavpack -hh -x4	signal_pink	1415298	0.233	0.007	ok
+block level 0	signal_pink	1436153	0.064	0.027	ok
+block level 1	signal_pink	1436153	0.101	0.027	ok
+block level 2	signal_pink	1427292	0.382	0.079	ok
+block level 4	signal_pink	1419155	1.874	0.073	ok
+block level 4 parallel	signal_pink	1419155	0.232	0.073	ok
+flac -0	signal_sawtooth	1417967	0.012	0.009	ok
+flac -5	signal_sawtooth	1411395	0.012	0.008	ok
+flac -8	signal_sawtooth	1411395	0.021	0.009	ok
+wavpack -f	signal_sawtooth	829766	0.008	0.006	ok
+wavpack	signal_sawtooth	923850	0.012	0.009	ok
+wavpack -hh	signal_sawtooth	1311700	0.024	0.010	ok
+wavpack -hh -x4	signal_sawtooth	909710	0.164	0.011	ok
+block level 0	signal_sawtooth	6954	0.045	0.014	ok
+block level 1	signal_sawtooth	6954	0.084	0.014	ok
+block level 2	signal_sawtooth	6428	0.235	0.018	ok
+block level 4	signal_sawtooth	5982	1.217	0.014	ok
+block level 4 parallel	signal_sawtooth	5982	0.189	0.014	ok
 flac -0	signal_silence	17388	0.006	0.006	ok
-flac -5	signal_silence	10788	0.006	0.005	ok
+flac -5	signal_silence	10788	0.006	0.006	ok
 flac -8	signal_silence	10788	0.006	0.005	ok
 wavpack -f	signal_silence	2538	0.004	0.003	ok
 wavpack	signal_silence	2538	0.004	0.003	ok
 wavpack -hh	signal_silence	2538	0.004	0.003	ok
 wavpack -hh -x4	signal_silence	2538	0.004	0.003	ok
-block level 0	signal_silence	4676	0.011	0.012	ok
-block level 1	signal_silence	4676	0.011	0.012	ok
-block level 2	signal_silence	4676	0.010	0.012	ok
-block level 4	signal_silence	4676	0.011	0.012	ok
+block level 0	signal_silence	4676	0.021	0.012	ok
+block level 1	signal_silence	4676	0.021	0.013	ok
+block level 2	signal_silence	4676	0.022	0.013	ok
+block level 4	signal_silence	4676	0.022	0.014	ok
+block level 4 parallel	signal_silence	4676	0.022	0.012	ok
 flac -0	signal_sine	538719	0.007	0.008	ok
 flac -5	signal_sine	390414	0.010	0.008	ok
 flac -8	signal_sine	440024	0.018	0.008	ok
 wavpack -f	signal_sine	641318	0.008	0.004	ok
-wavpack	signal_sine	692768	0.010	0.006	ok
-wavpack -hh	signal_sine	662408	0.020	0.010	ok
-wavpack -hh -x4	signal_sine	462642	0.240	0.008	ok
-block level 0	signal_sine	6767	0.031	0.014	ok
-block level 1	signal_sine	6767	0.067	0.014	ok
-block level 2	signal_sine	6241	0.197	0.013	ok
-block level 4	signal_sine	5657	1.161	0.014	ok
-flac -0	signal_square	146156	0.007	0.008	ok
-flac -5	signal_square	138880	0.009	0.007	ok
+wavpack	signal_sine	692768	0.011	0.006	ok
+wavpack -hh	signal_sine	662408	0.021	0.010	ok
+wavpack -hh -x4	signal_sine	462642	0.230	0.009	ok
+block level 0	signal_sine	6767	0.042	0.013	ok
+block level 1	signal_sine	6767	0.078	0.013	ok
+block level 2	signal_sine	6241	0.207	0.013	ok
+block level 4	signal_sine	5657	1.149	0.013	ok
+block level 4 parallel	signal_sine	5657	0.169	0.014	ok
+flac -0	signal_square	146156	0.007	0.009	ok
+flac -5	signal_square	138880	0.009	0.008	ok
 flac -8	signal_square	138880	0.017	0.008	ok
-wavpack -f	signal_square	97908	0.006	0.004	ok
-wavpack	signal_square	99480	0.012	0.005	ok
+wavpack -f	signal_square	97908	0.007	0.004	ok
+wavpack	signal_square	99480	0.009	0.005	ok
 wavpack -hh	signal_square	119080	0.015	0.009	ok
-wavpack -hh -x4	signal_square	97818	0.084	0.004	ok
-block level 0	signal_square	16093	0.031	0.014	ok
-block level 1	signal_square	16093	0.062	0.014	ok
-block level 2	signal_square	14053	0.177	0.016	ok
-block level 4	signal_square	14053	1.082	0.016	ok
-flac -0	signal_sweep	766655	0.008	0.009	ok
-flac -5	signal_sweep	458583	0.010	0.008	ok
+wavpack -hh -x4	signal_square	97818	0.088	0.004	ok
+block level 0	signal_square	16093	0.041	0.015	ok
+block level 1	signal_square	16093	0.069	0.014	ok
+block level 2	signal_square	14053	0.185	0.016	ok
+block level 4	signal_square	14053	1.096	0.015	ok
+block level 4 parallel	signal_square	14053	0.161	0.020	ok
+flac -0	signal_sweep	766655	0.008	0.008	ok
+flac -5	signal_sweep	458583	0.011	0.008	ok
 flac -8	signal_sweep	385946	0.018	0.008	ok
-wavpack -f	signal_sweep	890208	0.009	0.007	ok
-wavpack	signal_sweep	781084	0.012	0.006	ok
-wavpack -hh	signal_sweep	684878	0.025	0.012	ok
-wavpack -hh -x4	signal_sweep	498010	0.249	0.011	ok
-block level 0	signal_sweep	728181	0.045	0.026	ok
-block level 1	signal_sweep	241957	0.083	0.032	ok
-block level 2	signal_sweep	183273	0.226	0.031	ok
-block level 4	signal_sweep	167643	1.265	0.028	ok
-flac -0	signal_triangle	1121784	0.008	0.008	ok
+wavpack -f	signal_sweep	890208	0.010	0.007	ok
+wavpack	signal_sweep	781084	0.014	0.007	ok
+wavpack -hh	signal_sweep	684878	0.026	0.013	ok
+wavpack -hh -x4	signal_sweep	498010	0.251	0.011	ok
+block level 0	signal_sweep	728181	0.055	0.025	ok
+block level 1	signal_sweep	241957	0.092	0.031	ok
+block level 2	signal_sweep	183273	0.236	0.032	ok
+block level 4	signal_sweep	167643	1.234	0.028	ok
+block level 4 parallel	signal_sweep	167643	0.163	0.028	ok
+flac -0	signal_triangle	1121784	0.007	0.008	ok
 flac -5	signal_triangle	1114577	0.010	0.007	ok
-flac -8	signal_triangle	1114577	0.020	0.007	ok
-wavpack -f	signal_triangle	831228	0.008	0.004	ok
-wavpack	signal_triangle	1311528	0.010	0.006	ok
-wavpack -hh	signal_triangle	1202898	0.020	0.009	ok
-wavpack -hh -x4	signal_triangle	610058	0.143	0.008	ok
-block level 0	signal_triangle	6657	0.030	0.014	ok
-block level 1	signal_triangle	6657	0.065	0.013	ok
-block level 2	signal_triangle	6474	0.199	0.014	ok
-block level 4	signal_triangle	5732	1.320	0.013	ok
+flac -8	signal_triangle	1114577	0.020	0.008	ok
+wavpack -f	signal_triangle	831228	0.009	0.005	ok
+wavpack	signal_triangle	1311528	0.013	0.007	ok
+wavpack -hh	signal_triangle	1202898	0.022	0.010	ok
+wavpack -hh -x4	signal_triangle	610058	0.145	0.009	ok
+block level 0	signal_triangle	6657	0.042	0.014	ok
+block level 1	signal_triangle	6657	0.077	0.014	ok
+block level 2	signal_triangle	6474	0.205	0.013	ok
+block level 4	signal_triangle	5732	1.310	0.013	ok
+block level 4 parallel	signal_triangle	5732	0.197	0.013	ok
 flac -0	signal_white	1724976	0.008	0.008	ok
-flac -5	signal_white	1718904	0.011	0.007	ok
-flac -8	signal_white	1718904	0.019	0.008	ok
-wavpack -f	signal_white	1678228	0.011	0.006	ok
-wavpack	signal_white	1680730	0.015	0.008	ok
-wavpack -hh	signal_white	1686752	0.024	0.011	ok
-wavpack -hh -x4	signal_white	1677180	0.142	0.006	ok
-block level 0	signal_white	1660569	0.057	0.034	ok
-block level 1	signal_white	1660569	0.096	0.034	ok
-block level 2	signal_white	1660569	0.405	0.034	ok
-block level 4	signal_white	1660569	1.746	0.034	ok
+flac -5	signal_white	1718904	0.011	0.008	ok
+flac -8	signal_white	1718904	0.018	0.008	ok
+wavpack -f	signal_white	1678228	0.010	0.007	ok
+wavpack	signal_white	1680730	0.013	0.009	ok
+wavpack -hh	signal_white	1686752	0.023	0.010	ok
+wavpack -hh -x4	signal_white	1677180	0.159	0.006	ok
+block level 0	signal_white	1660569	0.077	0.035	ok
+block level 1	signal_white	1660569	0.108	0.035	ok
+block level 2	signal_white	1660569	0.413	0.035	ok
+block level 4	signal_white	1660569	1.786	0.047	ok
+block level 4 parallel	signal_white	1660569	0.343	0.048	ok
