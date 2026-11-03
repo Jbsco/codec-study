@@ -14,6 +14,7 @@ package Stream_Format is
    Group_Head : constant := 11;
    Tag_Block : constant := 1;
    Seek_Block : constant := 2;
+   Source_Block : constant := 3;
    Max_Channels : constant := 8;
    Max_Pairs : constant := Max_Channels / 2;
 

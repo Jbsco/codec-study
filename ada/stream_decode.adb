@@ -68,8 +68,21 @@ begin
                   Fail (Name & ": the header claims" & H.Frames'Image & " frames, more than memory holds");
                   return;
             end;
-            Wav_Files.Write (Ada.Command_Line.Argument (2), H.Channels, H.Rate, H.Depth, H.Valid_Bits, H.Channel_Mask, H.Is_Float,
-                             H.Frames, Sample'Access);
+            declare
+               Written : Boolean := False;
+            begin
+               if H.Source /= null then
+                  Wav_Files.Write_Source (Ada.Command_Line.Argument (2), H.Source.all, H.Channels, H.Depth, H.Valid_Bits, H.Is_Float,
+                                          H.Frames, Sample'Access, Written);
+                  if not Written then
+                     Put_Line (Standard_Error, Name & ": source description does not match the audio, writing a WAV file");
+                  end if;
+               end if;
+               if not Written then
+                  Wav_Files.Write (Ada.Command_Line.Argument (2), H.Channels, H.Rate, H.Depth, H.Valid_Bits, H.Channel_Mask, H.Is_Float,
+                                   H.Frames, Sample'Access);
+               end if;
+            end;
             Put_Line (Standard_Error, Name & ":" & H.Frames'Image & " frames," & H.Channels'Image & " channels,"
                       & H.Rate'Image & " Hz," & H.Depth'Image & (if H.Is_Float then "-bit float" else "-bit")
                       & (if H.Tag_Count > 0 then ", tags " & Ada.Strings.Unbounded.To_String (H.Tags) else "")

@@ -18,7 +18,7 @@ Header, in order:
 | audio MD5 | 128 | MD5 of the input samples in FLAC's layout, zero when not recorded |
 | mode, scale | 8 each, per channel, float input only | float samples as integers over 2^scale (mode 1) or as ordered bit patterns (mode 2) |
 | metadata count | 8 | blocks that follow |
-| metadata block | 8 + 24 + bytes | type, byte length, bytes: 1 tags, each a 16-bit length and a `key=value` string; 2 a seek table, each entry a 32-bit first frame and a 64-bit byte offset from the stream's start |
+| metadata block | 8 + 24 + bytes | type, byte length, bytes: 1 tags, each a 16-bit length and a `key=value` string; 2 a seek table, each entry a 32-bit first frame and a 64-bit byte offset from the stream's start; 3 the source description below |
 | CRC-16 | 16 | of every header byte before it |
 
 Each group, in order:
@@ -35,6 +35,21 @@ Each group, in order:
 | blocks | | coded blocks in the table's order |
 
 A segment is the span a block may read earlier samples from: one group when flag bit 0 is set, otherwise from one seek point to the next. The encoder writes a seek point every 10 s by default (`--seek-every <seconds>`, 0 for one segment and no table), and `--independent` makes every group a segment. The decoder needs no knowledge of segments: it hands every block the samples before it, and the encoder never referenced further back than the segment's start.
+
+## Source file
+
+Metadata block 3 describes the input file so a decoder can write it back byte for byte. It names the container in 8 bits: 1 RIFF WAV, 2 RF64, 3 BW64, 4 Wave64, 5 AIFF, 6 AIFF-C. The container's own size field follows in 64 bits, then a 16-bit count of chunks and every chunk in file order. Each chunk is its role and identifier length in 8 bits each, its identifier, the value of its own length field in 64 bits, its body length in 32 bits and its body.
+
+| Role | Chunk | Body kept |
+|---|---|---|
+| 0 | any other chunk: LIST, bext, cue, iXML and the rest | whole |
+| 1 | format: `fmt ` or `COMM` | whole |
+| 2 | audio: `data` or `SSND` | what precedes the samples, AIFF's offset and block size |
+| 3 | RF64's `ds64` size table | whole, its sizes rewritten on decode |
+
+`stream_decode` writes the container and chunks back in order, the samples into the audio chunk, and every size field computed again. A size field that held 0 or all ones, as a program writing to a pipe leaves it, is written back as it was, so a file piped from ffmpeg also comes back byte for byte.
+
+The decoder writes plain WAV when the stream has no description, or when the format chunk does not describe the decoded samples. Chunks other than format, audio and the size table are left out when all of them would not fit one 16 MB metadata block, and `codec_main` reports that.
 
 ## Audio MD5
 
@@ -70,9 +85,9 @@ Segments, measured by `segments.sh` at level 4 on the corpus, where a block may 
 
 | Segment | Bytes | Against one segment |
 |---|---|---|
-| one segment, no seek table (`--seek-every 0`) | 41,964,961 | |
-| a seek point every 10 s, the default | 41,967,578 | +2,617, 0.006 percent |
-| a seek point every 1 s | 42,038,486 | +73,525, 0.18 percent |
-| every group a segment (`--independent`) | 42,732,273 | +767,312, 1.83 percent |
+| one segment, no seek table (`--seek-every 0`) | 41,967,977 | |
+| a seek point every 10 s, the default | 41,970,594 | +2,617, 0.006 percent |
+| a seek point every 1 s | 42,041,502 | +73,525, 0.18 percent |
+| every group a segment (`--independent`) | 42,735,289 | +767,312, 1.83 percent |
 
 A seek point every 10 s costs nothing worth measuring, because few blocks reach more than 16,384 samples back and fewer start a segment. Every group its own segment costs 1.8 percent, which is what the history buys: the delay predictor's reach into earlier samples and the adaptive stage's warm-up, both lost by the first blocks of every segment. A stream for random access or for links that drop data chooses between these by how much it must be able to lose at once.

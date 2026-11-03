@@ -32,6 +32,7 @@ package Stream_Reading is
       Tag_Count : Natural := 0;
       Tags : Ada.Strings.Unbounded.Unbounded_String;
       Seeks : Seek_List_Access;
+      Source : Byte_Array_Access;
       First_Group : Natural := 0;
    end record;
 

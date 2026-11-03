@@ -27,14 +27,13 @@ else
 fi
 
 echo "== 3/6  Stream decoder"
-# Same audio from the decoded WAV as from the original, by ffmpeg's hash of the samples.
-same_audio() { [ "$(ffmpeg -v error -i "$1" -map 0:a -f md5 - 2>&1)" = "$(ffmpeg -v error -i "$2" -map 0:a -f md5 - 2>&1)" ]; }
+# The decoder writes the source file back, container and chunks included, byte for byte.
 ada/obj/codec_main corpus/depth_pink_32f.wav 1 --stream build/pink_32f.bin > /dev/null || exit 1
 for s in speech_8k:build/wav/rec_speech_8k.wav pink_32f:corpus/depth_pink_32f.wav; do
   name=${s%%:*}; wav=${s#*:}
   if ada/obj/stream_decode "build/$name.bin" "build/${name}_decoded.wav" 2>&1 | grep -q "audio MD5 matches" \
-     && same_audio "$wav" "build/${name}_decoded.wav"; then
-    echo "  $name: decoded from the stream alone, same audio, audio MD5 checked"
+     && cmp -s "$wav" "build/${name}_decoded.wav"; then
+    echo "  $name: decoded from the stream alone, byte-identical file, audio MD5 checked"
   else
     echo "  $name: stream_decode FAILED"; FAIL=1
   fi
@@ -72,22 +71,29 @@ ada/obj/stream_decode build/not_a_stream.bin build/not_a_stream.wav 2> /dev/null
 [ $? = 2 ] && echo "  foreign file: refused" || { echo "  foreign file: wrong status"; FAIL=1; }
 
 echo "== 4/6  Input containers"
-# The same samples in RF64, Wave64, AIFF and AIFF-C give the stream their WAV gives, since none of these carries a
-# channel mask for these files; the Haskell reader agrees with the Ada reader on AIFF.
+# The same samples in RF64, Wave64, AIFF and AIFF-C, and in a WAV written to a pipe with its sizes unknown, give their
+# WAV's audio MD5, and each file comes back from its stream byte for byte, container and chunks included; the Haskell reader agrees with the Ada reader on AIFF.
 ffmpeg -v error -y -i build/wav/rec_speech_8k.wav -c:a pcm_u8 -rf64 always build/speech_8k_rf64.wav || exit 1
 ffmpeg -v error -y -i build/wav/rec_speech_8k.wav -c:a pcm_u8 build/speech_8k.w64 || exit 1
 ffmpeg -v error -y -i build/wav/rec_speech_8k.wav -c:a pcm_s8 build/speech_8k.aiff || exit 1
 flac -d -s -f -o build/wav/rec_speech_16k.wav corpus/rec_speech_16k.flac || exit 1
 ffmpeg -v error -y -i build/wav/rec_speech_16k.wav -c:a pcm_s16le -f aiff build/speech_16k_sowt.aifc || exit 1
 ffmpeg -v error -y -i corpus/depth_pink_32f.wav -c:a pcm_f32be -f aiff build/pink_32f.aifc || exit 1
-stream_hash() { ada/obj/codec_main "$1" 0 | grep -oE 'round trip OK, hash [0-9a-f]+'; }
-for s in rec_speech_8k.wav:speech_8k_rf64.wav rec_speech_8k.wav:speech_8k.w64 rec_speech_8k.wav:speech_8k.aiff \
-         rec_speech_16k.wav:speech_16k_sowt.aifc; do
-  a=$(stream_hash "build/wav/${s%%:*}"); b=$(stream_hash "build/${s#*:}")
-  [ -n "$a" ] && [ "$a" = "$b" ] && echo "  ${s#*:}: same stream as its WAV" || { echo "  ${s#*:}: FAILED"; FAIL=1; }
+ffmpeg -v error -i build/wav/rec_speech_8k.wav -c:a pcm_u8 -f wav - | cat > build/speech_8k_piped.wav || exit 1
+audio_md5() { ada/obj/codec_main "$1" 0 --stream "$2" | grep -oE 'audio MD5 [0-9a-f]+'; }
+for s in build/wav/rec_speech_8k.wav:build/speech_8k_rf64.wav build/wav/rec_speech_8k.wav:build/speech_8k.w64 \
+         build/wav/rec_speech_8k.wav:build/speech_8k.aiff build/wav/rec_speech_16k.wav:build/speech_16k_sowt.aifc \
+         corpus/depth_pink_32f.wav:build/pink_32f.aifc build/wav/rec_speech_8k.wav:build/speech_8k_piped.wav; do
+  wav=${s%%:*}; file=${s#*:}; name=$(basename "$file")
+  a=$(audio_md5 "$wav" build/source.bin); b=$(audio_md5 "$file" build/container.bin)
+  if [ -n "$a" ] && [ "$a" = "$b" ] && ada/obj/stream_decode build/container.bin "build/back_$name" 2> /dev/null \
+     && cmp -s "$file" "build/back_$name"; then
+    echo "  $name: WAV's audio MD5, byte-identical after decoding"
+  else
+    echo "  $name: FAILED"; FAIL=1
+  fi
 done
-a=$(stream_hash corpus/depth_pink_32f.wav); b=$(stream_hash build/pink_32f.aifc)
-[ -n "$a" ] && [ "$a" = "$b" ] && echo "  pink_32f.aifc: same stream as its WAV" || { echo "  pink_32f.aifc: FAILED"; FAIL=1; }
+stream_hash() { ada/obj/codec_main "$1" 0 | grep -oE 'round trip OK, hash [0-9a-f]+'; }
 hs=haskell/$(cd haskell && stack path --dist-dir)/build
 h=$("$hs/huffman-audio/huffman-audio" build/speech_8k.aiff --block 0 | grep -oE 'round trip OK, hash [0-9a-f]+')
 [ "$h" = "$(stream_hash build/speech_8k.aiff)" ] && echo "  Haskell reads AIFF as Ada does" || { echo "  Haskell AIFF: FAILED"; FAIL=1; }
@@ -123,8 +129,8 @@ ha=$(grep -oE 'hash [0-9a-f]+' <<< "$a"); hh=$(grep -oE 'hash [0-9a-f]+' <<< "$h
 if [ "$ok" = 3 ] && [ "$ha" = "$hh" ] && [ "$ha" = "$hy" ]; then
   echo "  four channels, level 1: three round trips, one stream ($(awk '{print $6}' <<< "$a") bits per sample)"
   ada/obj/codec_main build/four_48k.wav 1 --stream build/four_48k.bin > /dev/null
-  if ada/obj/stream_decode build/four_48k.bin build/four_decoded.wav 2> /dev/null && same_audio build/four_48k.wav build/four_decoded.wav; then
-    echo "  four channels: decoded from the stream alone, same audio"
+  if ada/obj/stream_decode build/four_48k.bin build/four_decoded.wav 2> /dev/null && cmp -s build/four_48k.wav build/four_decoded.wav; then
+    echo "  four channels: decoded from the stream alone, byte-identical file"
   else
     echo "  four channels: stream_decode FAILED"; FAIL=1
   fi

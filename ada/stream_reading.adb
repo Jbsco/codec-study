@@ -101,6 +101,8 @@ package body Stream_Reading is
                      end if;
                   end loop;
                end;
+            elsif Kind = Source_Block and then H.Source = null then
+               H.Source := new Byte_Array'(Stream (Pos / 8 .. Pos / 8 + Len - 1));
             elsif Kind = Seek_Block then
                Ok := Ok and then Len mod 12 = 0;
                if Ok then

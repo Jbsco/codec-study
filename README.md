@@ -85,10 +85,10 @@ Level 4, with tables, parameters and headers included; every stream decodes back
 | signal_fm | 16 44.1k mono | 0.07 (`brotli -q 11`) | 3.19 (`flac -8`) | 13.70 | 8.11 | 3.57 | 0.07 | delay 218, LPC 4 |
 | signal_chord | 16 44.1k mono | 12.01 (`bzip2 -9`) | 2.82 (`flac -5`) | 13.45 | 6.56 | 2.71 | 1.40 | LPC 216 |
 | rate_sine_8000 | 16 8k mono | 0.01 (`zstd -3`) | 0.03 (`wavpack -hh -x4`) | 2.19 | 1.25 | 14.00 | 0.06 | delay 20 |
-| rate_sine_16000 | 16 16k mono | 0.00 (`brotli -q 11`) | 0.04 (`wavpack -hh -x4`) | 3.00 | 1.75 | 10.50 | 0.05 | delay 40 |
+| rate_sine_16000 | 16 16k mono | 0.00 (`brotli -q 11`) | 0.04 (`wavpack -hh -x4`) | 3.00 | 1.75 | 10.50 | 0.06 | delay 40 |
 | rate_sine_96000 | 16 96k mono | 0.00 (`zstd -3`) | 3.46 (`flac -5`) | 6.02 | 3.81 | 3.36 | 0.05 | delay 235 |
 | rate_sine_192000 | 16 192k mono | 0.00 (`xz -6`) | 2.32 (`flac -5`) | 7.34 | 3.98 | 2.25 | 0.05 | delay 471, LPC 1 |
-| rate_pink_8000 | 16 8k mono | 13.40 (`brotli -q 11`) | 12.83 (`wavpack -hh -x4`) | 14.01 | 13.59 | 13.08 | 12.87 | tiers 10, LPC 10 |
+| rate_pink_8000 | 16 8k mono | 13.40 (`brotli -q 11`) | 12.83 (`wavpack -hh -x4`) | 14.01 | 13.59 | 13.08 | 12.88 | tiers 10, LPC 10 |
 | rate_pink_16000 | 16 16k mono | 13.35 (`brotli -q 11`) | 12.83 (`wavpack -hh -x4`) | 13.81 | 13.35 | 13.08 | 12.86 | tiers 17, LPC 23 |
 | rate_pink_96000 | 16 96k mono | 13.29 (`brotli -q 11`) | 12.82 (`wavpack -hh -x4`) | 13.61 | 13.02 | 13.08 | 12.87 | tiers 121, LPC 130 |
 | rate_pink_192000 | 16 192k mono | 13.28 (`brotli -q 11`) | 12.82 (`wavpack -hh -x4`) | 13.58 | 12.95 | 13.08 | 12.87 | tiers 224, LPC 275 |
@@ -122,7 +122,7 @@ Level 4, with tables, parameters and headers included; every stream decodes back
 - Tiers alone, as first described, cost 1.5 to 7.9 bits more than first differences on every recording. Offsets grow with distance from the group start, and coarser tiers hold samples further apart in time.
 - Linear prediction wins most blocks of every recording. The block codec is smaller than every tool on 8 kHz speech, both piano recordings, the electronic track and the 192 kHz vinyl rip, and 0.01 to 0.07 bits above the best audio codec on the other five. WavPack `-hh -x4` adapts its prediction sample by sample where the block codec fixes one predictor per block, which seems the likely source of that gap.
 - Stereo modes take 1.11 bits off the electronic track and 0.19 off speech. Split blocks take 0.28 bits off 8 kHz speech and 0.98 off the float sine.
-- Level 5's adaptive stage takes the piano from 3.67 to 3.52 bits per sample and the corpus from 7.059 to 7.045. It is kept only where it saves one bit per 64 samples, because the decoder pays its taps on every sample of such a block. The 192 kHz vinyl then decodes in 173 s in Ada against 0.95 s at level 4.
+- Level 5's adaptive stage takes the piano from 3.67 to 3.52 bits per sample and the corpus from 7.059 to 7.046. It is kept only where it saves one bit per 64 samples, because the decoder pays its taps on every sample of such a block. The 192 kHz vinyl then decodes in 162 s in Ada against 0.94 s at level 4.
 - Dither and white noise are smallest under the block codec, 1.78 and 15.06 bits per sample.
 
 ### Gain per part
@@ -145,16 +145,16 @@ Two estimates replace exhaustive search at the low levels. The order estimate pi
 
 | Level | Search | Mean bits per sample | Coded corpus | Of PCM | Encode, Ada, 1 thread | Decode, Ada | Encode, Haskell, 16 threads | Decode, Haskell |
 |---|---|---|---|---|---|---|---|---|
-| 0 | 4096-frame blocks; polynomial, delay and tiers; left and right | 7.551 | 47.49 MB | 40.3% | 5.6 s | 1.77 s | 1.34 s | 0.35 s |
-| 1 | and 1 estimated order of linear prediction at 15 bits; stereo mode estimated | 7.211 | 42.87 MB | 36.4% | 9.9 s | 2.47 s | 1.72 s | 0.57 s |
-| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048; the adaptive binary code | 7.117 | 42.36 MB | 36.0% | 30.8 s | 5.85 s | 4.77 s | 1.49 s |
-| 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded | 7.086 | 42.08 MB | 35.7% | 85.1 s | 5.76 s | 15.25 s | 1.59 s |
-| 4 | and every order and precision 5 to 15; blocks down to 512 | 7.059 | 41.97 MB | 35.6% | 181.1 s | 5.73 s | 54.47 s | 1.73 s |
-| 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.045 | 41.71 MB | 35.4% | 2061.6 s | 573.26 s | 1162.54 s | 46.93 s |
+| 0 | 4096-frame blocks; polynomial, delay and tiers; left and right | 7.551 | 47.50 MB | 40.3% | 7.3 s | 2.42 s | 5.24 s | 1.17 s |
+| 1 | and 1 estimated order of linear prediction at 15 bits; stereo mode estimated | 7.212 | 42.88 MB | 36.4% | 11.2 s | 2.78 s | 2.47 s | 0.75 s |
+| 2 | and 2 orders, precisions 12 to 15; blocks down to 2048; the adaptive binary code | 7.118 | 42.37 MB | 36.0% | 33.7 s | 6.12 s | 6.13 s | 1.89 s |
+| 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded | 7.086 | 42.08 MB | 35.7% | 101.4 s | 6.71 s | 24.11 s | 2.74 s |
+| 4 | and every order and precision 5 to 15; blocks down to 512 | 7.059 | 41.97 MB | 35.6% | 181.3 s | 5.68 s | 63.13 s | 1.83 s |
+| 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.046 | 41.71 MB | 35.4% | 1876.7 s | 546.53 s | 994.24 s | 38.08 s |
 
-Level 1 encodes the corpus 18 times faster than level 4 in Ada, 9.9 s against 181.1 s, for 2.2% more bytes. Level 3 comes within 0.3% of level 4 in 47% of its time.
+Level 1 encodes the corpus 16 times faster than level 4 in Ada, 11.2 s against 181.3 s, for 2.2% more bytes. Level 3 comes within 0.3% of level 4 in 56% of its time.
 
-Levels 0 and 1 leave the adaptive binary code out, so their streams decode in 1.8 and 2.5 s in Ada. From level 2 the encoder takes it wherever it is shorter, and the decoder pays 5.7 to 5.9 s for the corpus, a range decoder step per modeled bit. Level 5 takes 0.6% of the bytes off level 4 and multiplies the decoder's time by about 100 in Ada and 27 in Haskell, where only blocks that train on earlier samples wait for one another.
+Levels 0 and 1 leave the adaptive binary code out, so their streams decode in 2.4 and 2.8 s in Ada. From level 2 the encoder takes it wherever it is shorter, and the decoder pays 5.7 to 6.7 s for the corpus, a range decoder step per modeled bit. Level 5 takes 0.6% of the bytes off level 4 and multiplies the decoder's time by about 96 in Ada and 21 in Haskell, where only blocks that train on earlier samples wait for one another.
 
 Times are single runs on a typical workstation (AMD Ryzen 7 7700X). `levels.sh` produces the table and `results/levels.txt`, every file at every level, and checks that Ada and Haskell write the same bytes.
 
@@ -164,11 +164,11 @@ Bits of the level-4 streams by role, from the `bits:` line of `codec_main`. Side
 
 | Files | Headers | LPC coefficients | LPC warm-up | Code tables | Framing | Residuals |
 |---|---|---|---|---|---|---|
-| Generated signals | 0.16% | 0.30% | 0.28% | 0.22% | 1.06% | 97.99% |
-| Sample-rate sweep | 0.09% | 0.03% | 0.07% | 0.04% | 0.56% | 99.20% |
-| Bit-depth sweep | 0.06% | 0.01% | 0.06% | 0.10% | 0.40% | 99.37% |
+| Generated signals | 0.16% | 0.30% | 0.28% | 0.22% | 1.07% | 97.97% |
+| Sample-rate sweep | 0.09% | 0.03% | 0.07% | 0.04% | 0.57% | 99.19% |
+| Bit-depth sweep | 0.06% | 0.01% | 0.06% | 0.10% | 0.41% | 99.36% |
 | Recordings | 0.07% | 0.64% | 0.77% | 0.02% | 0.24% | 98.26% |
-| Whole corpus | 0.08% | 0.46% | 0.55% | 0.05% | 0.39% | 98.46% |
+| Whole corpus | 0.08% | 0.46% | 0.55% | 0.05% | 0.40% | 98.45% |
 
 ### Timing
 
@@ -179,15 +179,15 @@ Whole corpus, 44,883,000 samples, at level 4 with per-block CRCs, on an AMD Ryze
 
 | Implementation | Threads | Encode | Decode |
 |---|---|---|---|
-| Ada and SPARK (`codec_main`, assertions on) | 1 | 183.06 s | 5.73 s |
-| Haskell | 1 | 274.92 s | 7.56 s |
-| Haskell | 4 | 73.91 s | 2.29 s |
-| Haskell | 8 | 42.86 s | 1.44 s |
-| Haskell | 16 | 39.91 s | 1.36 s |
-| Haskell + SPARK library | 1 | 202.56 s | 3.96 s |
-| Haskell + SPARK library | 4 | 55.32 s | 1.40 s |
-| Haskell + SPARK library | 8 | 36.45 s | 0.98 s |
-| Haskell + SPARK library | 16 | 33.20 s | 0.88 s |
+| Ada and SPARK (`codec_main`, assertions on) | 1 | 186.09 s | 5.90 s |
+| Haskell | 1 | 266.93 s | 7.96 s |
+| Haskell | 4 | 89.72 s | 2.94 s |
+| Haskell | 8 | 57.32 s | 1.66 s |
+| Haskell | 16 | 52.77 s | 1.81 s |
+| Haskell + SPARK library | 1 | 226.43 s | 4.31 s |
+| Haskell + SPARK library | 4 | 62.39 s | 1.49 s |
+| Haskell + SPARK library | 8 | 52.32 s | 1.25 s |
+| Haskell + SPARK library | 16 | 36.04 s | 0.91 s |
 
 </details>
 
@@ -229,10 +229,10 @@ Installed sizes of the tools compared, and this work's binaries. Decoder rows co
 | Block encoder with the adaptive code, Cortex-M4 Thumb-2, `-Os -gnatp` | 11,328 code, plus libgcc's software double precision |
 | Read-only data of the five units, `-Os -gnatp` | 521 (637 with checks on) |
 | `libblockcodec.so`, x86-64, stripped, Ada runtime included | 267,688 |
-| `codec_main`, x86-64, stripped, needs only libc | 761,600 |
-| `stream_decode`, x86-64, stripped, needs only libc | 654,144 |
-| `huffman-audio`, Haskell, x86-64, stripped, needs libgmp | 6,400,464 |
-| `huffman-audio-hybrid`, x86-64, stripped, needs `libblockcodec.so` and libgmp | 6,353,056 |
+| `codec_main`, x86-64, stripped, needs only libc | 777,984 |
+| `stream_decode`, x86-64, stripped, needs only libc | 670,528 |
+| `huffman-audio`, Haskell, x86-64, stripped, needs libgmp | 6,543,248 |
+| `huffman-audio-hybrid`, x86-64, stripped, needs `libblockcodec.so` and libgmp | 6,495,776 |
 
 </details>
 
@@ -274,7 +274,7 @@ Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer or 32-bit float. `codec_
 | `--no-pairs` | code every channel alone |
 | `--features <out.tsv>` | write each group's features and whether the search split its root |
 
-`stream_decode <stream.bin> <out.wav>` reads a stream from its own bytes and writes a WAV file. Exit status 0 means the stream was intact. Status 1 means damage: frames of unreadable groups, and blocks that did not decode, are written as zeros and counted on stderr. Status 2 means the file is not a readable stream.
+`stream_decode <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). Exit status 0 means the stream was intact. Status 1 means damage: frames of unreadable groups, and blocks that did not decode, are written as zeros and counted on stderr. Status 2 means the file is not a readable stream.
 
 ## References
 

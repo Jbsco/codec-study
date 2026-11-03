@@ -1,120 +1,120 @@
 build/wav/depth_pink_24.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          20.87  round trip OK, hash fcef9c96c0d764bf, encode  0.30 s, decode  0.02 s, level 4, 1150565 bytes
+  Block codec, Haskell + SPARK                          20.87  round trip OK, hash 3414d72207ea3198, encode  0.42 s, decode  0.03 s, level 4, 1150656 bytes
 build/wav/depth_pink_32f.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          27.65  round trip OK, hash 6774e4c49566f4da, encode  0.34 s, decode  0.01 s, level 4, 1524221 bytes
+  Block codec, Haskell + SPARK                          27.65  round trip OK, hash c798c94a320208e2, encode  0.46 s, decode  0.01 s, level 4, 1524312 bytes
 build/wav/depth_pink_32.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          28.90  round trip OK, hash 585634caea212f51, encode  0.34 s, decode  0.03 s, level 4, 1593264 bytes
+  Block codec, Haskell + SPARK                          28.90  round trip OK, hash 1a16353a65824674, encode  0.42 s, decode  0.03 s, level 4, 1593355 bytes
 build/wav/depth_pink_8.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           4.90  round trip OK, hash 815dfd6475886216, encode  0.25 s, decode  0.02 s, level 4, 269938 bytes
+  Block codec, Haskell + SPARK                           4.90  round trip OK, hash 0ac90421a8c359b4, encode  0.30 s, decode  0.01 s, level 4, 270005 bytes
 build/wav/depth_sine_12in16.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.07  round trip OK, hash fa06e3453865f47b, encode  0.22 s, decode  0.01 s, level 4, 3585 bytes
+  Block codec, Haskell + SPARK                           0.07  round trip OK, hash 77ad9b4e310b6de0, encode  0.30 s, decode  0.01 s, level 4, 3652 bytes
 build/wav/depth_sine_24.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.06  round trip OK, hash 44e30a6fcf5efd88, encode  0.17 s, decode  0.01 s, level 4, 3183 bytes
+  Block codec, Haskell + SPARK                           0.06  round trip OK, hash 29e84138b05fe4c3, encode  0.16 s, decode  0.01 s, level 4, 3274 bytes
 build/wav/depth_sine_32f.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.36  round trip OK, hash 346bf6374fdcbbef, encode  0.30 s, decode  0.01 s, level 4, 19834 bytes
+  Block codec, Haskell + SPARK                           0.36  round trip OK, hash 2e4ee59f0f5b9ddc, encode  0.27 s, decode  0.01 s, level 4, 19925 bytes
 build/wav/depth_sine_32.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.11  round trip OK, hash 151c329f220513c3, encode  0.66 s, decode  0.03 s, level 4, 5976 bytes
+  Block codec, Haskell + SPARK                           0.11  round trip OK, hash d481e2eb517bca39, encode  0.18 s, decode  0.01 s, level 4, 6067 bytes
 build/wav/depth_sine_8.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.05  round trip OK, hash 562118be3b030c59, encode  0.19 s, decode  0.01 s, level 4, 2780 bytes
+  Block codec, Haskell + SPARK                           0.05  round trip OK, hash 6439835714df1c90, encode  0.22 s, decode  0.01 s, level 4, 2847 bytes
 build/wav/rate_pink_16000.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          12.86  round trip OK, hash 61af7a19cbf5119d, encode  0.10 s, decode  0.01 s, level 4, 257174 bytes
+  Block codec, Haskell + SPARK                          12.86  round trip OK, hash 3e69a66488095e8c, encode  0.12 s, decode  0.01 s, level 4, 257241 bytes
 build/wav/rate_pink_192000.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          12.87  round trip OK, hash 62cf6021ad01891b, encode  1.14 s, decode  0.05 s, level 4, 3087734 bytes
+  Block codec, Haskell + SPARK                          12.87  round trip OK, hash 77986f0e331519e7, encode  1.47 s, decode  0.06 s, level 4, 3087801 bytes
 build/wav/rate_pink_8000.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          12.87  round trip OK, hash 91c62ec3c6e2efff, encode  0.05 s, decode  0.00 s, level 4, 128697 bytes
+  Block codec, Haskell + SPARK                          12.88  round trip OK, hash a2ae057def7a7ff6, encode  0.19 s, decode  0.02 s, level 4, 128764 bytes
 build/wav/rate_pink_96000.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          12.87  round trip OK, hash 00648ec36b06d813, encode  0.62 s, decode  0.03 s, level 4, 1544558 bytes
+  Block codec, Haskell + SPARK                          12.87  round trip OK, hash 4a6200944f20f157, encode  1.06 s, decode  0.03 s, level 4, 1544625 bytes
 build/wav/rate_sine_16000.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.05  round trip OK, hash cb1d71d3b6296c19, encode  0.27 s, decode  0.00 s, level 4, 1052 bytes
+  Block codec, Haskell + SPARK                           0.06  round trip OK, hash e0a619863fceb7e4, encode  0.07 s, decode  0.00 s, level 4, 1119 bytes
 build/wav/rate_sine_192000.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.05  round trip OK, hash 2207eeeacaf36ae6, encode  0.86 s, decode  0.04 s, level 4, 11456 bytes
+  Block codec, Haskell + SPARK                           0.05  round trip OK, hash eae7411b222daf0b, encode  0.89 s, decode  0.04 s, level 4, 11523 bytes
 build/wav/rate_sine_8000.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.06  round trip OK, hash af5c63ab8d913c75, encode  0.03 s, decode  0.00 s, level 4, 559 bytes
+  Block codec, Haskell + SPARK                           0.06  round trip OK, hash 566fff32dfb4bec3, encode  0.04 s, decode  0.00 s, level 4, 626 bytes
 build/wav/rate_sine_96000.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.05  round trip OK, hash d4b38d5eb55b3dc6, encode  0.44 s, decode  0.02 s, level 4, 5849 bytes
+  Block codec, Haskell + SPARK                           0.05  round trip OK, hash aff750cd70bf47ff, encode  0.43 s, decode  0.02 s, level 4, 5916 bytes
 build/wav/rec_electronic.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          18.54  round trip OK, hash d8109351acc1e896, encode  2.50 s, decode  0.06 s, level 4, 4087345 bytes
+  Block codec, Haskell + SPARK                          18.54  round trip OK, hash f75118962bf7cb0f, encode  2.40 s, decode  0.06 s, level 4, 4087436 bytes
 build/wav/rec_orchestra_f32.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          13.82  round trip OK, hash e44266f8a50fa4fc, encode  3.14 s, decode  0.06 s, level 4, 3316453 bytes
+  Block codec, Haskell + SPARK                          13.82  round trip OK, hash 0a8aff8453921146, encode  2.35 s, decode  0.05 s, level 4, 3316544 bytes
 build/wav/rec_orchestra.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          13.82  round trip OK, hash 8067a51db05544d9, encode  2.47 s, decode  0.06 s, level 4, 3316449 bytes
+  Block codec, Haskell + SPARK                          13.82  round trip OK, hash 4c198deccb59de7d, encode  2.43 s, decode  0.05 s, level 4, 3316540 bytes
 build/wav/rec_piano_96k.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           6.31  round trip OK, hash 108d9b128a3f6c2a, encode  4.25 s, decode  0.06 s, level 4, 3027507 bytes
+  Block codec, Haskell + SPARK                           6.31  round trip OK, hash e5afa29af9dc7088, encode  4.80 s, decode  0.06 s, level 4, 3027598 bytes
 build/wav/rec_piano.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           3.67  round trip OK, hash dc6077a72ec9ffcb, encode  1.92 s, decode  0.02 s, level 4, 808793 bytes
+  Block codec, Haskell + SPARK                           3.67  round trip OK, hash d88741fe96dbdd3b, encode  1.92 s, decode  0.03 s, level 4, 808884 bytes
 build/wav/rec_room.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          13.39  round trip OK, hash b9eb519aeb6c85b7, encode  2.15 s, decode  0.04 s, level 4, 3212653 bytes
+  Block codec, Haskell + SPARK                          13.39  round trip OK, hash 697b6999462c1bf2, encode  2.41 s, decode  0.06 s, level 4, 3212744 bytes
 build/wav/rec_speech_16k.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           9.10  round trip OK, hash 1a94a64bf2de4d2a, encode  0.19 s, decode  0.01 s, level 4, 364024 bytes
+  Block codec, Haskell + SPARK                           9.10  round trip OK, hash 5e005ae3051402cf, encode  0.20 s, decode  0.01 s, level 4, 364091 bytes
 build/wav/rec_speech_8k.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           3.25  round trip OK, hash 614fd76625721fc5, encode  0.08 s, decode  0.01 s, level 4, 64983 bytes
+  Block codec, Haskell + SPARK                           3.25  round trip OK, hash 86cda399815e1e17, encode  0.09 s, decode  0.00 s, level 4, 65050 bytes
 build/wav/rec_speech.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          15.55  round trip OK, hash 2b812cc2fccf5dd3, encode  2.42 s, decode  0.06 s, level 4, 3731162 bytes
+  Block codec, Haskell + SPARK                          15.55  round trip OK, hash e1deffaf3bc4e336, encode  2.61 s, decode  0.06 s, level 4, 3731253 bytes
 build/wav/rec_vinyl_192k.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           5.75  round trip OK, hash dae52da1b83b5e20, encode  9.13 s, decode  0.13 s, level 4, 5520458 bytes
+  Block codec, Haskell + SPARK                           5.75  round trip OK, hash ef6b1c12f26e0af9, encode  9.46 s, decode  0.13 s, level 4, 5520549 bytes
 build/wav/signal_brown.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          11.42  round trip OK, hash 45983e2c38813b99, encode  0.57 s, decode  0.03 s, level 4, 1259374 bytes
+  Block codec, Haskell + SPARK                          11.42  round trip OK, hash 54ef1006710f68b0, encode  0.54 s, decode  0.02 s, level 4, 1259441 bytes
 build/wav/signal_chord.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           1.40  round trip OK, hash dced7bcb5dc3780f, encode  0.45 s, decode  0.02 s, level 4, 153986 bytes
+  Block codec, Haskell + SPARK                           1.40  round trip OK, hash 5f86f640756ab674, encode  0.43 s, decode  0.01 s, level 4, 154053 bytes
 build/wav/signal_dither.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           1.78  round trip OK, hash f10d70d1108121ac, encode  0.45 s, decode  0.00 s, level 4, 196345 bytes
+  Block codec, Haskell + SPARK                           1.78  round trip OK, hash 0b78b2545d4e8d45, encode  0.48 s, decode  0.01 s, level 4, 196412 bytes
 build/wav/signal_fm.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.07  round trip OK, hash 155d05f14429ed55, encode  0.43 s, decode  0.02 s, level 4, 7617 bytes
+  Block codec, Haskell + SPARK                           0.07  round trip OK, hash 8d24478f86aadb23, encode  0.58 s, decode  0.02 s, level 4, 7684 bytes
 build/wav/signal_impulses.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.06  round trip OK, hash e660eefe3d28d1e7, encode  0.09 s, decode  0.01 s, level 4, 7073 bytes
+  Block codec, Haskell + SPARK                           0.06  round trip OK, hash 4d6dccbc19259086, encode  0.08 s, decode  0.00 s, level 4, 7140 bytes
 build/wav/signal_pink.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          12.87  round trip OK, hash 975f767047c82d43, encode  0.51 s, decode  0.03 s, level 4, 1419088 bytes
+  Block codec, Haskell + SPARK                          12.87  round trip OK, hash 13c55f2b442b85bb, encode  0.57 s, decode  0.03 s, level 4, 1419155 bytes
 build/wav/signal_sawtooth.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.05  round trip OK, hash fa7eb773351b7b95, encode  0.33 s, decode  0.01 s, level 4, 5915 bytes
+  Block codec, Haskell + SPARK                           0.05  round trip OK, hash 4de0169d72141835, encode  0.39 s, decode  0.02 s, level 4, 5982 bytes
 build/wav/signal_silence.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.04  round trip OK, hash a00f6cd6fed0fb40, encode  0.03 s, decode  0.00 s, level 4, 4609 bytes
+  Block codec, Haskell + SPARK                           0.04  round trip OK, hash 553ae2b9149f3dde, encode  0.05 s, decode  0.00 s, level 4, 4676 bytes
 build/wav/signal_sine.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.05  round trip OK, hash a6b7a6d33d0a3b7a, encode  0.40 s, decode  0.02 s, level 4, 5590 bytes
+  Block codec, Haskell + SPARK                           0.05  round trip OK, hash 64a507d79bc24982, encode  0.41 s, decode  0.02 s, level 4, 5657 bytes
 build/wav/signal_square.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.13  round trip OK, hash 953924f2d28568ba, encode  0.38 s, decode  0.03 s, level 4, 13986 bytes
+  Block codec, Haskell + SPARK                           0.13  round trip OK, hash e3645d4e0e9d8a1d, encode  0.39 s, decode  0.02 s, level 4, 14053 bytes
 build/wav/signal_sweep.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           1.52  round trip OK, hash 4186e3ef1d1b46b3, encode  0.42 s, decode  0.01 s, level 4, 167576 bytes
+  Block codec, Haskell + SPARK                           1.52  round trip OK, hash 93466374bfae99d0, encode  0.47 s, decode  0.01 s, level 4, 167643 bytes
 build/wav/signal_triangle.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                           0.05  round trip OK, hash 659aa5e6a9b4c2a6, encode  0.44 s, decode  0.02 s, level 4, 5665 bytes
+  Block codec, Haskell + SPARK                           0.05  round trip OK, hash b98a55de7184bb07, encode  0.49 s, decode  0.02 s, level 4, 5732 bytes
 build/wav/signal_white.wav
  16 capabilities; bits per sample, side information included:
-  Block codec, Haskell + SPARK                          15.06  round trip OK, hash af37b8bc802eab8b, encode  0.56 s, decode  0.01 s, level 4, 1660502 bytes
+  Block codec, Haskell + SPARK                          15.06  round trip OK, hash 3ad130a672632c79, encode  0.63 s, decode  0.02 s, level 4, 1660569 bytes

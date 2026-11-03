@@ -8,11 +8,11 @@ Level-4 streams, from the `bits:` line of `codec_main`:
 
 | Files | Headers | LPC coefficients | LPC warm-up | Code tables | Framing | Residuals |
 |---|---|---|---|---|---|---|
-| Generated signals | 0.16% | 0.30% | 0.28% | 0.22% | 1.06% | 97.99% |
-| Sample-rate sweep | 0.09% | 0.03% | 0.07% | 0.04% | 0.56% | 99.20% |
-| Bit-depth sweep | 0.06% | 0.01% | 0.06% | 0.10% | 0.40% | 99.37% |
+| Generated signals | 0.16% | 0.30% | 0.28% | 0.22% | 1.07% | 97.97% |
+| Sample-rate sweep | 0.09% | 0.03% | 0.07% | 0.04% | 0.57% | 99.19% |
+| Bit-depth sweep | 0.06% | 0.01% | 0.06% | 0.10% | 0.41% | 99.36% |
 | Recordings | 0.07% | 0.64% | 0.77% | 0.02% | 0.24% | 98.26% |
-| Whole corpus | 0.08% | 0.46% | 0.55% | 0.05% | 0.39% | 98.46% |
+| Whole corpus | 0.08% | 0.46% | 0.55% | 0.05% | 0.40% | 98.45% |
 
 Side information takes 1.5 percent of all bits; code tables fell from 0.13 to 0.05 percent when the adaptive binary code took most of the run-length code's blocks. The two largest parts are linear prediction coefficients and their warm-up, both on the recordings. Group framing, 15 bytes per group of 4096 frames, is third, and the largest part on generated signals and the sweeps, where blocks themselves are small ([container.md](container.md)).
 

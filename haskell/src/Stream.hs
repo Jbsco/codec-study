@@ -44,6 +44,7 @@ data Prepared = Prepared
   , pFloat :: !Bool
   , pModes :: [(Int, Int)]
   , pCoded :: [U.Vector Int]
+  , pSource :: Maybe (S.Vector Word8)
   }
 
 prepare :: Audio -> Prepared
@@ -51,8 +52,12 @@ prepare a
   | isFloat a =
       let found = map toIntegers (channels a)
       in Prepared (frames a) (rate a) (depth a) (validBits a) (channelMask a) (audioMd5 a) True [maybe (2, 0) (\(s, _) -> (1, s)) f | f <- found]
-           [maybe c snd f | (f, c) <- zip found (channels a)]
-  | otherwise = Prepared (frames a) (rate a) (depth a) (validBits a) (channelMask a) (audioMd5 a) False [] (channels a)
+           [maybe c snd f | (f, c) <- zip found (channels a)] (sourceOf a)
+  | otherwise = Prepared (frames a) (rate a) (depth a) (validBits a) (channelMask a) (audioMd5 a) False [] (channels a) (sourceOf a)
+
+-- | The source description of the input file, for metadata block 3.
+sourceOf :: Audio -> Maybe (S.Vector Word8)
+sourceOf = fmap (S.fromList . BI.unpackBytes) . source
 
 -- | MD5 of the input samples in FLAC's layout: frames in order with channels interleaved, each integer shifted down
 -- to its valid bits and written little-endian in as many bytes as those bits need, each float as its 32-bit pattern.
@@ -106,11 +111,12 @@ container = Container False 10
 magic :: S.Vector Word8
 magic = S.fromList [0x42, 0x4C, 0x4B, 0x43]
 
-version, syncWord, groupHead, seekBlock :: Int
+version, syncWord, groupHead, seekBlock, sourceBlock :: Int
 version = 2
 syncWord = 0xB1C5
 groupHead = 11
 seekBlock = 2
+sourceBlock = 3
 
 -- | The two signals each stereo mode codes: 1 and 2 the pair's channels, 3 its mid and 4 its side.
 modeSignals :: [[Int]]
@@ -259,7 +265,8 @@ encodeStream enc setting c p = S.concat ([header, word16 (fromIntegral (crc16 he
         hd = S.concat [word16 syncWord, word24 len, word32 first, word16 count]
         table = S.concat (concatMap (\b -> [word16 (S.length b), word16 (fromIntegral (crc16 b))]) bs)
     entries = if tableSpan == 0 then 0 else (groups + tableSpan - 1) `quot` tableSpan
-    headerLength = 42 + (if pFloat p then 2 * nch else 0) + 1 + (if entries > 0 then 4 + 12 * entries else 0) + 2
+    headerLength = 42 + (if pFloat p then 2 * nch else 0) + 1 + (if entries > 0 then 4 + 12 * entries else 0)
+      + maybe 0 ((+ 4) . S.length) (pSource p) + 2
     offsets = V.fromList (scanl (+) headerLength (map S.length groupsCoded))
     seekTable
       | entries == 0 = S.empty
@@ -274,8 +281,9 @@ encodeStream enc setting c p = S.concat ([header, word16 (fromIntegral (crc16 he
       , word32 (pMask p)
       , pMd5 p
       , S.fromList (concat [[fromIntegral m, fromIntegral s] | (m, s) <- pModes p])
-      , S.fromList [if entries > 0 then 1 else 0]
+      , S.fromList [(if entries > 0 then 1 else 0) + maybe 0 (const 1) (pSource p)]
       , seekTable
+      , maybe S.empty (\s -> S.concat [S.fromList [fromIntegral sourceBlock], word24 (S.length s), s]) (pSource p)
       ]
 
 -- | The decoded channels, and the positions of what fails: -1 for the header CRC, -2 for a seek table entry
