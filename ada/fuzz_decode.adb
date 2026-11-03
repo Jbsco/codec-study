@@ -1,8 +1,8 @@
 --  Mutation fuzzer for the stream decoder. Each iteration takes one of the given streams, changes it at random and
---  decodes it as stream_decode does: header, walker, audio MD5 and the writer, into /dev/null. Some changes rewrite a
---  header or group field and recompute its CRC, so the change reaches the parsers behind the CRCs. Any exception is
---  a failure: the changed stream is saved as fuzz_failure.blkc and the exit status is 1. With 0 iterations, each
---  stream is decoded once as given, to replay a saved failure.
+--  decodes it as stream_decode does: header, walker, audio MD5 and the writer, into /dev/null, then seeks to a frame
+--  at random. Some changes rewrite a header or group field and recompute its CRC, so the change reaches the parsers
+--  behind the CRCs. Any exception is a failure: the changed stream is saved as fuzz_failure.blkc and the exit status
+--  is 1. With 0 iterations, each stream is decoded once as given, to replay a saved failure.
 --  Usage: fuzz_decode <iterations> <seed> <stream>...
 with Ada.Command_Line;
 with Ada.Exceptions;
@@ -28,7 +28,7 @@ procedure Fuzz_Decode is
    State : Unsigned_64 := 0;
 
    procedure Free is new Ada.Unchecked_Deallocation (Byte_Array, Byte_Array_Access);
-   Refused, Intact, Damaged, Skipped : Natural := 0;
+   Refused, Intact, Damaged, Skipped, Seeks : Natural := 0;
 
    --  xorshift64*: a fixed sequence for each seed, so a failure can be found again.
    function Next return Unsigned_64 is
@@ -224,6 +224,22 @@ procedure Fuzz_Decode is
                Damaged := Damaged + 1;
             end if;
          end;
+         --  The walker then seeks to a frame at random and reads a few frames from there.
+         if H.Frames > 0 then
+            declare
+               Target : constant Natural := Below (H.Frames);
+               Sum : Long_Long_Integer := 0;
+            begin
+               Seek (W, Target);
+               for F in Target .. Natural'Min (Target + 99, H.Frames - 1) loop
+                  Advance (W, F);
+                  for C in 1 .. H.Channels loop
+                     Sum := Sum + Value (W, C, F) mod 2;
+                  end loop;
+               end loop;
+               Seeks := Seeks + (if Sum >= 0 then 1 else 0);
+            end;
+         end if;
          Stop (W);
       end;
    end Decode;
@@ -280,5 +296,6 @@ begin
       end;
    end loop;
    Put_Line ("fuzz_decode:" & Iterations'Image & " changed streams, no exception:" & Refused'Image & " refused,"
-             & Intact'Image & " intact," & Damaged'Image & " damaged," & Skipped'Image & " skipped for length");
+             & Intact'Image & " intact," & Damaged'Image & " damaged," & Skipped'Image & " skipped for length,"
+             & Seeks'Image & " seeks");
 end Fuzz_Decode;

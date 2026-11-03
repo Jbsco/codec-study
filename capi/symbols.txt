@@ -1,6 +1,8 @@
 blkc_api_version
 blkc_decode
 blkc_decode_float
+blkc_decode_range
+blkc_decode_range_float
 blkc_encode
 blkc_encode_bound
 blkc_encode_float

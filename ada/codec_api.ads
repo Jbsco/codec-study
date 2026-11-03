@@ -54,4 +54,12 @@ package Codec_Api is
                           Report : access Damage_Report) return int
      with Export, Convention => C, External_Name => "blkc_decode_float";
 
+   function Decode_Range (Stream : System.Address; Length, First, Count : Integer_64; Samples : System.Address;
+                          Report : access Damage_Report) return int
+     with Export, Convention => C, External_Name => "blkc_decode_range";
+
+   function Decode_Range_Float (Stream : System.Address; Length, First, Count : Integer_64; Samples : System.Address;
+                                Report : access Damage_Report) return int
+     with Export, Convention => C, External_Name => "blkc_decode_range_float";
+
 end Codec_Api;

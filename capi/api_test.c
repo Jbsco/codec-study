@@ -54,6 +54,37 @@ static int decode_float_file(const char *path, blkc_damage *d) {
   return r;
 }
 
+/* Decode ranges of a vector, as integers or as floats, and compare each with the same frames of a full decode. */
+static int ranges_match(const char *path, int is_float) {
+  int64_t length;
+  uint8_t *s = load(path, &length);
+  blkc_info info;
+  if (!s || blkc_read_info(s, length, &info) != BLKC_OK) {
+    free(s);
+    return 0;
+  }
+  size_t n = (size_t)(info.frames * info.channels);
+  int32_t *all = malloc(sizeof(int32_t) * n), *part = malloc(sizeof(int32_t) * n);
+  blkc_damage d;
+  int ok = (is_float ? blkc_decode_float(s, length, (float *)all, info.frames, &d)
+                     : blkc_decode(s, length, all, info.frames, &d)) == BLKC_OK;
+  int64_t starts[] = {0, 1, 4095, 4096, 5000, info.frames / 2, info.frames - 7};
+  for (size_t k = 0; ok && k < sizeof starts / sizeof starts[0]; k++) {
+    int64_t first = starts[k], count = info.frames - first < 3000 ? info.frames - first : 3000;
+    int r = is_float ? blkc_decode_range_float(s, length, first, count, (float *)part, &d)
+                     : blkc_decode_range(s, length, first, count, part, &d);
+    ok = r == BLKC_OK && d.audio_md5 == 0 &&
+         memcmp(part, all + first * info.channels, sizeof(int32_t) * (size_t)(count * info.channels)) == 0;
+  }
+  int past = is_float ? blkc_decode_range_float(s, length, info.frames - 1, 2, (float *)part, &d)
+                      : blkc_decode_range(s, length, info.frames - 1, 2, part, &d);
+  ok = ok && past == BLKC_BAD_ARGUMENT;
+  free(part);
+  free(all);
+  free(s);
+  return ok;
+}
+
 /* Code float samples and decode them again; 1 when every bit pattern comes back and the integer decoder refuses them. */
 static int float_round_trip(const float *x, int64_t frames, int channels) {
   blkc_info info = {channels, 48000, 32, 32, frames, 0, 1, {0}};
@@ -115,6 +146,10 @@ int main(void) {
   check(float_round_trip(f, float_frames, 2), "float round trip, NaN, infinity and negative zero");
   free(f);
   check(decode_float_file("../vectors/float_patterns.blkc", &d) == BLKC_OK && d.audio_md5 == 1, "float vector");
+  check(ranges_match("../vectors/tags_seek_table.blkc", 0), "ranges from a seek point every second");
+  check(ranges_match("../vectors/independent.blkc", 0), "ranges with every group a segment");
+  check(ranges_match("../vectors/stereo_modes.blkc", 0), "ranges of a stereo stream");
+  check(ranges_match("../vectors/float_patterns.blkc", 1), "float ranges");
 
   a[la / 2] ^= 0x10;
   check(blkc_decode(a, la, y, frames, &d) == BLKC_DAMAGED, "changed byte reported as damage");
@@ -134,6 +169,6 @@ int main(void) {
   free(y);
   free(a);
   free(b);
-  if (failures == 0) printf("  C interface: versions, layout, integer and float round trips, damage and arguments as declared\n");
+  if (failures == 0) printf("  C interface: versions, layout, round trips, ranges, damage and arguments as declared\n");
   return failures != 0;
 }

@@ -564,6 +564,40 @@ package body Stream_Reading is
       Free (H.Source);
    end Release;
 
+   procedure Seek (W : in out Walker; Target : Natural) is
+      Frame : Natural := 0;
+      Offset : Natural := W.H.First_Group;
+   begin
+      for E of W.H.Seeks.all loop
+         if E.Frame <= Target and then E.Frame >= Frame and then E.Offset in W.H.First_Group .. W.Stream'Length - 1 then
+            Frame := E.Frame;
+            Offset := E.Offset;
+         end if;
+      end loop;
+      if W.H.Independent then
+         declare
+            Group_Length, Group_First, Group_Count, Leaf_Count, Table_At : Natural;
+            L : Leaf_List;
+            Ok : Boolean;
+         begin
+            loop
+               Parse_Group (W.Stream.all, W.H, Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
+               exit when not Ok or else Group_First /= Frame or else Group_First + Group_Count > Target;
+               Offset := Offset + Group_Length;
+               Frame := Group_First + Group_Count;
+            end loop;
+         end;
+      end if;
+      W.Offset := Offset;
+      W.Filled := Frame;
+      W.Base := Natural'Max (0, Frame - Max_History);
+      for C in 1 .. W.H.Channels loop
+         Free (W.Buf (C));
+         W.Buf (C) := new Sample_Array'(W.Base .. W.Base + Window - 1 => 0);
+      end loop;
+      W.D := (others => <>);
+   end Seek;
+
    procedure Stop (W : in out Walker) is
    begin
       for C in 1 .. W.H.Channels loop
