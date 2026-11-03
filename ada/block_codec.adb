@@ -180,15 +180,28 @@ package body Block_Codec with SPARK_Mode is
    --  The smallest distance P, at most the length of History, at which the first 32 samples of X repeat the
    --  samples P before them, counting back into History, or zero.
    function Find_Back (X, History : Sample_Array) return Natural with SPARK_Mode => Off is
-      function Before (K : Integer) return Long_Long_Integer is
-        (if K >= 0 then X (X'First + K) else History (History'Last + 1 + K));
+      N : constant Natural := History'Length;
    begin
-      if X'Length >= Match_Length then
-         for P in 1 .. History'Length loop
-            if (for all J in 0 .. Match_Length - 1 => Before (J - P) = X (X'First + J)) then
-               return P;
-            end if;
-         end loop;
+      if X'Length >= Match_Length and then N > 0 then
+         declare
+            --  History, then the first samples of X, in one buffer.
+            S : array (0 .. N + Match_Length - 1) of Long_Long_Integer;
+            First : constant Long_Long_Integer := X (X'First);
+         begin
+            for I in 0 .. N - 1 loop
+               S (I) := History (History'First + I);
+            end loop;
+            for J in 0 .. Match_Length - 1 loop
+               S (N + J) := X (X'First + J);
+            end loop;
+            for P in 1 .. N loop
+               if S (N - P) = First
+                 and then (for all J in 1 .. Match_Length - 1 => S (N - P + J) = S (N + J))
+               then
+                  return P;
+               end if;
+            end loop;
+         end;
       end if;
       return 0;
    end Find_Back;
