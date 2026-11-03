@@ -17,6 +17,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
 - `extra.sh`: the codec on the wider corpus in `corpus/extra/`, results in `results/extra.tsv`.
+- `release.sh`, `.github/workflows/release.yml`: release package and its publication from a version tag.
 - `run.sh`, `compare.sh`, `bench.sh`, `tool_timing.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, timing against FLAC and WavPack, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
 - `vectors/`: format version 2 test streams, intact and damaged, with a manifest of decoded MD5s and `check.sh` to test a decoder.
 - `docs/`: one page per compression topic with method, measured effect, decoder cost and where it applies beyond audio; `docs/format.md` lists every field of a block, and `docs/spec.md` defines format version 2 for a decoder.
@@ -358,6 +359,12 @@ Exit status 0 means the stream was intact. Status 1 means damage: frames of unre
     cc -Iinclude app.c -Lada/lib -lblockcodec
 
 Float streams decode with status `BLKC_UNSUPPORTED` in API version 1. `capi/check.sh` builds `capi/api_test.c` against the header and checks the library's exported functions against `capi/symbols.txt`, so a changed interface fails the tests before it reaches a release.
+
+### Release
+
+`release.sh [out] [name]` builds the release programs and the library with the version `git describe` gives, and packs them with the header, the specification, the README and the licenses into `<name>-<version>-linux-x86_64.tar.gz` with its SHA-256. `stream_encode --version` and `stream_decode --version` report that version, the format version and the C API version.
+
+Once the repository variable `RELEASE_NAME` is set, every merge to main runs `.github/workflows/release.yml` on a hosted runner. It tags the merge as the next version, runs `release.sh` with that name, and publishes a GitHub release with generated notes. Releases are numbered from v0.1.0, and each one raises the last number only: v0.1.1, v0.1.2, and on past v0.1.9 to v0.1.10.
 
 ## References
 
