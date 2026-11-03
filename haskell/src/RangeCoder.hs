@@ -1,7 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
--- | A binary range coder with adaptive 12-one probabilities, the mirror of ada/range_coding.adb: a 32-one rng,
--- a 33-one low with the carry held back in a cache byte, bytes written as 8-one fields of the one stream. Each
--- probability is that of a zero one, in 4096ths, and moves toward each coded one by a 32nd of the distance.
+-- | A binary range coder with adaptive 12-bit probabilities, the mirror of ada/range_coding.adb: a 32-bit range,
+-- a 33-bit low with the carry held back in a cache byte, bytes written as 8-bit fields of the bit stream. Each
+-- probability is that of a zero bit, in 4096ths, and moves toward each coded bit by a 32nd of the distance.
 module RangeCoder (Enc, encStart, encPending, encodeBit, encodeDirect, flush, Dec, decStart, decodeBit, decodeDirect, half) where
 
 import Control.Monad.ST (ST)
@@ -48,7 +48,7 @@ normalize buf w e@(Enc low rng cache pending)
   | rng < top = shiftLow buf w (Enc low (rng `unsafeShiftL` 8) cache pending) >>= \(w', e') -> normalize buf w' e'
   | otherwise = pure (w, e)
 
--- | Code a one with the probability at the given index of the context table, and adapt it.
+-- | Code a bit with the probability at the given index of the context table, and adapt it.
 encodeBit :: Buffer s -> W -> Enc -> UM.MVector s Int -> Int -> Bool -> ST s (W, Enc)
 encodeBit buf w (Enc low rng cache pending) probs ctx one = do
   p <- UM.unsafeRead probs ctx
@@ -57,13 +57,13 @@ encodeBit buf w (Enc low rng cache pending) probs ctx one = do
     then UM.unsafeWrite probs ctx (p - p `unsafeShiftR` rate) >> normalize buf w (Enc (low + fromIntegral bound) (rng - bound) cache pending)
     else UM.unsafeWrite probs ctx (p + (4096 - p) `unsafeShiftR` rate) >> normalize buf w (Enc low bound cache pending)
 
--- | A one with no model, each value equally likely.
+-- | A bit with no model, each value equally likely.
 encodeDirect :: Buffer s -> W -> Enc -> Bool -> ST s (W, Enc)
 encodeDirect buf w (Enc low rng cache pending) one =
   let rng' = rng `unsafeShiftR` 1
   in normalize buf w (Enc (if one then low + fromIntegral rng' else low) rng' cache pending)
 
--- | Write the bytes that let the decoder read every one coded so far.
+-- | Write the bytes that let the decoder read every bit coded so far.
 flush :: Buffer s -> W -> Enc -> ST s W
 flush buf w0 e0 = go w0 e0 (5 :: Int)
   where
@@ -73,7 +73,7 @@ flush buf w0 e0 = go w0 e0 (5 :: Int)
 -- | Decoder state: the code and the rng.
 data Dec = Dec {-# UNPACK #-} !Word32 {-# UNPACK #-} !Word32
 
--- | The decoder from the five bytes at one p, the first of which is the encoder's initial cache byte.
+-- | The decoder from the five bytes at bit p, the first of which is the encoder's initial cache byte.
 decStart :: S.Vector Word8 -> Int -> (Dec, Int)
 decStart v p = (Dec (fromIntegral (getLong v (p + 8) 32)) 0xFFFFFFFF, p + 40)
 
