@@ -277,7 +277,7 @@ version=$(git describe --tags --match 'v*' --abbrev=8 --always --dirty)
 mkdir -p build/dist/unpacked && tar -xzf "$tarball" -C build/dist/unpacked
 root=$(echo build/dist/unpacked/*)
 if [ -x "$root/bin/stream_encode" ] && [ -f "$root/lib/libblockcodec.so" ] && [ -f "$root/include/blockcodec.h" ] \
-   && [ -f "$root/share/doc/codec-study/spec.md" ] && (cd build/dist && sha256sum -c --quiet ./*.sha256) \
+   && [ -f "$root/share/doc/blockcodec/spec.md" ] && (cd build/dist && sha256sum -c --quiet ./*.sha256) \
    && "$root/bin/stream_decode" --version | grep -q "^stream_decode $version, format version 2, C API version 1$"; then
   echo "  release package: programs, library, header and documents, version $version"
 else
