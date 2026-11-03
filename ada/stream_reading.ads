@@ -102,8 +102,9 @@ package Stream_Reading is
    --  Free the walker's buffers. Start it again before any other call.
    procedure Stop (W : in out Walker);
 
-   --  Start over at the seek point at or before frame Target, or at the group holding Target when every group is a
-   --  segment, with a fresh damage report; frames from Target on may then be asked for in order.
+   --  Start over at the group that holds frame Target, or at the earliest group before it whose samples its blocks
+   --  read, back to the seek point at most, with a fresh damage report; frames from Target on may then be asked for
+   --  in order.
    procedure Seek (W : in out Walker; Target : Natural);
 
 private
@@ -124,6 +125,7 @@ private
       Buf : Channel_Buffers;
       Base : Natural := 0;
       Filled, Offset : Natural := 0;
+      Decoded_From : Natural := 0;
       D : Damage;
    end record;
 

@@ -68,7 +68,7 @@ static int ranges_match(const char *path, int is_float) {
   blkc_damage d;
   int ok = (is_float ? blkc_decode_float(s, length, (float *)all, info.frames, &d)
                      : blkc_decode(s, length, all, info.frames, &d)) == BLKC_OK;
-  int64_t starts[] = {0, 1, 4095, 4096, 5000, info.frames / 2, info.frames - 7};
+  int64_t starts[] = {0, 1, 4095, 4096, 5000, 6208, info.frames / 2, info.frames - 7};
   for (size_t k = 0; ok && k < sizeof starts / sizeof starts[0]; k++) {
     int64_t first = starts[k], count = info.frames - first < 3000 ? info.frames - first : 3000;
     int r = is_float ? blkc_decode_range_float(s, length, first, count, (float *)part, &d)
@@ -150,6 +150,8 @@ int main(void) {
   check(ranges_match("../vectors/independent.blkc", 0), "ranges with every group a segment");
   check(ranges_match("../vectors/stereo_modes.blkc", 0), "ranges of a stereo stream");
   check(ranges_match("../vectors/float_patterns.blkc", 1), "float ranges");
+  check(ranges_match("../vectors/delay_in_history.blkc", 0), "ranges of a stream that repeats earlier samples");
+  check(ranges_match("../vectors/adaptive_stage.blkc", 0), "ranges of a stream with the adaptive stage");
 
   a[la / 2] ^= 0x10;
   check(blkc_decode(a, la, y, frames, &d) == BLKC_DAMAGED, "changed byte reported as damage");
