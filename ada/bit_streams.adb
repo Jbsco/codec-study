@@ -4,20 +4,23 @@ package body Bit_Streams with SPARK_Mode is
      (Unsigned_64 ((Buffer (Buffer'First + Pos / 8) / 2**(7 - Pos mod 8)) and 1));
 
    procedure Put (Buffer : in out Byte_Array; Pos : in out Natural; Value : Unsigned_64; Count : Field_Width) is
+      Left : Natural := Count;
    begin
-      for K in reverse 0 .. Count - 1 loop
-         pragma Loop_Invariant (Pos = Pos'Loop_Entry + (Count - 1 - K));
+      while Left > 0 loop
+         pragma Loop_Invariant (Left <= Count and then Pos = Pos'Loop_Entry + (Count - Left));
+         pragma Loop_Variant (Decreases => Left);
          declare
             Index : constant Natural := Buffer'First + Pos / 8;
-            Mask : constant Byte := 2**(7 - Pos mod 8);
+            Avail : constant Positive := 8 - Pos mod 8;
+            Take : constant Positive := Natural'Min (Avail, Left);
+            Low : constant Unsigned_64 := Shift_Left (1, Take) - 1;
+            Field : constant Unsigned_64 := Shift_Left (Shift_Right (Value, Left - Take) and Low, Avail - Take);
+            Mask : constant Unsigned_64 := Shift_Left (Low, Avail - Take);
          begin
-            if (Shift_Right (Value, K) and 1) = 1 then
-               Buffer (Index) := Buffer (Index) or Mask;
-            else
-               Buffer (Index) := Buffer (Index) and not Mask;
-            end if;
+            Buffer (Index) := Byte (((Unsigned_64 (Buffer (Index)) and not Mask) or Field) and 16#FF#);
+            Pos := Pos + Take;
+            Left := Left - Take;
          end;
-         Pos := Pos + 1;
       end loop;
    end Put;
 
