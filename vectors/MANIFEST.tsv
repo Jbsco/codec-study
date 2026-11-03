@@ -37,3 +37,5 @@ damaged_block_bit	1	85f369ac1b6a6af7cefec4b610d00326	bit flipped in the second g
 damaged_truncated	1	652c69c459ecf0dc23eff862c3f8a5a2	stream cut inside the third group: decoded to the last whole group
 damaged_garbage	1	c6b5577108757f3997c07d62ed6b7b87	false sync words between the first and second groups: next group found again
 not_a_stream	2	-	WAV bytes, not a stream: refused
+regression_out_of_depth	1	1f349993845a48ddfece8f9295947c23	found by fuzzing: damaged blocks rebuild a channel outside its depth, zeroed and counted
+regression_resync_first_frame	1	9198c17392970c48bf949f060a26e7f6	found by fuzzing: after a damaged group, the next good group starts at frame 0

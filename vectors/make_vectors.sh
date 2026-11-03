@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Write the format version 2 test vectors into vectors/: streams that together use every block kind, residual code,
-# stereo mode, depth, float mode, container and metadata block, and damaged copies of one stream. MANIFEST.tsv lists
-# each stream with the exit status and the MD5 of the file that ada/obj/stream_decode writes from it, and the block
-# kinds codec_main reports for the intact ones. Sources are generated signals and short corpus excerpts. Needs the
-# Ada programs built, ffmpeg and python3. The vectors are kept as written: rerun this only to add vectors.
+# stereo mode, depth, float mode, container and metadata block, and damaged copies of one stream. Regression streams
+# the fuzzer found stay as found. MANIFEST.tsv lists each stream with the exit status and the MD5 of the file that
+# ada/obj/stream_decode writes from it, and the block kinds codec_main reports for the intact ones. Sources are
+# generated signals and short corpus excerpts. Needs the Ada programs built, ffmpeg and python3. The vectors are kept
+# as written: rerun this only to add vectors.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 out=vectors
@@ -12,7 +13,7 @@ trap 'rm -rf "$work"' EXIT
 enc=ada/obj/stream_encode
 dec=ada/obj/stream_decode
 mkdir -p "$out"
-rm -f "$out"/*.blkc
+find "$out" -name '*.blkc' ! -name 'regression_*' -delete
 manifest=$out/MANIFEST.tsv
 printf 'vector\tstatus\tdecoded_md5\tcontent\n' > "$manifest"
 
@@ -203,4 +204,8 @@ damage damaged_truncated truncated "stream cut inside the third group: decoded t
 damage damaged_garbage garbage "false sync words between the first and second groups: next group found again"
 head -c 3000 "$work/speech8k.wav" > "$out/not_a_stream.blkc"
 record not_a_stream "WAV bytes, not a stream: refused"
+
+# Streams the fuzzer found, kept as found.
+record regression_out_of_depth "found by fuzzing: damaged blocks rebuild a channel outside its depth, zeroed and counted"
+record regression_resync_first_frame "found by fuzzing: after a damaged group, the next good group starts at frame 0"
 echo "vectors: $(($(wc -l < "$manifest") - 1)) written to $out" >&2
