@@ -1,0 +1,80 @@
+name: AUR
+
+# Nightly, and on demand: when the latest release differs from the version of the AUR package that the repository
+# variable AUR_PACKAGE names, update that package to the release from an Arch container. Until the variable is set,
+# nothing runs. The SSH key is a secret of the aur environment, deployable from main only. GitHub turns scheduled
+# workflows off after 60 days without activity in a public repository; Actions shows how to turn this one on again.
+on:
+  schedule:
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: aur
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: vars.AUR_PACKAGE != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.compare.outputs.version }}
+      sha256: ${{ steps.compare.outputs.sha256 }}
+    steps:
+      - name: Compare the latest release with the AUR package
+        id: compare
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PACKAGE: ${{ vars.AUR_PACKAGE }}
+        run: |
+          tag=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)
+          aur=$(curl -fsS "https://aur.archlinux.org/rpc/v5/info?arg[]=$PACKAGE" | jq -r '.results[0].Version // ""')
+          echo "latest release $tag, AUR $PACKAGE ${aur:-not found}"
+          if [ "${aur%-*}" != "${tag#v}" ]; then
+            sha=$(gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern '*.tar.gz.sha256' --output - | cut -d' ' -f1)
+            test "${#sha}" = 64
+            echo "version=$tag" >> "$GITHUB_OUTPUT"
+            echo "sha256=$sha" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: check
+    if: needs.check.outputs.version != ''
+    runs-on: ubuntu-latest
+    environment: aur
+    container: archlinux:base-devel
+    timeout-minutes: 30
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm --needed git openssh
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update the AUR package
+        env:
+          AUR_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+          PACKAGE: ${{ vars.AUR_PACKAGE }}
+          VERSION: ${{ needs.check.outputs.version }}
+          SHA256: ${{ needs.check.outputs.sha256 }}
+        run: |
+          useradd -m builder
+          home=~builder
+          install -d -m 700 "$home/.ssh"
+          printf '%s\n' "$AUR_KEY" > "$home/.ssh/aur"
+          chmod 600 "$home/.ssh/aur"
+          # The AUR's ED25519 host key, matching the fingerprint aur.archlinux.org publishes.
+          echo 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN' \
+            > "$home/.ssh/known_hosts"
+          printf 'Host aur.archlinux.org\n  User aur\n  IdentityFile ~/.ssh/aur\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n' \
+            > "$home/.ssh/config"
+          cp aur.sh "$home/aur.sh"
+          chown -R builder: "$home"
+          runuser -u builder -- env HOME="$home" bash -c "cd ~ && git clone -q ssh://aur@aur.archlinux.org/$PACKAGE.git package \
+            && git -C package config user.name jbsco \
+            && git -C package config user.email 90524106+Jbsco@users.noreply.github.com \
+            && ./aur.sh package ${VERSION#v} $SHA256 --push"

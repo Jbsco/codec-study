@@ -17,7 +17,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
 - `extra.sh`: the codec on the wider corpus in `corpus/extra/`, results in `results/extra.tsv`.
-- `release.sh`, `.github/workflows/release.yml`: release package and its publication from a version tag.
+- `release.sh`, `.github/workflows/release.yml`: release package and its publication from a version tag. `aur.sh`: AUR package update to a release.
 - `seek_timing.sh` with `capi/seek_bench.c`: seek times through the FLAC, WavPack and block codec libraries, results in `results/seek_timing.tsv`.
 - `run.sh`, `compare.sh`, `bench.sh`, `tool_timing.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, timing against FLAC and WavPack, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
 - `vectors/`: format version 2 test streams, intact and damaged, with a manifest of decoded MD5s and `check.sh` to test a decoder; `edge_audio.py` writes edge-case inputs for the encoder.
@@ -387,6 +387,14 @@ The library builds the units proved free of run-time errors without run-time che
 `release.sh [out] [name]` builds the release programs and the library with the version `git describe` gives, and packs them with the header, the specification, the README and the licenses into `<name>-<version>-linux-x86_64.tar.gz` with its SHA-256. The name is `blockcodec` when none is given. `blkc-encode --version` and `blkc-decode --version` report that version, the format version and the C API version.
 
 Once the repository variable `RELEASE_NAME` is set, every merge to main runs `.github/workflows/release.yml` on a hosted runner. It tags the merge as the next version, runs `release.sh` with that name, and publishes a GitHub release with generated notes. Releases are numbered from v0.1.0, and each one raises the last number only: v0.1.1, v0.1.2, and on past v0.1.9 to v0.1.10.
+
+On Arch Linux the AUR package `blockcodec-bin` installs a release's programs, library, header and documents:
+
+    yay -S blockcodec-bin
+
+Or clone `https://aur.archlinux.org/blockcodec-bin.git` and run `makepkg -si` in it.
+
+With the repository variable `AUR_PACKAGE` set, `.github/workflows/aur.yml` checks every night whether the latest release is newer than that package, and can also be started by hand. When it is, `aur.sh` runs in an Arch container to set the version and SHA-256, write `.SRCINFO` and build the package from the release before it pushes. Its SSH key is a secret of the `aur` environment, which only main can deploy, and the AUR's host key is pinned. GitHub turns scheduled workflows off after 60 days without activity in a public repository, and Actions shows how to turn this one on again.
 
 ## References
 
