@@ -15,6 +15,7 @@ Every coded stream is decoded again and compared sample for sample.
 - `ada/wav_files`: input from WAV, RF64, Wave64 and AIFF, WAV output. `ada/audio_huffman.adb` with `huffman_codes`, `predictors` and `residual_coders`: experiment coders.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
+- `extra.sh`: the codec on the wider corpus in `corpus/extra/`, results in `results/extra.tsv`.
 - `run.sh`, `compare.sh`, `bench.sh`, `tool_timing.sh`, `levels.sh`, `segments.sh`, `multichannel.sh`, `sizes.sh`, `tables.sh`: every coder, common lossless tools, timing, timing against FLAC and WavPack, encoder levels, segment lengths, a four-channel file, tool sizes and tables. Output in `results/`.
 - `vectors/`: format version 2 test streams, intact and damaged, with a manifest of decoded MD5s and `check.sh` to test a decoder.
 - `docs/`: one page per compression topic with method, measured effect, decoder cost and where it applies beyond audio; `docs/format.md` lists every field of a block, and `docs/spec.md` defines format version 2 for a decoder.
@@ -47,7 +48,7 @@ Generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the express
 
 </details>
 
-`corpus/extra/` contains six more 20 s recordings, kept apart so every result below stays comparable: a string quartet, birds, rain and thunder decoded from an MP3 original, a rocket launch, a church choir and an organ. `corpus/make_extra.sh` fetches and cuts them.
+`corpus/extra/` contains six more 20 s recordings, kept apart so every result below stays comparable: a string quartet, birds, rain and thunder decoded from an MP3 original, a rocket launch, a church choir and an organ. `corpus/make_extra.sh` fetches and cuts them, and `extra.sh` checks the codec on them.
 
 <details>
 <summary><b>Wider corpus sources</b> (6 rows)</summary>
@@ -279,6 +280,26 @@ Installed sizes of the tools compared, and this work's binaries. Decoder rows co
 | `stream_decode`, x86-64, stripped, needs only libc | 670,528 |
 | `huffman-audio`, Haskell, x86-64, stripped, needs libgmp | 6,543,248 |
 | `huffman-audio-hybrid`, x86-64, stripped, needs `libblockcodec.so` and libgmp | 6,495,776 |
+
+</details>
+
+### Wider corpus
+
+`extra.sh` codes each file of `corpus/extra/` at levels 0, 2 and 4 with the release programs, decodes it and compares the file byte for byte. It also checks that Ada, Haskell and the hybrid write one stream at level 4. Every file came back byte for byte, and the three implementations agreed on each.
+
+Level 4 is smaller than `flac -8` on every file. It is smaller than `wavpack -hh -x4` on the quartet, birds, organ and rain, and larger by 0.02 bits per sample on the choir and the launch. Over all six, level 4 codes 16,240,064 bytes against 16,530,608 for `flac -8` and 16,380,392 for `wavpack -hh -x4`.
+
+<details>
+<summary><b>Bits per sample on the wider corpus</b> (6 rows)</summary>
+
+| File | Format | Level 0 | Level 2 | Level 4 | `flac -8` | `wavpack -hh -x4` |
+|---|---|---|---|---|---|---|
+| `extra_birds` | 24 48k stereo | 19.69 | 17.81 | 17.79 | 17.99 | 18.02 |
+| `extra_choir` | 24 48k stereo | 17.17 | 16.45 | 16.43 | 16.50 | 16.41 |
+| `extra_launch` | 16 44.1k stereo | 6.00 | 5.55 | 5.52 | 5.60 | 5.50 |
+| `extra_organ` | 16 44.1k stereo | 7.63 | 7.15 | 7.10 | 7.27 | 7.23 |
+| `extra_quartet` | 24 48k stereo | 16.08 | 12.68 | 12.47 | 12.62 | 12.49 |
+| `extra_rain_mp3` | 16 48k stereo | 10.71 | 9.39 | 9.39 | 9.94 | 9.64 |
 
 </details>
 
