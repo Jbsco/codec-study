@@ -40,6 +40,9 @@ for s in speech_8k:build/wav/rec_speech_8k.wav pink_32f:corpus/depth_pink_32f.wa
     echo "  $name: stream_decode FAILED"; FAIL=1
   fi
 done
+ada/obj/stream_encode --level 1 --tag title=speech build/wav/rec_speech_8k.wav build/speech_8k_tool.bin 2> /dev/null
+cmp -s build/speech_8k.bin build/speech_8k_tool.bin && echo "  stream_encode writes codec_main's stream" \
+  || { echo "  stream_encode: FAILED"; FAIL=1; }
 ours=$(ada/obj/codec_main build/wav/rec_speech_8k.wav 0 | grep -oE 'audio MD5 [0-9a-f]+' | awk '{print $3}')
 [ "$ours" = "$(metaflac --show-md5sum corpus/rec_speech_8k.flac)" ] && echo "  audio MD5 equal to FLAC's" \
   || { echo "  audio MD5 differs from FLAC's"; FAIL=1; }
