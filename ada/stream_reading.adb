@@ -540,7 +540,9 @@ package body Stream_Reading is
                   Lose (W, W.Filled, W.H.Frames - 1);
                   W.Filled := W.H.Frames;
                else
-                  Lose (W, W.Filled, Group_First - 1);
+                  if Group_First > W.Filled then
+                     Lose (W, W.Filled, Group_First - 1);
+                  end if;
                   W.Filled := Group_First;
                end if;
             end if;
