@@ -4,7 +4,7 @@
 # then seeks to 200 frames drawn from one seed and reads 4096 frames from each; the median, 90th percentile and
 # largest times go to results/seek_timing.tsv with a check sum that must equal FLAC's. Runs on one pinned processor
 # and prints the load average, since a seek competes with the rest of the machine. Needs flac, wavpack, ffmpeg, the
-# FLAC and WavPack development headers, the library (gprbuild -P ada/codec_lib.gpr) and the release stream_encode.
+# FLAC and WavPack development headers, the library (gprbuild -P ada/codec_lib.gpr) and the release blkc-encode.
 set -uo pipefail
 cd "$(dirname "$0")"
 work=$(mktemp -d -p "${TMPDIR:-/var/tmp}")
@@ -24,7 +24,7 @@ for name in joined_48k vinyl_192k; do
   wav="$work/$name.wav"
   flac -s -f -5 -o "$work/a.flac" "$wav"; flac -s -f -8 -o "$work/b.flac" "$wav"
   wavpack -q -y "$wav" -o "$work/c.wv"; wavpack -q -y -hh "$wav" -o "$work/d.wv"
-  for level in 2 4 5; do ada/obj-release/stream_encode --level "$level" "$wav" "$work/l$level.blkc" 2> /dev/null; done
+  for level in 2 4 5; do ada/obj-release/blkc-encode --level "$level" "$wav" "$work/l$level.blkc" 2> /dev/null; done
   reference=
   for m in "flac -5:a.flac" "flac -8:b.flac" "wavpack:c.wv" "wavpack -hh:d.wv" "block level 2:l2.blkc" \
            "block level 4:l4.blkc" "block level 5:l5.blkc"; do

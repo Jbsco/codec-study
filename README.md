@@ -11,7 +11,7 @@ Every coded stream is decoded again and compared sample for sample.
 
 - `ada/block_codec.ads`, `.adb`: block codec. SPARK decoder with no heap and no exceptions; malformed input returns `Truncated_Input` or `Bad_Data`. Encoder with no heap and no shared state; linear prediction analysis in 64-bit floating point.
 - `ada/canonical_decoding`, `bit_streams`, `checksums`, `range_coding`: canonical Huffman decoding, bit access, CRC-16 and the binary range coder, in SPARK. `ada/checksums_test.adb` tests the CRC; `ada/corrupt_test.adb` walks a written stream and checks its framing and every CRC against flipped bits. `ada/fuzz_decode.adb` decodes changed copies of the test vectors and fails on any exception.
-- `ada/codec_main.adb`: stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/stream_reading` and `ada/stream_format`: header, groups and damage handling, read from a stream's own bytes. `ada/stream_writing` with `ada/stream_encode.adb`: audio file to stream. `ada/stream_decode.adb`: stream to audio file, group by group. `ada/byte_files`: files and pipes. `ada/block_codec_ffi` and `ada/codec_lib.gpr`: block codec as a C library, `ada/lib/libblockcodec.so`.
+- `ada/codec_main.adb`: stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/stream_reading` and `ada/stream_format`: header, groups and damage handling, read from a stream's own bytes. `ada/stream_writing` with `ada/blkc_encode.adb`: audio file to stream. `ada/blkc_decode.adb`: stream to audio file, group by group. `ada/byte_files`: files and pipes. `ada/block_codec_ffi` and `ada/codec_lib.gpr`: block codec as a C library, `ada/lib/libblockcodec.so`.
 - `ada/codec_api` with `include/blockcodec.h`: the library's C interface for streams; `capi/` tests it.
 - `ada/wav_files`: input from WAV, RF64, Wave64 and AIFF, WAV output. `ada/audio_huffman.adb` with `huffman_codes`, `predictors` and `residual_coders`: experiment coders.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
@@ -217,7 +217,7 @@ The encoder codes every node of each group's split tree, up to 15 blocks per gro
 
 Haskell decodes every block that does not reach back before itself in parallel. Pure Haskell times at 16 threads vary between runs, 59.56 s and 40.57 s in two runs of an earlier build, while Ada moved by 0.3 s.
 
-`tool_timing.sh` times `flac`, `wavpack` and the release build of `stream_encode` and `stream_decode`, on one thread, one file at a time. Each tool's decoder writes a WAV file, and its samples are checked against the input's. FLAC does not code 32-bit float, so the table sums every file but the three float ones.
+`tool_timing.sh` times `flac`, `wavpack` and the release build of `blkc-encode` and `blkc-decode`, on one thread, one file at a time. Each tool's decoder writes a WAV file, and its samples are checked against the input's. FLAC does not code 32-bit float, so the table sums every file but the three float ones.
 
 <details>
 <summary><b>Size and time against FLAC and WavPack</b> (13 rows)</summary>
@@ -231,12 +231,12 @@ Haskell decodes every block that does not reach back before itself in parallel. 
 | `wavpack` | 52,446,880 | 0.72 s | 0.37 s |
 | `wavpack -hh` | 52,082,680 | 1.10 s | 0.57 s |
 | `wavpack -hh -x4` | 43,358,134 | 12.26 s | 0.65 s |
-| `stream_encode --level 0` | 42,436,904 | 2.78 s | 1.23 s |
-| `stream_encode --level 1` | 37,914,752 | 4.72 s | 1.42 s |
-| `stream_encode --level 2` | 37,462,799 | 15.54 s | 2.32 s |
-| `stream_encode --level 4` | 37,109,813 | 110.49 s | 2.58 s |
-| `stream_encode --level 4`, every processor | 37,109,813 | 15.98 s | 2.34 s |
-| `stream_encode --level 5`, every processor | 36,954,023 | 96.32 s | 9.48 s |
+| `blkc-encode --level 0` | 42,436,904 | 2.78 s | 1.23 s |
+| `blkc-encode --level 1` | 37,914,752 | 4.72 s | 1.42 s |
+| `blkc-encode --level 2` | 37,462,799 | 15.54 s | 2.32 s |
+| `blkc-encode --level 4` | 37,109,813 | 110.49 s | 2.58 s |
+| `blkc-encode --level 4`, every processor | 37,109,813 | 15.98 s | 2.34 s |
+| `blkc-encode --level 5`, every processor | 36,954,023 | 96.32 s | 9.48 s |
 
 </details>
 
@@ -244,7 +244,7 @@ Level 0 is smaller than every FLAC and WavPack mode and encodes in 2.78 s, again
 
 Coding groups on all 16 threads, level 4 encodes in 15.98 s against 110.49 s on one, to the same bytes. Level 5 is 0.4% smaller than level 4 and decodes in 9.48 s, about four times as long, since its adaptive filter does up to 256 multiply-adds per sample where it is kept. WavPack without `-x` is larger than `flac -0` here: the 192 kHz recording alone costs 4.9 MB more than with `-x4`. Its size is measured with a seek point every second, and its times come from the run before that change.
 
-The release build leaves out run-time checks and assertions and inlines across units at `-O3`. Its streams and decoded files are identical to the checked build's. Over the whole corpus at level 0 on one thread, best of three runs, release `stream_encode` takes 2.51 s against 3.54 s for the checked build, and `stream_decode` 1.32 s against 1.88 s.
+The release build leaves out run-time checks and assertions and inlines across units at `-O3`. Its streams and decoded files are identical to the checked build's. Over the whole corpus at level 0 on one thread, best of three runs, release `blkc-encode` takes 2.51 s against 3.54 s for the checked build, and `blkc-decode` 1.32 s against 1.88 s.
 
 Haskell uses unboxed vectors whose loops fuse, strict unpacked writer state, `countLeadingZeros` for unary and bit-length codes, and decoding from a 32-bit peek. Parallelism comes from sparks over pure functions, so output cannot depend on scheduling. Executables run with `-N -A4m`; a 4 MB allocation area measured faster than 64 MB.
 
@@ -297,7 +297,7 @@ Installed sizes of the tools compared, and this work's binaries. Decoder rows co
 | Read-only data of the five units, `-Os -gnatp` | 521 (637 with checks on) |
 | `libblockcodec.so`, x86-64, stripped, Ada runtime included, blocks and streams | 777,816 |
 | `codec_main`, x86-64, stripped, needs only libc | 777,984 |
-| `stream_decode`, x86-64, stripped, needs only libc | 670,528 |
+| `blkc-decode`, x86-64, stripped, needs only libc | 670,528 |
 | `huffman-audio`, Haskell, x86-64, stripped, needs libgmp | 6,543,248 |
 | `huffman-audio-hybrid`, x86-64, stripped, needs `libblockcodec.so` and libgmp | 6,495,776 |
 
@@ -363,9 +363,9 @@ Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer, 32-bit float, or 64-bit
 | `--no-pairs` | code every channel alone |
 | `--features <out.tsv>` | write each group's features and whether the search split its root |
 
-`stream_encode [--level <0 to 5>] [--tag <key=value>] [--seek-every <seconds>] [--independent] [--no-pairs] [--threads <n>] [--verify] <in.wav> <out.bin>` codes a file into a stream, byte for byte the stream `codec_main --stream` writes. It codes groups on every processor, or on `--threads` of them, and the stream is the same for any count. Either program takes `-` for standard input or output. With `--verify` it decodes the stream before writing it and checks every frame against the audio MD5. On a mismatch it writes nothing and exits with status 1.
+`blkc-encode [--level <0 to 5>] [--tag <key=value>] [--seek-every <seconds>] [--independent] [--no-pairs] [--threads <n>] [--verify] <in.wav> <out.bin>` codes a file into a stream, byte for byte the stream `codec_main --stream` writes. It codes groups on every processor, or on `--threads` of them, and the stream is the same for any count. Either program takes `-` for standard input or output. With `--verify` it decodes the stream before writing it and checks every frame against the audio MD5. On a mismatch it writes nothing and exits with status 1.
 
-`stream_decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). It decodes group by group and keeps only the history later blocks may read, so its memory does not grow with the audio's length. With `--skip` or `--until` it writes frames from the first named up to the second as a WAV file, decoding only the groups those frames need, as `flac --skip --until` does.
+`blkc-decode [--skip <frame>] [--until <frame>] <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). It decodes group by group and keeps only the history later blocks may read, so its memory does not grow with the audio's length. With `--skip` or `--until` it writes frames from the first named up to the second as a WAV file, decoding only the groups those frames need, as `flac --skip --until` does.
 
 Exit status 0 means the stream was intact. Status 1 means damage: frames of unreadable groups, and blocks that did not decode, are written as zeros and counted on stderr. Status 2 means the file is not a readable stream.
 
@@ -384,7 +384,7 @@ The library builds the units proved free of run-time errors without run-time che
 
 ### Release
 
-`release.sh [out] [name]` builds the release programs and the library with the version `git describe` gives, and packs them with the header, the specification, the README and the licenses into `<name>-<version>-linux-x86_64.tar.gz` with its SHA-256. The name is `blockcodec` when none is given. `stream_encode --version` and `stream_decode --version` report that version, the format version and the C API version.
+`release.sh [out] [name]` builds the release programs and the library with the version `git describe` gives, and packs them with the header, the specification, the README and the licenses into `<name>-<version>-linux-x86_64.tar.gz` with its SHA-256. The name is `blockcodec` when none is given. `blkc-encode --version` and `blkc-decode --version` report that version, the format version and the C API version.
 
 Once the repository variable `RELEASE_NAME` is set, every merge to main runs `.github/workflows/release.yml` on a hosted runner. It tags the merge as the next version, runs `release.sh` with that name, and publishes a GitHub release with generated notes. Releases are numbered from v0.1.0, and each one raises the last number only: v0.1.1, v0.1.2, and on past v0.1.9 to v0.1.10.
 

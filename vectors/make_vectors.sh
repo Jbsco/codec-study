@@ -2,7 +2,7 @@
 # Write the format version 2 test vectors into vectors/: streams that together use every block kind, residual code,
 # stereo mode, depth, float mode, container and metadata block, and damaged copies of one stream. Regression streams
 # the fuzzer found stay as found. MANIFEST.tsv lists each stream with the exit status and the MD5 of the file that
-# ada/obj/stream_decode writes from it, and the block kinds codec_main reports for the intact ones. Sources are
+# ada/obj/blkc-decode writes from it, and the block kinds codec_main reports for the intact ones. Sources are
 # generated signals and short corpus excerpts. Needs the Ada programs built, ffmpeg and python3. The vectors are kept
 # as written: rerun this only to add vectors.
 set -euo pipefail
@@ -10,8 +10,8 @@ cd "$(dirname "$0")/.."
 out=vectors
 work=$(mktemp -d -p "${TMPDIR:-/var/tmp}")
 trap 'rm -rf "$work"' EXIT
-enc=ada/obj/stream_encode
-dec=ada/obj/stream_decode
+enc=ada/obj/blkc-encode
+dec=ada/obj/blkc-decode
 mkdir -p "$out"
 find "$out" -name '*.blkc' ! -name 'regression_*' -delete
 manifest=$out/MANIFEST.tsv

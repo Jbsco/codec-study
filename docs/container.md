@@ -47,7 +47,7 @@ Metadata block 3 describes the input file so a decoder can write it back byte fo
 | 2 | audio: `data` or `SSND` | what precedes the samples, AIFF's offset and block size |
 | 3 | RF64's `ds64` size table | whole, its sizes rewritten on decode |
 
-`stream_decode` writes the container and chunks back in order, the samples into the audio chunk, and every size field computed again. A size field that held 0 or all ones, as a program writing to a pipe leaves it, is written back as it was, so a file piped from ffmpeg also comes back byte for byte.
+`blkc-decode` writes the container and chunks back in order, the samples into the audio chunk, and every size field computed again. A size field that held 0 or all ones, as a program writing to a pipe leaves it, is written back as it was, so a file piped from ffmpeg also comes back byte for byte.
 
 The decoder writes plain WAV when the stream has no description, or when the format chunk does not describe the decoded samples. Chunks other than format, audio and the size table are left out when all of them would not fit one 16 MB metadata block, and `codec_main` reports that.
 
@@ -55,7 +55,7 @@ The decoder writes plain WAV when the stream has no description, or when the for
 
 The MD5 covers the samples as the input file held them, frames in order with channels interleaved. Each integer sample is shifted down to its valid bits and written little-endian in as many bytes as those bits need. Each float sample is its 32-bit or 64-bit pattern. This is FLAC's layout, so a FLAC file of the same audio records the same digest. `metaflac --show-md5sum` gives the stream's digest for every FLAC file of the corpus, and for a 20-bit file in 24-bit words.
 
-Per-block CRCs show that coded bytes arrived intact. The MD5 shows that the decoder rebuilt the input: `stream_decode` checks the decoded audio against it and exits with status 1 on a difference.
+Per-block CRCs show that coded bytes arrived intact. The MD5 shows that the decoder rebuilt the input: `blkc-decode` checks the decoded audio against it and exits with status 1 on a difference.
 
 Readers take version 2 only. Version 1 had a 32-bit frame count and no valid bits, channel mask or MD5. The header is 25 bytes longer for them.
 
@@ -65,13 +65,13 @@ A seek to frame F decodes from the group that contains F, or from an earlier gro
 
 From the last seek point at or before F, the decoder skips group by group, reading each group's length, to the group that contains F. It then walks back while a block of the groups kept reads an earlier frame, and stops at the seek point at the latest. Each group decoded after F is checked the same way. A group that reads before the first frame decoded since the seek sends the decoder back to an earlier group.
 
-`stream_decode --skip <frame> --until <frame>`, `blkc_seek` and `blkc_decode_range` seek this way. `codec_main <file> <level> --seek <frame>` decodes from the seek point after the full decode and compares the samples from F to the end of that group with the input.
+`blkc-decode --skip <frame> --until <frame>`, `blkc_seek` and `blkc_decode_range` seek this way. `codec_main <file> <level> --seek <frame>` decodes from the seek point after the full decode and compares the samples from F to the end of that group with the input.
 
 ## Damage
 
 A decoder reads the header's CRC, then each group's. A group whose sync word, fields or CRC are wrong is skipped. The decoder scans forward for the next sync word whose group header passes its CRC, resumes at that group's first frame, and counts the frames between as lost. A block whose CRC fails is counted and decoded anyway.
 
-`stream_decode <stream.bin> <out.wav>` decodes this way from the stream's bytes alone, group by group, writes lost frames as zeros and exits with status 1 when anything was lost. A header that claims more frames than its groups hold costs output length, not memory. A truncated stream decodes up to its last whole group. `codec_main <file> <level> --flip <group> <byte>` flips one bit of the written stream before decoding and reports what was lost. `corrupt_test <stream.bin>` checks the same on a written stream, with the group found again after a damaged length.
+`blkc-decode <stream.bin> <out.wav>` decodes this way from the stream's bytes alone, group by group, writes lost frames as zeros and exits with status 1 when anything was lost. A header that claims more frames than its groups hold costs output length, not memory. A truncated stream decodes up to its last whole group. `codec_main <file> <level> --flip <group> <byte>` flips one bit of the written stream before decoding and reports what was lost. `corrupt_test <stream.bin>` checks the same on a written stream, with the group found again after a damaged length.
 
 Within a segment, blocks after a lost group that read the lost samples decode to wrong values without a CRC failure. The next segment is exact again. With every group a segment, damage is contained to the lost group.
 
@@ -96,4 +96,4 @@ Segments, measured by `segments.sh` at level 4 on the corpus, where a block may 
 
 A seek point every 10 s costs nothing worth measuring, because few blocks reach more than 16,384 samples back and fewer start a segment. Every group its own segment costs 1.8 percent, which is what the history buys: the delay predictor's reach into earlier samples and the adaptive stage's warm-up, both lost by the first blocks of every segment. A stream for random access or for links that drop data chooses between these by how much it must be able to lose at once.
 
-Measured per file with `stream_encode` on the corpus and the wider corpus, that cost falls on generated signals. At level 4, every group a segment left each recording's stream the same size, one header byte apart, and made generated signals 5.3 percent larger. At level 5 it made recordings 0.95 percent larger, the adaptive stage's training lost at every group. A seek point every second, level 5's default, made recordings 0.076 percent and generated signals 0.44 percent larger than one every 10 s.
+Measured per file with `blkc-encode` on the corpus and the wider corpus, that cost falls on generated signals. At level 4, every group a segment left each recording's stream the same size, one header byte apart, and made generated signals 5.3 percent larger. At level 5 it made recordings 0.95 percent larger, the adaptive stage's training lost at every group. A seek point every second, level 5's default, made recordings 0.076 percent and generated signals 0.44 percent larger than one every 10 s.

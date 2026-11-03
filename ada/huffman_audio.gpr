@@ -10,8 +10,13 @@ project Huffman_Audio is
       when "check" => for Object_Dir use "obj";
       when "release" => for Object_Dir use "obj-release";
    end case;
-   for Main use ("audio_huffman.adb", "codec_main.adb", "checksums_test.adb", "corrupt_test.adb", "stream_decode.adb", "float_bits_test.adb", "stream_encode.adb",
+   for Main use ("audio_huffman.adb", "codec_main.adb", "checksums_test.adb", "corrupt_test.adb", "blkc_decode.adb", "float_bits_test.adb", "blkc_encode.adb",
                  "fuzz_decode.adb");
+
+   package Builder is
+      for Executable ("blkc_encode.adb") use "blkc-encode";
+      for Executable ("blkc_decode.adb") use "blkc-decode";
+   end Builder;
 
    package Compiler is
       case Build is

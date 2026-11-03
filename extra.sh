@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Check the block codec on the wider corpus in corpus/extra: each file must come back byte for byte from
-# stream_encode and stream_decode at levels 0, 2 and 4, and the Ada, Haskell and hybrid programs must write one
+# blkc-encode and blkc-decode at levels 0, 2 and 4, and the Ada, Haskell and hybrid programs must write one
 # stream at level 4. Writes results/extra.tsv with each file's coded bytes beside flac -8 and wavpack -hh -x4. Needs
 # the Ada release programs, the Ada and Haskell builds of run.sh, flac, wavpack and ffprobe.
 set -uo pipefail
@@ -22,8 +22,8 @@ for f in corpus/extra/*.flac; do
   pcm=$((duration_ts * channels * ((bits_per_sample + 7) / 8)))
   sizes=()
   for level in 0 2 4; do
-    ada/obj-release/stream_encode --level $level "$wav" "$work/s.bin" 2> /dev/null
-    if ada/obj-release/stream_decode "$work/s.bin" "$work/d.wav" 2> /dev/null && cmp -s "$wav" "$work/d.wav"; then
+    ada/obj-release/blkc-encode --level $level "$wav" "$work/s.bin" 2> /dev/null
+    if ada/obj-release/blkc-decode "$work/s.bin" "$work/d.wav" 2> /dev/null && cmp -s "$wav" "$work/d.wav"; then
       sizes+=("$(stat -c %s "$work/s.bin")")
     else
       echo "extra: $name level $level does not come back byte for byte" >&2

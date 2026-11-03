@@ -12,17 +12,17 @@ trap 'rm -rf "$work"' EXIT
 mkdir -p "$work/version"
 printf -- '--  Written by release.sh.\npackage Build_Version is\n   Version : constant String := "%s";\nend Build_Version;\n' \
   "$version" > "$work/version/build_version.ads"
-if ! (cd ada && gprbuild -q -P huffman_audio.gpr -XBUILD=release -XVERSION_SOURCE="$work/version" stream_encode \
-      stream_decode && gprbuild -q -P codec_lib.gpr) > "$work/build.log" 2>&1; then
+if ! (cd ada && gprbuild -q -P huffman_audio.gpr -XBUILD=release -XVERSION_SOURCE="$work/version" blkc_encode \
+      blkc_decode && gprbuild -q -P codec_lib.gpr) > "$work/build.log" 2>&1; then
   cat "$work/build.log" >&2
   exit 1
 fi
 
 root=$work/$name-$version
 mkdir -p "$root/bin" "$root/lib" "$root/include" "$root/share/doc/$name"
-install -m 755 ada/obj-release/stream_encode ada/obj-release/stream_decode "$root/bin/"
+install -m 755 ada/obj-release/blkc-encode ada/obj-release/blkc-decode "$root/bin/"
 install -m 755 ada/lib/libblockcodec.so "$root/lib/"
-strip "$root/bin/stream_encode" "$root/bin/stream_decode"
+strip "$root/bin/blkc-encode" "$root/bin/blkc-decode"
 strip --strip-unneeded "$root/lib/libblockcodec.so"
 install -m 644 include/blockcodec.h "$root/include/"
 cp README.md docs/spec.md LICENSE LICENSING.md "$root/share/doc/$name/"
