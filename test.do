@@ -1,9 +1,10 @@
 #!/bin/bash
-# Test gate: the CRC package against its check value and its bitwise form, a written stream's framing and CRCs against
-# flipped bits, a seek and a damaged group on one stream, the stream decoder on whole, truncated and foreign files,
-# the audio MD5 against FLAC's and against a changed digest, RF64, Wave64 and AIFF input, the three implementations
-# against one another on a short file at every level, and on a four-channel file. Needs gprbuild and GNAT on the PATH
-# (an Alire toolchain), stack, flac with metaflac, ffmpeg and python3.
+# Test gate: the CRC package against its check value and its bitwise form, the float conversions on every 32-bit
+# pattern, a written stream's framing and CRCs against flipped bits, a seek and a damaged group on one stream, the
+# stream decoder on whole, truncated and foreign files, the audio MD5 against FLAC's and against a changed digest,
+# RF64, Wave64, AIFF and 64-bit float input, the three implementations against one another on a short file at every
+# level, and on a four-channel file. Needs gprbuild and GNAT on the PATH (an Alire toolchain), stack, flac with
+# metaflac, ffmpeg and python3.
 exec >&2
 cd "$(dirname "$0")" || exit 1
 FAIL=0
@@ -15,6 +16,7 @@ echo "  built"
 
 echo "== 2/6  Checksums, framing, seek, damage"
 ada/obj/checksums_test || FAIL=1
+ada/obj/float_bits_test || FAIL=1
 mkdir -p build/wav
 flac -d -s -f -o build/wav/rec_speech_8k.wav corpus/rec_speech_8k.flac || exit 1
 ada/obj/codec_main build/wav/rec_speech_8k.wav 1 --stream build/speech_8k.bin --tag title=speech > /dev/null || exit 1
@@ -93,8 +95,36 @@ for s in build/wav/rec_speech_8k.wav:build/speech_8k_rf64.wav build/wav/rec_spee
     echo "  $name: FAILED"; FAIL=1
   fi
 done
+# 64-bit float made from 32-bit float comes back byte for byte in WAV and AIFF-C; a 64-bit file with more precision
+# than a 32-bit float carries is refused.
+ffmpeg -v error -y -i corpus/depth_pink_32f.wav -c:a pcm_f64le build/pink_64f.wav || exit 1
+ffmpeg -v error -y -i corpus/depth_pink_32f.wav -c:a pcm_f64be -f aiff build/pink_64f.aifc || exit 1
+for file in build/pink_64f.wav build/pink_64f.aifc; do
+  name=$(basename "$file")
+  if ada/obj/codec_main "$file" 0 --stream build/float64.bin | grep -q 'round trip OK' \
+     && ada/obj/stream_decode build/float64.bin "build/back_$name" 2> /dev/null && cmp -s "$file" "build/back_$name"; then
+    echo "  $name: 64-bit float, byte-identical after decoding"
+  else
+    echo "  $name: FAILED"; FAIL=1
+  fi
+done
+python3 -I - build/double_sine.wav <<'EOF'
+import math, struct, sys
+n = 1000
+data = b''.join(struct.pack('<d', math.sin(i / 7) / 3) for i in range(n))
+fmt = struct.pack('<HHIIHH', 3, 1, 48000, 48000 * 8, 8, 64)
+body = b'WAVE' + b'fmt ' + struct.pack('<I', len(fmt)) + fmt + b'data' + struct.pack('<I', len(data)) + data
+open(sys.argv[1], 'wb').write(b'RIFF' + struct.pack('<I', len(body)) + body)
+EOF
+if ada/obj/codec_main build/double_sine.wav 0 2>&1 | grep -q 'not exactly 32-bit float'; then
+  echo "  64-bit float beyond 32-bit precision: refused"
+else
+  echo "  64-bit float beyond 32-bit precision: not refused"; FAIL=1
+fi
 stream_hash() { ada/obj/codec_main "$1" 0 | grep -oE 'round trip OK, hash [0-9a-f]+'; }
 hs=haskell/$(cd haskell && stack path --dist-dir)/build
+h=$("$hs/huffman-audio/huffman-audio" build/pink_64f.aifc --block 0 | grep -oE 'round trip OK, hash [0-9a-f]+')
+[ "$h" = "$(stream_hash build/pink_64f.aifc)" ] && echo "  Haskell reads 64-bit float AIFF-C as Ada does" || { echo "  Haskell 64-bit float: FAILED"; FAIL=1; }
 h=$("$hs/huffman-audio/huffman-audio" build/speech_8k.aiff --block 0 | grep -oE 'round trip OK, hash [0-9a-f]+')
 [ "$h" = "$(stream_hash build/speech_8k.aiff)" ] && echo "  Haskell reads AIFF as Ada does" || { echo "  Haskell AIFF: FAILED"; FAIL=1; }
 
