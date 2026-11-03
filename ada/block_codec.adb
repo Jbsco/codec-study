@@ -104,19 +104,12 @@ package body Block_Codec with SPARK_Mode is
       return B;
    end Log_Floor;
 
-   function Bit_Length (U : Unsigned_64) return Natural with SPARK_Mode => Off is
-      Steps : constant array (1 .. 6) of Natural := [32, 16, 8, 4, 2, 1];
-      V : Unsigned_64 := U;
-      Bits : Natural := 0;
-   begin
-      for Step of Steps loop
-         if Shift_Right (V, Step) /= 0 then
-            V := Shift_Right (V, Step);
-            Bits := Bits + Step;
-         end if;
-      end loop;
-      return Bits + Natural (V);
-   end Bit_Length;
+   function Leading_Zeros (U : Unsigned_64) return Integer
+     with Import, Convention => Intrinsic, External_Name => "__builtin_clzll";
+
+   function Bit_Length (U : Unsigned_64) return Natural is
+     (if U = 0 then 0 else 64 - Leading_Zeros (U))
+     with SPARK_Mode => Off;
 
    --  V divided by 2**S, rounded down, by logical shifts.
    function Shift_Down (V : Long_Long_Integer; S : Natural) return Long_Long_Integer is
@@ -187,15 +180,28 @@ package body Block_Codec with SPARK_Mode is
    --  The smallest distance P, at most the length of History, at which the first 32 samples of X repeat the
    --  samples P before them, counting back into History, or zero.
    function Find_Back (X, History : Sample_Array) return Natural with SPARK_Mode => Off is
-      function Before (K : Integer) return Long_Long_Integer is
-        (if K >= 0 then X (X'First + K) else History (History'Last + 1 + K));
+      N : constant Natural := History'Length;
    begin
-      if X'Length >= Match_Length then
-         for P in 1 .. History'Length loop
-            if (for all J in 0 .. Match_Length - 1 => Before (J - P) = X (X'First + J)) then
-               return P;
-            end if;
-         end loop;
+      if X'Length >= Match_Length and then N > 0 then
+         declare
+            --  History, then the first samples of X, in one buffer.
+            S : array (0 .. N + Match_Length - 1) of Long_Long_Integer;
+            First : constant Long_Long_Integer := X (X'First);
+         begin
+            for I in 0 .. N - 1 loop
+               S (I) := History (History'First + I);
+            end loop;
+            for J in 0 .. Match_Length - 1 loop
+               S (N + J) := X (X'First + J);
+            end loop;
+            for P in 1 .. N loop
+               if S (N - P) = First
+                 and then (for all J in 1 .. Match_Length - 1 => S (N - P + J) = S (N + J))
+               then
+                  return P;
+               end if;
+            end loop;
+         end;
       end if;
       return 0;
    end Find_Back;
