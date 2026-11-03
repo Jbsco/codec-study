@@ -133,28 +133,33 @@ package body Codec_Api is
       return new Byte_Array'(Given);
    end Copy;
 
+   function Info_Of (H : Header) return Info is
+      Audio : Info := (Channels => Integer_32 (H.Channels), Rate => Integer_32 (H.Rate), Depth => Integer_32 (H.Depth),
+                       Valid_Bits => Integer_32 (H.Valid_Bits), Frames => Integer_64 (H.Frames),
+                       Channel_Mask => Unsigned_32 (H.Channel_Mask), Is_Float => (if H.Is_Float then 1 else 0),
+                       Audio_Md5 => [others => 0]);
+   begin
+      for I in Audio.Audio_Md5'Range loop
+         Audio.Audio_Md5 (I) := Unsigned_8 (H.Audio_Md5 (H.Audio_Md5'First + I));
+      end loop;
+      return Audio;
+   end Info_Of;
+
    function Read_Info (Stream : System.Address; Length : Integer_64; Audio : access Info) return int is
    begin
       if Stream = System.Null_Address or else Audio = null or else Length not in 0 .. Integer_64 (Natural'Last) then
          return Bad_Argument;
       end if;
       declare
-         S : Byte_Array_Access := Copy (Stream, Length);
+         Given : constant Byte_Array (0 .. Natural (Length) - 1) with Import, Address => Stream;
          H : Header;
       begin
-         Read_Header (S.all, H);
-         Free (S);
+         Read_Header (Given, H);
          if not H.Ok then
             Release (H);
             return Refused;
          end if;
-         Audio.all := (Channels => Integer_32 (H.Channels), Rate => Integer_32 (H.Rate), Depth => Integer_32 (H.Depth),
-                       Valid_Bits => Integer_32 (H.Valid_Bits), Frames => Integer_64 (H.Frames),
-                       Channel_Mask => Unsigned_32 (H.Channel_Mask), Is_Float => (if H.Is_Float then 1 else 0),
-                       Audio_Md5 => [others => 0]);
-         for I in Audio.Audio_Md5'Range loop
-            Audio.Audio_Md5 (I) := Unsigned_8 (H.Audio_Md5 (H.Audio_Md5'First + I));
-         end loop;
+         Audio.all := Info_Of (H);
          Release (H);
          return Ok;
       end;
