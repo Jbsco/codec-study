@@ -287,7 +287,8 @@ logFloor v = if v <= 1 then 0 else 63 - countLeadingZeros v
 -- | Residuals in the adaptive binary code (ada: Put_Adaptive): the first Rice parameter in 6 bits, then each
 -- value's quotient in unary and the top bit of its remainder through the range coder with a probability per
 -- (parameter, position) context, the rest of the remainder direct; the parameter follows a running mean. The
--- bytes hold the bits written, whose count is returned; coding stops once it passes the limit.
+-- bytes hold the bits written, whose count is returned; coding stops once the bits written and the bytes the range
+-- coder holds back pass the limit, and the count is then the limit plus one.
 adaptiveCode :: Int -> Int -> Int -> U.Vector Int -> (S.Vector Word8, Int)
 adaptiveCode k0 width limit r = runST $ do
   buf <- SM.new (bound n + 9)
@@ -295,21 +296,22 @@ adaptiveCode k0 width limit r = runST $ do
   let kStart = min k0 (width + 5)
       ctx ck j = ck * 9 + j
       bitsOf (W bytes _ pending) = 8 * bytes + pending
+      over w e = bitsOf w + 8 * encPending e > limit
       go !i !w !e !k !s
-        | i == n = flush buf w e
-        | bitsOf w > limit = pure w
+        | i == n = (\w' -> (w', False)) <$> flush buf w e
+        | over w e = pure (w, True)
         | otherwise = do
             let u = zigzag (U.unsafeIndex r i)
                 q = u `unsafeShiftR` k
                 ck = min k 23
                 unary !w' !e' !j
-                  | j >= q || bitsOf w' > limit = pure (w', e')
+                  | j >= q || over w' e' = pure (w', e')
                   | otherwise = encodeBit buf w' e' probs (ctx ck (fromIntegral (min j 7))) True >>= \(w'', e'') -> unary w'' e'' (j + 1)
                 direct !w' !e' !b
                   | b < 0 = pure (w', e')
                   | otherwise = encodeDirect buf w' e' (testBit u b) >>= \(w'', e'') -> direct w'' e'' (b - 1)
             (w1, e1) <- unary w e 0
-            if bitsOf w1 > limit then pure w1 else do
+            if over w1 e1 then pure (w1, True) else do
               (w2, e2) <- encodeBit buf w1 e1 probs (ctx ck (fromIntegral (min q 7))) False
               (w3, e3) <- if k > 0
                 then encodeBit buf w2 e2 probs (ctx ck 8) (testBit u (k - 1)) >>= \(wa, ea) -> direct wa ea (k - 2)
@@ -317,8 +319,8 @@ adaptiveCode k0 width limit r = runST $ do
               let s' = s + u - (s `unsafeShiftR` adaptiveWindow)
               go (i + 1) w3 e3 (min (logFloor ((s' `unsafeShiftR` adaptiveWindow) + 1)) (width + 5)) s'
   w0 <- put buf start (fromIntegral kStart) 6
-  w <- go 0 w0 encStart kStart ((1 `unsafeShiftL` kStart) `unsafeShiftL` adaptiveWindow)
-  let bits = bitsOf w
+  (w, stopped) <- go 0 w0 encStart kStart ((1 `unsafeShiftL` kStart) `unsafeShiftL` adaptiveWindow)
+  let bits = if stopped then limit + 1 else bitsOf w
   len <- finish buf w
   bytes <- S.unsafeFreeze (SM.take len buf)
   pure (S.force bytes, bits)

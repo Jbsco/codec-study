@@ -1,5 +1,5 @@
---  The stream interface of the block codec for C callers: versions, an encoder from interleaved integer samples to a
---  stream, and a decoder from a stream back to them. include/blockcodec.h declares the same functions.
+--  The stream interface of the block codec for C callers: versions, encoders from interleaved integer or float samples
+--  to a stream, and decoders from a stream back to them. include/blockcodec.h declares the same functions.
 with Interfaces; use Interfaces;
 with Interfaces.C; use Interfaces.C;
 with System;
@@ -39,11 +39,19 @@ package Codec_Api is
                     Stream : System.Address; Capacity : Integer_64) return Integer_64
      with Export, Convention => C, External_Name => "blkc_encode";
 
+   function Encode_Float (Samples : System.Address; Audio : access constant Info; Level, Threads : Integer_32;
+                          Stream : System.Address; Capacity : Integer_64) return Integer_64
+     with Export, Convention => C, External_Name => "blkc_encode_float";
+
    function Read_Info (Stream : System.Address; Length : Integer_64; Audio : access Info) return int
      with Export, Convention => C, External_Name => "blkc_read_info";
 
    function Decode (Stream : System.Address; Length : Integer_64; Samples : System.Address; Capacity_Frames : Integer_64;
                     Report : access Damage_Report) return int
      with Export, Convention => C, External_Name => "blkc_decode";
+
+   function Decode_Float (Stream : System.Address; Length : Integer_64; Samples : System.Address; Capacity_Frames : Integer_64;
+                          Report : access Damage_Report) return int
+     with Export, Convention => C, External_Name => "blkc_decode_float";
 
 end Codec_Api;

@@ -144,6 +144,27 @@ h=$("$hs/huffman-audio/huffman-audio" build/speech_8k.aiff --block 0 | grep -oE 
 
 echo "== 5/10  Three implementations, every level"
 export LD_LIBRARY_PATH=$PWD/ada/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+# Float samples that are integers over a power of two, but for a negative zero and a NaN in the second channel: one
+# channel codes as integers, the other as bit patterns, and the adaptive code's trials meet residuals far above their
+# parameter.
+python3 -I - build/float_edges.wav <<'EOF'
+import struct, sys
+values = [((i * 37) % 65536 - 32768) / 32768.0 for i in range(24000)]
+values[11] = -0.0
+values[21] = float('nan')
+data = b''.join(struct.pack('<f', v) for v in values)
+fmt = struct.pack('<IHHIIHH', 16, 3, 2, 48000, 384000, 8, 32)
+open(sys.argv[1], 'wb').write(b'RIFF' + struct.pack('<I', 36 + len(data)) + b'WAVE' + b'fmt ' + fmt + b'data'
+                              + struct.pack('<I', len(data)) + data)
+EOF
+a=$(ada/obj/codec_main build/float_edges.wav 2 | grep -oE 'round trip OK, hash [0-9a-f]+')
+h=$("$hs/huffman-audio/huffman-audio" build/float_edges.wav --block 2 | grep -oE 'round trip OK, hash [0-9a-f]+')
+y=$("$hs/huffman-audio-hybrid/huffman-audio-hybrid" build/float_edges.wav 2 | grep -oE 'round trip OK, hash [0-9a-f]+')
+if [ -n "$a" ] && [ "$a" = "$h" ] && [ "$a" = "$y" ]; then
+  echo "  float with negative zero and NaN: three round trips, one stream"
+else
+  echo "  float with negative zero and NaN: FAILED ($a / $h / $y)"; FAIL=1
+fi
 for level in 0 1 2 3 4 5; do
   a=$(ada/obj/codec_main build/wav/rec_speech_8k.wav "$level" | grep 'Block codec')
   h=$("$hs/huffman-audio/huffman-audio" build/wav/rec_speech_8k.wav --block "$level" | grep 'Block codec')

@@ -17,8 +17,10 @@ package body Codec_Api is
    Refused : constant := 2;
    Unsupported : constant := 3;
    Bad_Argument : constant := -1;
+   Failed : constant := -2;
 
    type Int32_Array is array (Integer_64 range <>) of Integer_32;
+   type Pattern_Array is array (Integer_64 range <>) of Unsigned_32;
 
    procedure Free is new Ada.Unchecked_Deallocation (Byte_Array, Byte_Array_Access);
    procedure Free is new Ada.Unchecked_Deallocation (Value_Array, Value_Array_Access);
@@ -31,64 +33,98 @@ package body Codec_Api is
      (if Frames not in 0 .. Integer_64 (Natural'Last) or else Channels not in 1 .. Integer_32 (Max_Channels) then Bad_Argument
       else 4096 + (Frames + 4095) / 4096 * (4096 + Integer_64 (Channels) * 20_800));
 
+   --  Code the audio Audio describes, taking interleaved sample I from Value, as integers or as float bit patterns.
+   function Encode_With (Audio : Info; Is_Float : Boolean; Value : not null access function (I : Integer_64) return Long_Long_Integer;
+                         Level, Threads : Integer_32; Stream : System.Address; Capacity : Integer_64) return Integer_64 is
+      Frames : constant Natural := Natural (Audio.Frames);
+      Channels : constant Integer_64 := Integer_64 (Audio.Channels);
+      Input : Wav_Files.Audio;
+      Opt : Options;
+      Coded : Byte_Array_Access;
+      Length : Natural;
+      Stats : Statistics;
+   begin
+      Input.Channels := Natural (Audio.Channels);
+      Input.Rate := Natural (Audio.Rate);
+      Input.Depth := Natural (Audio.Depth);
+      Input.Valid_Bits := Natural (Audio.Valid_Bits);
+      Input.Is_Float := Is_Float;
+      Input.Channel_Mask := Long_Long_Integer (Audio.Channel_Mask);
+      Input.Frames := Frames;
+      for C in 1 .. Input.Channels loop
+         Input.Samples (C) := new Value_Array (0 .. Frames - 1);
+         for F in 0 .. Frames - 1 loop
+            Input.Samples (C) (F) := Value (Integer_64 (F) * Channels + Integer_64 (C - 1));
+         end loop;
+      end loop;
+      Opt.Level := Natural (Level);
+      Opt.Threads := (if Threads = 0 then Positive (System.Multiprocessors.Number_Of_CPUs) else Positive (Threads));
+      Stream_Writing.Encode (Input, Opt, Coded, Length, Stats);
+      for C in 1 .. Input.Channels loop
+         Free (Input.Samples (C));
+      end loop;
+      Release (Stats);
+      if Integer_64 (Length) > Capacity then
+         Free (Coded);
+         return Bad_Argument;
+      end if;
+      declare
+         Out_Bytes : Byte_Array (0 .. Length - 1) with Import, Address => Stream;
+      begin
+         Out_Bytes := Coded (0 .. Length - 1);
+      end;
+      Free (Coded);
+      return Integer_64 (Length);
+   end Encode_With;
+
+   --  The checks every encode shares: the pointers, the channels, frames and rate, the level and the threads.
+   function Arguments_Ok (Samples : System.Address; Audio : access constant Info; Level, Threads : Integer_32;
+                          Stream : System.Address) return Boolean is
+     (Samples /= System.Null_Address and then Audio /= null and then Stream /= System.Null_Address
+      and then Audio.Channels in 1 .. Integer_32 (Max_Channels) and then Audio.Frames in 0 .. Integer_64 (Natural'Last)
+      and then Audio.Rate >= 0 and then Level in 0 .. 5 and then Threads in 0 .. 1024);
+
    function Encode (Samples : System.Address; Audio : access constant Info; Level, Threads : Integer_32;
                     Stream : System.Address; Capacity : Integer_64) return Integer_64 is
    begin
-      if Samples = System.Null_Address or else Audio = null or else Stream = System.Null_Address
-        or else Audio.Channels not in 1 .. Integer_32 (Max_Channels) or else Audio.Depth not in 8 | 16 | 24 | 32
-        or else Audio.Valid_Bits not in 1 .. Audio.Depth or else Audio.Frames not in 0 .. Integer_64 (Natural'Last)
-        or else Audio.Rate < 0 or else Audio.Is_Float /= 0 or else Level not in 0 .. 5 or else Threads not in 0 .. 1024
+      if not Arguments_Ok (Samples, Audio, Level, Threads, Stream) or else Audio.Depth not in 8 | 16 | 24 | 32
+        or else Audio.Valid_Bits not in 1 .. Audio.Depth or else Audio.Is_Float /= 0
       then
          return Bad_Argument;
       end if;
       declare
-         Channels : constant Integer_64 := Integer_64 (Audio.Channels);
-         Frames : constant Natural := Natural (Audio.Frames);
-         X : Int32_Array (0 .. Integer_64 (Frames) * Channels - 1) with Import, Address => Samples;
+         X : Int32_Array (0 .. Audio.Frames * Integer_64 (Audio.Channels) - 1) with Import, Address => Samples;
          Half : constant Integer_64 := 2**Natural (Audio.Depth - 1);
-         Input : Wav_Files.Audio;
-         Opt : Options;
-         Coded : Byte_Array_Access;
-         Length : Natural;
-         Stats : Statistics;
+         function Value (I : Integer_64) return Long_Long_Integer is (Long_Long_Integer (X (I)));
       begin
          for V of X loop
             if Integer_64 (V) < -Half or else Integer_64 (V) >= Half then
                return Bad_Argument;
             end if;
          end loop;
-         Input.Channels := Natural (Audio.Channels);
-         Input.Rate := Natural (Audio.Rate);
-         Input.Depth := Natural (Audio.Depth);
-         Input.Valid_Bits := Natural (Audio.Valid_Bits);
-         Input.Channel_Mask := Long_Long_Integer (Audio.Channel_Mask);
-         Input.Frames := Frames;
-         for C in 1 .. Input.Channels loop
-            Input.Samples (C) := new Value_Array (0 .. Frames - 1);
-            for F in 0 .. Frames - 1 loop
-               Input.Samples (C) (F) := Long_Long_Integer (X (Integer_64 (F) * Channels + Integer_64 (C - 1)));
-            end loop;
-         end loop;
-         Opt.Level := Natural (Level);
-         Opt.Threads := (if Threads = 0 then Positive (System.Multiprocessors.Number_Of_CPUs) else Positive (Threads));
-         Stream_Writing.Encode (Input, Opt, Coded, Length, Stats);
-         for C in 1 .. Input.Channels loop
-            Free (Input.Samples (C));
-         end loop;
-         Release (Stats);
-         if Integer_64 (Length) > Capacity then
-            Free (Coded);
-            return Bad_Argument;
-         end if;
-         declare
-            Out_Bytes : Byte_Array (0 .. Length - 1) with Import, Address => Stream;
-         begin
-            Out_Bytes := Coded (0 .. Length - 1);
-         end;
-         Free (Coded);
-         return Integer_64 (Length);
+         return Encode_With (Audio.all, False, Value'Access, Level, Threads, Stream, Capacity);
       end;
+   exception
+      when others =>
+         return Failed;
    end Encode;
+
+   function Encode_Float (Samples : System.Address; Audio : access constant Info; Level, Threads : Integer_32;
+                          Stream : System.Address; Capacity : Integer_64) return Integer_64 is
+   begin
+      if not Arguments_Ok (Samples, Audio, Level, Threads, Stream) or else Audio.Depth /= 32 or else Audio.Valid_Bits /= 32 then
+         return Bad_Argument;
+      end if;
+      declare
+         X : Pattern_Array (0 .. Audio.Frames * Integer_64 (Audio.Channels) - 1) with Import, Address => Samples;
+         function Value (I : Integer_64) return Long_Long_Integer is (Ordered (Long_Long_Integer (X (I))));
+      begin
+         return Encode_With (Audio.all, True, Value'Access, Level, Threads, Stream, Capacity);
+      end;
+   exception
+      when others =>
+         return Failed;
+   end Encode_Float;
 
    --  The stream at Stream as an array indexed from 0, as the reader takes it.
    function Copy (Stream : System.Address; Length : Integer_64) return Byte_Array_Access is
@@ -122,74 +158,111 @@ package body Codec_Api is
          Release (H);
          return Ok;
       end;
+   exception
+      when others =>
+         return Failed;
    end Read_Info;
+
+   --  Decode a stream of the sample kind Is_Float names, handing interleaved sample I to Store as the integer, or as
+   --  the order-keeping integer of a float's bit pattern.
+   function Decode_With (Stream : System.Address; Length : Integer_64; Is_Float : Boolean;
+                         Store : not null access procedure (I : Integer_64; V : Long_Long_Integer);
+                         Capacity_Frames : Integer_64; Report : access Damage_Report) return int is
+      S : Byte_Array_Access := Copy (Stream, Length);
+      H : Header;
+   begin
+      Read_Header (S.all, H);
+      if not H.Ok or else H.Is_Float /= Is_Float or else Integer_64 (H.Frames) > Capacity_Frames then
+         Free (S);
+         Release (H);
+         return (if not H.Ok then Refused elsif H.Is_Float /= Is_Float then Unsupported else Bad_Argument);
+      end if;
+      declare
+         Channels : constant Integer_64 := Integer_64 (H.Channels);
+         W : Walker;
+         Check : Audio_Digest.Hasher;
+         Got : Audio_Digest.Digest;
+         D : Damage;
+         Recorded : constant Boolean := H.Audio_Md5 /= Audio_Digest.Not_Recorded;
+         Matches : Boolean;
+      begin
+         Start (W, S, H);
+         Audio_Digest.Start (Check, H.Depth, H.Valid_Bits, H.Is_Float);
+         for F in 0 .. H.Frames - 1 loop
+            Advance (W, F);
+            for C in 1 .. H.Channels loop
+               declare
+                  V : Long_Long_Integer := Value (W, C, F);
+               begin
+                  if H.Is_Float and then H.Modes (C) = 1 then
+                     V := From_Integer (V, H.Scales (C));
+                  end if;
+                  Audio_Digest.Add (Check, V);
+                  Store (Integer_64 (F) * Channels + Integer_64 (C - 1), V);
+               end;
+            end loop;
+         end loop;
+         Audio_Digest.Finish (Check, Got);
+         D := Stream_Reading.Report (W);
+         Stop (W);
+         Free (S);
+         Matches := Got = H.Audio_Md5;
+         Report.all := (Lost_Frames => Integer_64 (D.Lost_Frames), Bad_Groups => Integer_32 (D.Bad_Groups),
+                        Bad_Block_Crcs => Integer_32 (D.Bad_Crcs), Blocks_Ok => (if D.Blocks_Ok then 1 else 0),
+                        Audio_Md5 => (if not Recorded then 0 elsif Matches then 1 else 2));
+         Release (H);
+         return (if D.Complete and then D.Blocks_Ok and then D.Bad_Crcs = 0 and then (not Recorded or else Matches) then Ok
+                 else Damaged);
+      end;
+   end Decode_With;
+
+   --  The checks every decode shares, and the frames a caller's buffer may be taken to hold.
+   function Decode_Arguments_Ok (Stream, Samples : System.Address; Length, Capacity_Frames : Integer_64;
+                                 Report : access Damage_Report) return Boolean is
+     (Stream /= System.Null_Address and then Samples /= System.Null_Address and then Report /= null
+      and then Length in 0 .. Integer_64 (Natural'Last) and then Capacity_Frames >= 0);
+
+   function Frames_Held (Capacity_Frames : Integer_64) return Integer_64 is
+     (Integer_64'Min (Capacity_Frames, Integer_64 (Natural'Last)));
 
    function Decode (Stream : System.Address; Length : Integer_64; Samples : System.Address; Capacity_Frames : Integer_64;
                     Report : access Damage_Report) return int is
    begin
-      if Stream = System.Null_Address or else Samples = System.Null_Address or else Report = null
-        or else Length not in 0 .. Integer_64 (Natural'Last) or else Capacity_Frames < 0
-      then
+      if not Decode_Arguments_Ok (Stream, Samples, Length, Capacity_Frames, Report) then
          return Bad_Argument;
       end if;
       declare
-         S : constant Byte_Array_Access := Copy (Stream, Length);
-         H : Header;
-      begin
-         Read_Header (S.all, H);
-         if not H.Ok then
-            declare
-               Unused : Byte_Array_Access := S;
-            begin
-               Free (Unused);
-            end;
-            Release (H);
-            return Refused;
-         end if;
-         if H.Is_Float or else Integer_64 (H.Frames) > Capacity_Frames then
-            declare
-               Unused : Byte_Array_Access := S;
-            begin
-               Free (Unused);
-            end;
-            Release (H);
-            return (if H.Is_Float then Unsupported else Bad_Argument);
-         end if;
-         declare
-            Channels : constant Integer_64 := Integer_64 (H.Channels);
-            X : Int32_Array (0 .. Integer_64 (H.Frames) * Channels - 1) with Import, Address => Samples;
-            W : Walker;
-            Check : Audio_Digest.Hasher;
-            Got : Audio_Digest.Digest;
-            D : Damage;
-            Recorded : constant Boolean := H.Audio_Md5 /= Audio_Digest.Not_Recorded;
-            Unused : Byte_Array_Access := S;
+         X : Int32_Array (0 .. Frames_Held (Capacity_Frames) * Integer_64 (Max_Channels) - 1) with Import, Address => Samples;
+         procedure Store (I : Integer_64; V : Long_Long_Integer) is
          begin
-            Start (W, S, H);
-            Audio_Digest.Start (Check, H.Depth, H.Valid_Bits, H.Is_Float);
-            for F in 0 .. H.Frames - 1 loop
-               Advance (W, F);
-               for C in 1 .. H.Channels loop
-                  declare
-                     V : constant Long_Long_Integer := Value (W, C, F);
-                  begin
-                     Audio_Digest.Add (Check, V);
-                     X (Integer_64 (F) * Channels + Integer_64 (C - 1)) := Integer_32 (V);
-                  end;
-               end loop;
-            end loop;
-            Audio_Digest.Finish (Check, Got);
-            D := Stream_Reading.Report (W);
-            Stop (W);
-            Free (Unused);
-            Report.all := (Lost_Frames => Integer_64 (D.Lost_Frames), Bad_Groups => Integer_32 (D.Bad_Groups),
-                           Bad_Block_Crcs => Integer_32 (D.Bad_Crcs), Blocks_Ok => (if D.Blocks_Ok then 1 else 0),
-                           Audio_Md5 => (if not Recorded then 0 elsif Got = H.Audio_Md5 then 1 else 2));
-            Release (H);
-            return (if D.Complete and then D.Blocks_Ok and then D.Bad_Crcs = 0 and then (not Recorded or else Got = H.Audio_Md5)
-                    then Ok else Damaged);
-         end;
+            X (I) := Integer_32 (V);
+         end Store;
+      begin
+         return Decode_With (Stream, Length, False, Store'Access, Frames_Held (Capacity_Frames), Report);
       end;
+   exception
+      when others =>
+         return Failed;
    end Decode;
+
+   function Decode_Float (Stream : System.Address; Length : Integer_64; Samples : System.Address; Capacity_Frames : Integer_64;
+                          Report : access Damage_Report) return int is
+   begin
+      if not Decode_Arguments_Ok (Stream, Samples, Length, Capacity_Frames, Report) then
+         return Bad_Argument;
+      end if;
+      declare
+         X : Pattern_Array (0 .. Frames_Held (Capacity_Frames) * Integer_64 (Max_Channels) - 1) with Import, Address => Samples;
+         procedure Store (I : Integer_64; V : Long_Long_Integer) is
+         begin
+            X (I) := Unsigned_32 (Bits_Of (V));
+         end Store;
+      begin
+         return Decode_With (Stream, Length, True, Store'Access, Frames_Held (Capacity_Frames), Report);
+      end;
+   exception
+      when others =>
+         return Failed;
+   end Decode_Float;
 
 end Codec_Api;

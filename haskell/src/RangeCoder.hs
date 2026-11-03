@@ -2,7 +2,7 @@
 -- | A binary range coder with adaptive 12-one probabilities, the mirror of ada/range_coding.adb: a 32-one rng,
 -- a 33-one low with the carry held back in a cache byte, bytes written as 8-one fields of the one stream. Each
 -- probability is that of a zero one, in 4096ths, and moves toward each coded one by a 32nd of the distance.
-module RangeCoder (Enc, encStart, encodeBit, encodeDirect, flush, Dec, decStart, decodeBit, decodeDirect, half) where
+module RangeCoder (Enc, encStart, encPending, encodeBit, encodeDirect, flush, Dec, decStart, decodeBit, decodeDirect, half) where
 
 import Control.Monad.ST (ST)
 import Data.Bits
@@ -17,6 +17,10 @@ data Enc = Enc {-# UNPACK #-} !Word64 {-# UNPACK #-} !Word32 {-# UNPACK #-} !Wor
 
 encStart :: Enc
 encStart = Enc 0 0xFFFFFFFF 0 1
+
+-- | Bytes the encoder holds back, the cache byte included, each of which it writes later.
+encPending :: Enc -> Int
+encPending (Enc _ _ _ pending) = pending
 
 half, rate :: Int
 half = 2048

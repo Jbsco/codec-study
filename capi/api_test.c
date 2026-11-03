@@ -1,6 +1,7 @@
-/* Checks the C interface against include/blockcodec.h: versions, structure sizes, a round trip at two thread counts,
+/* Checks the C interface against include/blockcodec.h: versions, structure sizes, integer and float round trips,
    stream details, damaged, refused and float streams from vectors/, and argument checks. Exit status 1 on a failure. */
 #include <math.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -42,6 +43,35 @@ static int decode_file(const char *path, blkc_damage *d) {
   return r;
 }
 
+static int decode_float_file(const char *path, blkc_damage *d) {
+  int64_t length;
+  uint8_t *s = load(path, &length);
+  if (!s) return -100;
+  float *x = malloc(sizeof(float) * 1000000);
+  int r = blkc_decode_float(s, length, x, 1000000 / 8, d);
+  free(x);
+  free(s);
+  return r;
+}
+
+/* Code float samples and decode them again; 1 when every bit pattern comes back and the integer decoder refuses them. */
+static int float_round_trip(const float *x, int64_t frames, int channels) {
+  blkc_info info = {channels, 48000, 32, 32, frames, 0, 1, {0}};
+  int64_t bound = blkc_encode_bound(frames, channels);
+  size_t count = (size_t)(frames * channels);
+  uint8_t *s = malloc((size_t)bound);
+  float *y = malloc(sizeof(float) * count);
+  int32_t *z = malloc(sizeof(int32_t) * count);
+  blkc_damage d;
+  int64_t n = blkc_encode_float(x, &info, 2, 0, s, bound);
+  int ok = n > 0 && blkc_decode_float(s, n, y, frames, &d) == BLKC_OK && d.audio_md5 == 1 &&
+           memcmp(x, y, sizeof(float) * count) == 0 && blkc_decode(s, n, z, frames, &d) == BLKC_UNSUPPORTED;
+  free(z);
+  free(y);
+  free(s);
+  return ok;
+}
+
 int main(void) {
   check(blkc_api_version() == BLKC_API_VERSION && BLKC_API_VERSION == 1, "API version");
   check(blkc_format_version() == BLKC_FORMAT_VERSION && BLKC_FORMAT_VERSION == 2, "format version");
@@ -72,12 +102,26 @@ int main(void) {
             d.lost_frames == 0 && d.bad_groups == 0 && d.blocks_ok == 1 && d.audio_md5 == 1,
         "round trip");
 
+  check(blkc_decode_float(a, la, (float *)y, frames, &d) == BLKC_UNSUPPORTED, "integer stream refused as float");
+  enum { float_frames = 12000 };
+  float *f = malloc(sizeof(float) * float_frames * 2);
+  for (int i = 0; i < float_frames * 2; i++) f[i] = (float)(0.4 * sin(i * 0.013) + 0.001 * cos(i * 1.7));
+  check(float_round_trip(f, float_frames, 2), "float round trip, bit patterns");
+  for (int i = 0; i < float_frames * 2; i++) f[i] = (float)((i * 37) % 65536 - 32768) / 32768.0f;
+  check(float_round_trip(f, float_frames, 2), "float round trip, integers over a power of two");
+  f[5] = NAN;
+  f[9] = INFINITY;
+  f[11] = -0.0f;
+  check(float_round_trip(f, float_frames, 2), "float round trip, NaN, infinity and negative zero");
+  free(f);
+  check(decode_float_file("../vectors/float_patterns.blkc", &d) == BLKC_OK && d.audio_md5 == 1, "float vector");
+
   a[la / 2] ^= 0x10;
   check(blkc_decode(a, la, y, frames, &d) == BLKC_DAMAGED, "changed byte reported as damage");
   check(decode_file("../vectors/damaged_group_sync.blkc", &d) == BLKC_DAMAGED && d.lost_frames > 0 && d.bad_groups == 1,
         "damaged vector");
   check(decode_file("../vectors/not_a_stream.blkc", &d) == BLKC_REFUSED, "refused vector");
-  check(decode_file("../vectors/float_patterns.blkc", &d) == BLKC_UNSUPPORTED, "float vector");
+  check(decode_file("../vectors/float_patterns.blkc", &d) == BLKC_UNSUPPORTED, "float vector refused as integer");
   check(blkc_decode(a, la, y, frames - 1, &d) == BLKC_BAD_ARGUMENT, "small output capacity");
 
   check(blkc_encode(x, &info, 6, 1, b, bound) == BLKC_BAD_ARGUMENT, "level out of range");
@@ -90,6 +134,6 @@ int main(void) {
   free(y);
   free(a);
   free(b);
-  if (failures == 0) printf("  C interface: versions, layout, round trip, damage and arguments as declared\n");
+  if (failures == 0) printf("  C interface: versions, layout, integer and float round trips, damage and arguments as declared\n");
   return failures != 0;
 }
