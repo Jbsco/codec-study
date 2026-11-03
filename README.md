@@ -143,7 +143,8 @@ Level 4, with tables, parameters and headers included; every stream decodes back
 - Tiers alone, as first described, cost 1.5 to 7.9 bits more than first differences on every recording. Offsets grow with distance from the group start, and coarser tiers hold samples further apart in time.
 - Linear prediction wins most blocks of every recording. The block codec is smaller than every tool on 8 kHz speech, both piano recordings, the electronic track and the 192 kHz vinyl rip, and 0.01 to 0.07 bits above the best audio codec on the other five. WavPack `-hh -x4` adapts its prediction sample by sample where the block codec fixes one predictor per block, which seems the likely source of that gap.
 - Stereo modes take 1.11 bits off the electronic track and 0.19 off speech. Split blocks take 0.28 bits off 8 kHz speech and 0.98 off the float sine.
-- Level 5's adaptive stage takes the piano from 3.67 to 3.52 bits per sample and the corpus from 7.059 to 7.046. It is kept only where it saves one bit per 64 samples, because the decoder pays its taps on every sample of such a block. The 192 kHz vinyl then decodes in 162 s in Ada against 0.94 s at level 4.
+- Level 5's adaptive stage takes the piano from 3.67 to 3.54 bits per sample. It is kept only where it saves one bit per 64 samples, because the decoder pays its taps on every sample of such a block. The 192 kHz vinyl then decodes in 162 s in Ada against 0.94 s at level 4.
+- Level 5 also writes a seek point every second, so a seek decodes at most 1 s back. Each seek point costs generated periodic signals their delays into earlier samples. The corpus mean is then 7.072 against 7.059 at level 4, while by bytes level 5 is 0.42 percent smaller, and 0.92 percent on the recordings.
 - Dither and white noise are smallest under the block codec, 1.78 and 15.06 bits per sample.
 
 ### Gain per part
@@ -171,13 +172,13 @@ Two estimates replace exhaustive search at the low levels. The order estimate pi
 | 2 | and 2 orders, precisions 12 to 15; blocks down to 2048; the adaptive binary code | 7.118 | 42.37 MB | 36.0% | 33.7 s | 6.12 s | 6.13 s | 1.89 s |
 | 3 | and 4 orders, precisions 9 to 15; blocks down to 1024; every stereo mode coded | 7.086 | 42.08 MB | 35.7% | 101.4 s | 6.71 s | 24.11 s | 2.74 s |
 | 4 | and every order and precision 5 to 15; blocks down to 512 | 7.059 | 41.97 MB | 35.6% | 181.3 s | 5.68 s | 63.13 s | 1.83 s |
-| 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.046 | 41.71 MB | 35.4% | 1876.7 s | 546.53 s | 994.24 s | 38.08 s |
+| 5 | and the adaptive stage after linear prediction, every tap count and warm-up | 7.072 | 41.80 MB | 35.5% | 1876.7 s | 546.53 s | 994.24 s | 38.08 s |
 
 Level 1 encodes the corpus 16 times faster than level 4 in Ada, 11.2 s against 181.3 s, for 2.2% more bytes. Level 3 comes within 0.3% of level 4 in 56% of its time.
 
-Levels 0 and 1 leave the adaptive binary code out, so their streams decode in 2.4 and 2.8 s in Ada. From level 2 the encoder takes it wherever it is shorter, and the decoder pays 5.7 to 6.7 s for the corpus, a range decoder step per modeled bit. Level 5 takes 0.6% of the bytes off level 4 and multiplies the decoder's time by about 96 in Ada and 21 in Haskell, where only blocks that train on earlier samples wait for one another.
+Levels 0 and 1 leave the adaptive binary code out, so their streams decode in 2.4 and 2.8 s in Ada. From level 2 the encoder takes it wherever it is shorter, and the decoder pays 5.7 to 6.7 s for the corpus, a range decoder step per modeled bit. Level 5 takes 0.4% of the bytes off level 4 and multiplies the decoder's time by about 96 in Ada and 21 in Haskell, where only blocks that train on earlier samples wait for one another.
 
-Times are single runs on a typical workstation (AMD Ryzen 7 7700X). `levels.sh` produces the table and `results/levels.txt`, every file at every level, and checks that Ada and Haskell write the same bytes.
+Times are single runs on a typical workstation (AMD Ryzen 7 7700X). `levels.sh` produces the table and `results/levels.txt`, every file at every level, and checks that Ada and Haskell write the same bytes. Level 5's sizes are measured with a seek point every second, and its times come from the run before that change.
 
 ### Side information
 
@@ -235,13 +236,13 @@ Haskell decodes every block that does not reach back before itself in parallel. 
 | `stream_encode --level 2` | 37,462,799 | 15.54 s | 2.32 s |
 | `stream_encode --level 4` | 37,109,813 | 110.49 s | 2.58 s |
 | `stream_encode --level 4`, every processor | 37,109,813 | 15.98 s | 2.34 s |
-| `stream_encode --level 5`, every processor | 36,886,433 | 96.32 s | 9.48 s |
+| `stream_encode --level 5`, every processor | 36,954,023 | 96.32 s | 9.48 s |
 
 </details>
 
 Level 0 is smaller than every FLAC and WavPack mode and encodes in 2.78 s, against 1.45 s for `flac -8` and 12.26 s for `wavpack -hh -x4`. Its decoder takes 1.23 s, against 0.48 s for `flac -d` on `flac -8` streams. From level 2 the range decoder doubles that.
 
-Coding groups on all 16 threads, level 4 encodes in 15.98 s against 110.49 s on one, to the same bytes. Level 5 is 0.6% smaller than level 4 and decodes in 9.48 s, about four times as long, since its adaptive filter does up to 256 multiply-adds per sample where it is kept. WavPack without `-x` is larger than `flac -0` here: the 192 kHz recording alone costs 4.9 MB more than with `-x4`.
+Coding groups on all 16 threads, level 4 encodes in 15.98 s against 110.49 s on one, to the same bytes. Level 5 is 0.4% smaller than level 4 and decodes in 9.48 s, about four times as long, since its adaptive filter does up to 256 multiply-adds per sample where it is kept. WavPack without `-x` is larger than `flac -0` here: the 192 kHz recording alone costs 4.9 MB more than with `-x4`. Its size is measured with a seek point every second, and its times come from the run before that change.
 
 The release build leaves out run-time checks and assertions and inlines across units at `-O3`. Its streams and decoded files are identical to the checked build's. Over the whole corpus at level 0 on one thread, best of three runs, release `stream_encode` takes 2.51 s against 3.54 s for the checked build, and `stream_decode` 1.32 s against 1.88 s.
 
@@ -249,19 +250,19 @@ Haskell uses unboxed vectors whose loops fuse, strict unpacked writer state, `co
 
 ### Seeking
 
-`seek_timing.sh` opens each file once through its codec's library, then seeks to 200 frames drawn from one seed and reads 4096 frames from each. It ran on one pinned processor at a load average of 28, since a player seeks while the rest of the machine works. Every method read the same samples as FLAC. Times are in ms: median, 90th percentile and largest.
+`seek_timing.sh` opens each file once through its codec's library, then seeks to 200 frames drawn from one seed and reads 4096 frames from each. It ran on one pinned processor at a load average of 21, since a player seeks while the rest of the machine works. Every method read the same samples as FLAC. Times are in ms: median, 90th percentile and largest.
 
 | Method | 48 kHz, 120 s | 192 kHz, 20 s |
 |---|---|---|
-| `flac -5` | 0.31, 0.88, 3.21 | 0.22, 0.28, 0.54 |
-| `flac -8` | 0.40, 1.07, 3.47 | 0.22, 0.28, 0.41 |
-| `wavpack` | 0.69, 1.96, 4.28 | 0.73, 1.20, 1.61 |
-| `wavpack -hh` | 1.72, 3.12, 4.26 | 1.29, 2.14, 2.73 |
-| level 2 | 2.10, 2.44, 3.29 | 1.13, 1.29, 2.44 |
-| level 4 | 1.59, 1.96, 2.30 | 1.13, 1.26, 2.16 |
-| level 5 | 226, 617, 1,926 | 1,570, 3,580, 8,517 |
+| `flac -5` | 0.27, 0.95, 3.47 | 0.22, 0.28, 0.43 |
+| `flac -8` | 0.32, 1.10, 4.79 | 0.23, 0.30, 0.37 |
+| `wavpack` | 0.67, 1.64, 3.31 | 0.81, 1.25, 1.93 |
+| `wavpack -hh` | 1.78, 3.52, 6.30 | 1.32, 2.13, 2.49 |
+| level 2 | 1.92, 2.17, 2.42 | 1.22, 1.31, 1.89 |
+| level 4 | 1.70, 2.15, 4.81 | 1.20, 1.27, 1.74 |
+| level 5 | 26.9, 59.1, 74.9 | 111, 214, 255 |
 
-The 48 kHz file is six corpus recordings joined, and the 192 kHz file is the vinyl recording. At levels 0 to 4 a seek decodes one or two groups, about 0.9 ms each at 48 kHz. Level 5 decodes back to the seek point, up to 10 s of audio, because each adaptive stage trains on the group before it.
+The 48 kHz file is six corpus recordings joined, and the 192 kHz file is the vinyl recording. At levels 0 to 4 a seek decodes one or two groups, about 0.9 ms each at 48 kHz. Level 5 decodes back to its seek point, up to 1 s of audio, because each adaptive stage trains on the group before it. With seek points 10 s apart its median was 226 ms at 48 kHz and 1,570 ms at 192 kHz.
 
 ### Sizes
 
@@ -355,7 +356,7 @@ Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer, 32-bit float, or 64-bit
 |---|---|
 | `--stream <out.bin>` | write the stream to a file |
 | `--tag <key=value>` | add a metadata tag |
-| `--seek-every <seconds>` | seek point and segment length, 10 when left out, 0 for one segment |
+| `--seek-every <seconds>` | seek point and segment length, 10 when left out and 1 at level 5, 0 for one segment |
 | `--independent` | make every group a segment |
 | `--seek <frame>` | decode again from that frame's seek point after the full decode |
 | `--flip <group> <byte>` | damage one bit before decoding |

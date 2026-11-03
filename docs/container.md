@@ -34,7 +34,7 @@ Each group, in order:
 | CRC-16 | 16 | of the group from its sync word through its block table |
 | blocks | | coded blocks in the table's order |
 
-A segment is the span a block may read earlier samples from: one group when flag bit 0 is set, otherwise from one seek point to the next. The encoder writes a seek point every 10 s by default (`--seek-every <seconds>`, 0 for one segment and no table), and `--independent` makes every group a segment. The decoder needs no knowledge of segments: it hands every block the samples before it, and the encoder never referenced further back than the segment's start.
+A segment is the span a block may read earlier samples from: one group when flag bit 0 is set, otherwise from one seek point to the next. The encoder writes a seek point every 10 s by default, and every 1 s at level 5 (`--seek-every <seconds>`, 0 for one segment and no table), and `--independent` makes every group a segment. The decoder needs no knowledge of segments: it hands every block the samples before it, and the encoder never referenced further back than the segment's start.
 
 ## Source file
 
@@ -81,7 +81,7 @@ Framing was measured at level 4 on the corpus before the adaptive binary code, a
 
 The cost falls on short and small files: the 8 kHz pink noise gains 304 bytes and the 192 kHz vinyl 12,819. The silent file goes from 1,548 bytes to 4,584, because its 216 groups each contain a frame the stream coded in 7 bytes before. Framing is the price of a stream that can be read from the middle, written without knowing its length, and resynchronized after damage. A format for archives that are always read whole would keep the index at the head.
 
-Seeking costs the decoder at most one segment: 10 s of audio at the default seek interval, 108 groups at 44.1 kHz, decoded and discarded before the frame asked for. A seek costs that much only where every group's blocks read the group before it, as in a periodic signal coded with delays, or at level 5, whose adaptive stage trains on the samples before each block. On recordings at levels 0 to 4, a seek decodes the group that contains the frame and nothing before it.
+Seeking costs the decoder at most one segment: 10 s of audio at the default seek interval, 108 groups at 44.1 kHz, decoded and discarded before the frame asked for. A seek costs that much only where every group's blocks read the group before it, as in a periodic signal coded with delays, or at level 5, whose adaptive stage trains on the samples before each block. For that reason level 5 writes a seek point every second. On recordings at levels 0 to 4, a seek decodes the group that contains the frame and nothing before it.
 
 The decoder keeps one group's split tree and block table at a time, under 300 bytes for eight channels, where the previous layout held the whole index and table before decoding anything. The Haskell decoder still reads the whole stream into memory and decodes history-free blocks of every group in parallel.
 
@@ -96,4 +96,4 @@ Segments, measured by `segments.sh` at level 4 on the corpus, where a block may 
 
 A seek point every 10 s costs nothing worth measuring, because few blocks reach more than 16,384 samples back and fewer start a segment. Every group its own segment costs 1.8 percent, which is what the history buys: the delay predictor's reach into earlier samples and the adaptive stage's warm-up, both lost by the first blocks of every segment. A stream for random access or for links that drop data chooses between these by how much it must be able to lose at once.
 
-Measured per file with `stream_encode` on the corpus and the wider corpus, that cost falls on generated signals. At level 4, every group a segment left each recording's stream the same size, one header byte apart, and made generated signals 5.3 percent larger. At level 5 it made recordings 0.95 percent larger, the adaptive stage's training lost at every group.
+Measured per file with `stream_encode` on the corpus and the wider corpus, that cost falls on generated signals. At level 4, every group a segment left each recording's stream the same size, one header byte apart, and made generated signals 5.3 percent larger. At level 5 it made recordings 0.95 percent larger, the adaptive stage's training lost at every group. A seek point every second, level 5's default, made recordings 0.076 percent and generated signals 0.44 percent larger than one every 10 s.
