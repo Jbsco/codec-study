@@ -47,6 +47,22 @@ Generated signals come from ffmpeg's `anoisesrc` and `aevalsrc` with the express
 
 </details>
 
+`corpus/extra/` contains six more 20 s recordings, kept apart so every result below stays comparable: a string quartet, birds, rain and thunder decoded from an MP3 original, a rocket launch, a church choir and an organ. `corpus/make_extra.sh` fetches and cuts them.
+
+<details>
+<summary><b>Wider corpus sources</b> (6 rows)</summary>
+
+| File | Recording | Source | License | Format |
+|---|---|---|---|---|
+| `extra_quartet` | Haydn, String Quartet Op. 64 No. 5 "Lark", IV, 0:15 to 0:35 | [Musopen Collection as FLAC](https://archive.org/details/MusopenCollectionAsFlac) | Public Domain Mark 1.0 | 24-bit 48 kHz |
+| `extra_birds` | Bobiri Butterfly Sanctuary, Ghana, birds, insects and wind, 0:10 to 0:30 | [radio aporee](https://archive.org/details/aporee_70008_81545) | Public Domain Mark 1.0 | 24-bit 48 kHz |
+| `extra_rain_mp3` | Logone Oriental, Chad, rain and thunder, from the MP3 original, 0:05 to 0:25 | [radio aporee](https://archive.org/details/aporee_73575_85987) | Public Domain Mark 1.0 | 16-bit 48 kHz |
+| `extra_launch` | NASA, STS-87 launch, 0:20 to 0:40 | [NASA Launch Audio](https://archive.org/details/NasaLaunchAudio) | Public Domain Mark 1.0 | 16-bit 44.1 kHz |
+| `extra_choir` | Église de Villebrumier, France, choir singing Thoinot Arbeau's Pavane, 0:10 to 0:30 | [radio aporee](https://archive.org/details/aporee_60543_69571) | Public Domain Mark 1.0 | 24-bit 48 kHz |
+| `extra_organ` | Janice Faythe Bennett, "Easy Listening Organ Music", 0:30 to 0:50 | [Internet Archive](https://archive.org/details/EasyListeningOrganMusic) | CC0 1.0 | 16-bit 44.1 kHz |
+
+</details>
+
 ## Block codec
 
 A block codes 1 to 4096 samples of one signal, as one constant value or as a predictor and a residual code. Shared low bits are removed first. `docs/format.md` lists every field, and `docs/spec.md` gives every decoding rule.
