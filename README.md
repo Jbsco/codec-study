@@ -11,7 +11,7 @@ Every coded stream is decoded again and compared sample for sample.
 
 - `ada/block_codec.ads`, `.adb`: block codec. SPARK decoder with no heap and no exceptions; malformed input returns `Truncated_Input` or `Bad_Data`. Encoder with no heap and no shared state; linear prediction analysis in 64-bit floating point.
 - `ada/canonical_decoding`, `bit_streams`, `checksums`, `range_coding`: canonical Huffman decoding, bit access, CRC-16 and the binary range coder, in SPARK. `ada/checksums_test.adb` tests the CRC; `ada/corrupt_test.adb` walks a written stream and checks its framing and every CRC against flipped bits.
-- `ada/codec_main.adb`: stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/stream_reading` and `ada/stream_format`: header, groups and damage handling, read from a stream's own bytes. `ada/stream_decode.adb`: stream to WAV. `ada/block_codec_ffi` and `ada/codec_lib.gpr`: block codec as a C library, `ada/lib/libblockcodec.so`.
+- `ada/codec_main.adb`: stream of split trees and stereo modes around the block codec, run on a WAV file. `ada/stream_reading` and `ada/stream_format`: header, groups and damage handling, read from a stream's own bytes. `ada/stream_writing` with `ada/stream_encode.adb`: audio file to stream. `ada/stream_decode.adb`: stream to audio file. `ada/block_codec_ffi` and `ada/codec_lib.gpr`: block codec as a C library, `ada/lib/libblockcodec.so`.
 - `ada/wav_files`: input from WAV, RF64, Wave64 and AIFF, WAV output. `ada/audio_huffman.adb` with `huffman_codes`, `predictors` and `residual_coders`: experiment coders.
 - `haskell/src/BlockCodec.hs`, `Stream.hs`, `Checksum.hs`, `RangeCoder.hs`: block codec, stream, CRC-16 and range coder in Haskell, groups coded in parallel. `haskell/hybrid/`: same stream around the SPARK library. `haskell/src/Blocks.hs`, `Tiers.hs`: parallel versions of experiment schemes.
 - `corpus/`: test files, `make_corpus.sh` and `SHA256SUMS`.
@@ -274,7 +274,7 @@ Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer, 32-bit float, or 64-bit
 | `--no-pairs` | code every channel alone |
 | `--features <out.tsv>` | write each group's features and whether the search split its root |
 
-`stream_decode <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). Exit status 0 means the stream was intact. Status 1 means damage: frames of unreadable groups, and blocks that did not decode, are written as zeros and counted on stderr. Status 2 means the file is not a readable stream.
+`stream_encode [--level <0 to 5>] [--tag <key=value>] [--seek-every <seconds>] [--independent] <in.wav> <out.bin>` codes a file into a stream, byte for byte the stream `codec_main --stream` writes. `stream_decode <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). Exit status 0 means the stream was intact. Status 1 means damage: frames of unreadable groups, and blocks that did not decode, are written as zeros and counted on stderr. Status 2 means the file is not a readable stream.
 
 ## References
 
