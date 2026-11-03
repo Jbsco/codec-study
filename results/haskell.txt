@@ -1,280 +1,280 @@
 build/wav/depth_pink_24.wav
  24-bit, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       21.09  round trip OK, hash 7a39dc22212bb28a, encode  0.01 s, decode  0.00 s
-  Fixed predictor, bit-length Huffman per block         21.07  round trip OK, hash 603a604f8bf17181, encode  0.00 s, decode  0.00 s
+  Fixed predictor, bit-length Huffman per block         21.07  round trip OK, hash 603a604f8bf17181, encode  0.01 s, decode  0.00 s
   Fixed predictor, shorter of the two per block         21.07  round trip OK, hash e686ae80f1836404, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  21.01  round trip OK, hash c347fb01150d0059, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                  20.87  round trip OK, hash fcef9c96c0d764bf, encode  0.39 s, decode  0.04 s, level 4, 1150565 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk  21.01  round trip OK, hash c347fb01150d0059, encode  0.01 s, decode  0.02 s
+  Block codec, Haskell                                  20.87  round trip OK, hash 3414d72207ea3198, encode  0.49 s, decode  0.06 s, level 4, 1150656 bytes
 build/wav/depth_pink_32f.wav
  32-bit float, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       31.50  round trip OK, hash a0c009dec4c25a4d, encode  0.00 s, decode  0.00 s
+  Fixed predictor, Rice per block                       31.50  round trip OK, hash a0c009dec4c25a4d, encode  0.01 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block         27.63  round trip OK, hash a2420f07980687ed, encode  0.01 s, decode  0.00 s
-  Fixed predictor, shorter of the two per block         27.63  round trip OK, hash d8eefa98af61bd0e, encode  0.01 s, decode  0.00 s
+  Fixed predictor, shorter of the two per block         27.63  round trip OK, hash d8eefa98af61bd0e, encode  0.01 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk  28.65  round trip OK, hash bcfdb0d00572f12d, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                  27.65  round trip OK, hash 6774e4c49566f4da, encode  0.39 s, decode  0.01 s, level 4, 1524221 bytes
+  Block codec, Haskell                                  27.65  round trip OK, hash c798c94a320208e2, encode  0.57 s, decode  0.01 s, level 4, 1524312 bytes
 build/wav/depth_pink_32.wav
  32-bit, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       29.09  round trip OK, hash 08bf1acbca92aed7, encode  0.01 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block         29.08  round trip OK, hash 4071ee7d09a70d49, encode  0.01 s, decode  0.00 s
-  Fixed predictor, shorter of the two per block         29.08  round trip OK, hash 81d5ba1a0144c5af, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  29.02  round trip OK, hash 336d254c8cc41886, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                  28.90  round trip OK, hash 585634caea212f51, encode  0.41 s, decode  0.07 s, level 4, 1593264 bytes
+  Fixed predictor, shorter of the two per block         29.08  round trip OK, hash 81d5ba1a0144c5af, encode  0.01 s, decode  0.00 s
+  Tiers, pairs, offset from mean, bit-length per chunk  29.02  round trip OK, hash 336d254c8cc41886, encode  0.01 s, decode  0.02 s
+  Block codec, Haskell                                  28.90  round trip OK, hash 1a16353a65824674, encode  0.57 s, decode  0.07 s, level 4, 1593355 bytes
 build/wav/depth_pink_8.wav
  8-bit, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        5.10  round trip OK, hash 9eb232c7e8bbd84c, encode  0.00 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block          5.07  round trip OK, hash e87bc479fff340ef, encode  0.00 s, decode  0.01 s
   Fixed predictor, shorter of the two per block          5.07  round trip OK, hash 0475a61bcffe1f07, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk   5.01  round trip OK, hash be12ba2914f7b6b9, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   4.90  round trip OK, hash 815dfd6475886216, encode  0.33 s, decode  0.02 s, level 4, 269938 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk   5.01  round trip OK, hash be12ba2914f7b6b9, encode  0.01 s, decode  0.01 s
+  Block codec, Haskell                                   4.90  round trip OK, hash 0ac90421a8c359b4, encode  0.37 s, decode  0.02 s, level 4, 270005 bytes
 build/wav/depth_sine_12in16.wav
  16-bit, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                        7.62  round trip OK, hash 7ec6c83ba20624ac, encode  0.00 s, decode  0.00 s
-  Fixed predictor, bit-length Huffman per block          7.05  round trip OK, hash 57bbe15e4c38cecc, encode  0.00 s, decode  0.00 s
-  Fixed predictor, shorter of the two per block          7.05  round trip OK, hash f64255a5865d231e, encode  0.00 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  10.79  round trip OK, hash cb894c04b85d9e89, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   0.07  round trip OK, hash fa06e3453865f47b, encode  0.36 s, decode  0.01 s, level 4, 3585 bytes
+  Fixed predictor, Rice per block                        7.62  round trip OK, hash 7ec6c83ba20624ac, encode  0.01 s, decode  0.00 s
+  Fixed predictor, bit-length Huffman per block          7.05  round trip OK, hash 57bbe15e4c38cecc, encode  0.00 s, decode  0.01 s
+  Fixed predictor, shorter of the two per block          7.05  round trip OK, hash f64255a5865d231e, encode  0.01 s, decode  0.01 s
+  Tiers, pairs, offset from mean, bit-length per chunk  10.79  round trip OK, hash cb894c04b85d9e89, encode  0.00 s, decode  0.02 s
+  Block codec, Haskell                                   0.07  round trip OK, hash 77ad9b4e310b6de0, encode  0.45 s, decode  0.01 s, level 4, 3652 bytes
 build/wav/depth_sine_24.wav
  24-bit, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       12.62  round trip OK, hash 2e31e7ea23d4bbd5, encode  0.00 s, decode  0.00 s
+  Fixed predictor, Rice per block                       12.62  round trip OK, hash 2e31e7ea23d4bbd5, encode  0.01 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block         12.03  round trip OK, hash b431c7a0329e13e8, encode  0.00 s, decode  0.01 s
-  Fixed predictor, shorter of the two per block         12.03  round trip OK, hash 10718dc481e594fb, encode  0.00 s, decode  0.00 s
+  Fixed predictor, shorter of the two per block         12.03  round trip OK, hash 10718dc481e594fb, encode  0.01 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk  18.81  round trip OK, hash 6a9d9409a71443cf, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   0.06  round trip OK, hash 44e30a6fcf5efd88, encode  0.27 s, decode  0.00 s, level 4, 3183 bytes
+  Block codec, Haskell                                   0.06  round trip OK, hash 29e84138b05fe4c3, encode  0.26 s, decode  0.00 s, level 4, 3274 bytes
 build/wav/depth_sine_32f.wav
  32-bit float, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       29.37  round trip OK, hash 06d1b9cff90734a8, encode  0.00 s, decode  0.00 s
+  Fixed predictor, Rice per block                       29.37  round trip OK, hash 06d1b9cff90734a8, encode  0.01 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block         24.66  round trip OK, hash 02fd2b74635a396d, encode  0.00 s, decode  0.00 s
-  Fixed predictor, shorter of the two per block         24.66  round trip OK, hash 53512009148866d8, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  24.53  round trip OK, hash eb69f01462022cb2, encode  0.01 s, decode  0.01 s
-  Block codec, Haskell                                   0.36  round trip OK, hash 346bf6374fdcbbef, encode  0.44 s, decode  0.00 s, level 4, 19834 bytes
+  Fixed predictor, shorter of the two per block         24.66  round trip OK, hash 53512009148866d8, encode  0.00 s, decode  0.01 s
+  Tiers, pairs, offset from mean, bit-length per chunk  24.53  round trip OK, hash eb69f01462022cb2, encode  0.00 s, decode  0.01 s
+  Block codec, Haskell                                   0.36  round trip OK, hash 2e4ee59f0f5b9ddc, encode  0.39 s, decode  0.01 s, level 4, 19925 bytes
 build/wav/depth_sine_32.wav
  32-bit, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       20.62  round trip OK, hash 7e0152c51014fd95, encode  0.03 s, decode  0.04 s
-  Fixed predictor, bit-length Huffman per block         20.02  round trip OK, hash 70f4f670929dbc6c, encode  0.02 s, decode  0.02 s
-  Fixed predictor, shorter of the two per block         20.02  round trip OK, hash a19fb56aa767371b, encode  0.03 s, decode  0.02 s
-  Tiers, pairs, offset from mean, bit-length per chunk  26.80  round trip OK, hash d4a06954460377c4, encode  0.01 s, decode  0.04 s
-  Block codec, Haskell                                   0.11  round trip OK, hash 151c329f220513c3, encode  1.61 s, decode  0.03 s, level 4, 5976 bytes
+  Fixed predictor, Rice per block                       20.62  round trip OK, hash 7e0152c51014fd95, encode  0.01 s, decode  0.00 s
+  Fixed predictor, bit-length Huffman per block         20.02  round trip OK, hash 70f4f670929dbc6c, encode  0.00 s, decode  0.00 s
+  Fixed predictor, shorter of the two per block         20.02  round trip OK, hash a19fb56aa767371b, encode  0.01 s, decode  0.00 s
+  Tiers, pairs, offset from mean, bit-length per chunk  26.80  round trip OK, hash d4a06954460377c4, encode  0.00 s, decode  0.01 s
+  Block codec, Haskell                                   0.11  round trip OK, hash d481e2eb517bca39, encode  0.24 s, decode  0.01 s, level 4, 6067 bytes
 build/wav/depth_sine_8.wav
  8-bit, 44100 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        2.43  round trip OK, hash 03d3c07800faf93a, encode  0.00 s, decode  0.00 s
-  Fixed predictor, bit-length Huffman per block          2.43  round trip OK, hash 7544bf06c99e4e7f, encode  0.00 s, decode  0.00 s
+  Fixed predictor, bit-length Huffman per block          2.43  round trip OK, hash 7544bf06c99e4e7f, encode  0.00 s, decode  0.01 s
   Fixed predictor, shorter of the two per block          2.43  round trip OK, hash 3e6c1e6448504ab4, encode  0.00 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk   3.12  round trip OK, hash ce2c8a150e1b5e39, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   0.05  round trip OK, hash 562118be3b030c59, encode  0.31 s, decode  0.00 s, level 4, 2780 bytes
+  Block codec, Haskell                                   0.05  round trip OK, hash 6439835714df1c90, encode  0.33 s, decode  0.01 s, level 4, 2847 bytes
 build/wav/rate_pink_16000.wav
  16-bit, 16000 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       13.09  round trip OK, hash 2e3f43adc677d75d, encode  0.00 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block         13.06  round trip OK, hash a27c6f09d6f255ad, encode  0.00 s, decode  0.00 s
   Fixed predictor, shorter of the two per block         13.06  round trip OK, hash aa56aa95c0b0fb02, encode  0.00 s, decode  0.00 s
-  Tiers, pairs, offset from mean, bit-length per chunk  13.01  round trip OK, hash 41c62dd6a659735c, encode  0.00 s, decode  0.00 s
-  Block codec, Haskell                                  12.86  round trip OK, hash 61af7a19cbf5119d, encode  0.11 s, decode  0.01 s, level 4, 257174 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk  13.01  round trip OK, hash 41c62dd6a659735c, encode  0.00 s, decode  0.01 s
+  Block codec, Haskell                                  12.86  round trip OK, hash 3e69a66488095e8c, encode  0.16 s, decode  0.01 s, level 4, 257241 bytes
 build/wav/rate_pink_192000.wav
  16-bit, 192000 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       13.09  round trip OK, hash 8a25b93a89ecc634, encode  0.01 s, decode  0.01 s
+  Fixed predictor, Rice per block                       13.09  round trip OK, hash 8a25b93a89ecc634, encode  0.02 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block         13.06  round trip OK, hash aa765b9117290351, encode  0.02 s, decode  0.02 s
-  Fixed predictor, shorter of the two per block         13.06  round trip OK, hash 62141d64af57a4fb, encode  0.03 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  13.00  round trip OK, hash 4f56b7330e60b416, encode  0.02 s, decode  0.03 s
-  Block codec, Haskell                                  12.87  round trip OK, hash 62cf6021ad01891b, encode  1.43 s, decode  0.13 s, level 4, 3087734 bytes
+  Fixed predictor, shorter of the two per block         13.06  round trip OK, hash 62141d64af57a4fb, encode  0.03 s, decode  0.02 s
+  Tiers, pairs, offset from mean, bit-length per chunk  13.00  round trip OK, hash 4f56b7330e60b416, encode  0.01 s, decode  0.04 s
+  Block codec, Haskell                                  12.87  round trip OK, hash 77986f0e331519e7, encode  2.09 s, decode  0.15 s, level 4, 3087801 bytes
 build/wav/rate_pink_8000.wav
  16-bit, 8000 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       13.09  round trip OK, hash b7354aca1a40da35, encode  0.00 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block         13.05  round trip OK, hash 5483df99a46665d4, encode  0.00 s, decode  0.00 s
-  Fixed predictor, shorter of the two per block         13.05  round trip OK, hash 79aae43021be4426, encode  0.00 s, decode  0.00 s
+  Fixed predictor, shorter of the two per block         13.05  round trip OK, hash 79aae43021be4426, encode  0.01 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk  13.01  round trip OK, hash ae26b3bd4cf4061d, encode  0.00 s, decode  0.00 s
-  Block codec, Haskell                                  12.87  round trip OK, hash 91c62ec3c6e2efff, encode  0.06 s, decode  0.01 s, level 4, 128697 bytes
+  Block codec, Haskell                                  12.88  round trip OK, hash a2ae057def7a7ff6, encode  0.11 s, decode  0.02 s, level 4, 128764 bytes
 build/wav/rate_pink_96000.wav
  16-bit, 96000 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       13.09  round trip OK, hash e81999e9948b369d, encode  0.01 s, decode  0.00 s
-  Fixed predictor, bit-length Huffman per block         13.06  round trip OK, hash 440c6d6bfd98b25b, encode  0.01 s, decode  0.00 s
+  Fixed predictor, bit-length Huffman per block         13.06  round trip OK, hash 440c6d6bfd98b25b, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         13.06  round trip OK, hash 4eb78a96032ba2b5, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  13.00  round trip OK, hash 4016646e811cad9d, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                  12.87  round trip OK, hash 00648ec36b06d813, encode  0.68 s, decode  0.07 s, level 4, 1544558 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk  13.00  round trip OK, hash 4016646e811cad9d, encode  0.00 s, decode  0.02 s
+  Block codec, Haskell                                  12.87  round trip OK, hash 4a6200944f20f157, encode  0.82 s, decode  0.21 s, level 4, 1544625 bytes
 build/wav/rate_sine_16000.wav
  16-bit, 16000 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       10.52  round trip OK, hash a9afc47da68949f1, encode  0.00 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block          9.03  round trip OK, hash ff18b4016718719e, encode  0.00 s, decode  0.00 s
   Fixed predictor, shorter of the two per block          9.03  round trip OK, hash a1bb813b2a5a517e, encode  0.00 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk  10.91  round trip OK, hash 7ca349c8f6ed19f8, encode  0.00 s, decode  0.00 s
-  Block codec, Haskell                                   0.05  round trip OK, hash cb1d71d3b6296c19, encode  0.12 s, decode  0.00 s, level 4, 1052 bytes
+  Block codec, Haskell                                   0.06  round trip OK, hash e0a619863fceb7e4, encode  0.13 s, decode  0.00 s, level 4, 1119 bytes
 build/wav/rate_sine_192000.wav
  16-bit, 192000 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        2.27  round trip OK, hash 884abc47861a198d, encode  0.01 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block          2.27  round trip OK, hash edc7481bb4ef6cd0, encode  0.01 s, decode  0.01 s
-  Fixed predictor, shorter of the two per block          2.27  round trip OK, hash a8c8555817d08913, encode  0.02 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk   6.67  round trip OK, hash a15a41a14da6d0fe, encode  0.01 s, decode  0.03 s
-  Block codec, Haskell                                   0.05  round trip OK, hash 2207eeeacaf36ae6, encode  1.40 s, decode  0.02 s, level 4, 11456 bytes
+  Fixed predictor, shorter of the two per block          2.27  round trip OK, hash a8c8555817d08913, encode  0.01 s, decode  0.01 s
+  Tiers, pairs, offset from mean, bit-length per chunk   6.67  round trip OK, hash a15a41a14da6d0fe, encode  0.01 s, decode  0.02 s
+  Block codec, Haskell                                   0.05  round trip OK, hash eae7411b222daf0b, encode  1.21 s, decode  0.02 s, level 4, 11523 bytes
 build/wav/rate_sine_8000.wav
  16-bit, 8000 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       14.01  round trip OK, hash b8e5045cf48658b3, encode  0.00 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block         10.78  round trip OK, hash 4875183ac1da9c8b, encode  0.00 s, decode  0.00 s
   Fixed predictor, shorter of the two per block         10.78  round trip OK, hash cfe8cfb37cbdc833, encode  0.00 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk  10.78  round trip OK, hash b48b49dbf1c2c038, encode  0.00 s, decode  0.00 s
-  Block codec, Haskell                                   0.06  round trip OK, hash af5c63ab8d913c75, encode  0.06 s, decode  0.00 s, level 4, 559 bytes
+  Block codec, Haskell                                   0.06  round trip OK, hash 566fff32dfb4bec3, encode  0.06 s, decode  0.00 s, level 4, 626 bytes
 build/wav/rate_sine_96000.wav
  16-bit, 96000 Hz, 1 channels, 10 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        3.38  round trip OK, hash 26d625bddd89eafb, encode  0.01 s, decode  0.01 s
-  Fixed predictor, bit-length Huffman per block          3.40  round trip OK, hash 9fef2c6138c592a0, encode  0.01 s, decode  0.01 s
-  Fixed predictor, shorter of the two per block          3.38  round trip OK, hash 2d290850cf416fb5, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk   8.36  round trip OK, hash aa3b35505ee16ad5, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                   0.05  round trip OK, hash d4b38d5eb55b3dc6, encode  0.73 s, decode  0.01 s, level 4, 5849 bytes
+  Fixed predictor, bit-length Huffman per block          3.40  round trip OK, hash 9fef2c6138c592a0, encode  0.00 s, decode  0.01 s
+  Fixed predictor, shorter of the two per block          3.38  round trip OK, hash 2d290850cf416fb5, encode  0.01 s, decode  0.00 s
+  Tiers, pairs, offset from mean, bit-length per chunk   8.36  round trip OK, hash aa3b35505ee16ad5, encode  0.01 s, decode  0.01 s
+  Block codec, Haskell                                   0.05  round trip OK, hash aff750cd70bf47ff, encode  0.63 s, decode  0.01 s, level 4, 5916 bytes
 build/wav/rec_electronic.wav
  24-bit, 44100 Hz, 2 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       20.11  round trip OK, hash ad8253c3bead052b, encode  0.02 s, decode  0.01 s
-  Fixed predictor, bit-length Huffman per block         20.00  round trip OK, hash 4363b687cedb0666, encode  0.01 s, decode  0.02 s
+  Fixed predictor, Rice per block                       20.11  round trip OK, hash ad8253c3bead052b, encode  0.01 s, decode  0.01 s
+  Fixed predictor, bit-length Huffman per block         20.00  round trip OK, hash 4363b687cedb0666, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         19.99  round trip OK, hash b98ae49a5c9859f0, encode  0.02 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk  20.03  round trip OK, hash dc19aa5a4bdc7349, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                  18.54  round trip OK, hash d8109351acc1e896, encode  3.30 s, decode  0.19 s, level 4, 4087345 bytes
+  Block codec, Haskell                                  18.54  round trip OK, hash f75118962bf7cb0f, encode  3.15 s, decode  0.17 s, level 4, 4087436 bytes
 build/wav/rec_orchestra_f32.wav
  32-bit float, 48000 Hz, 2 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       29.05  round trip OK, hash 411140184df448cf, encode  0.01 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block         24.38  round trip OK, hash b9329124d6b715e0, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         24.38  round trip OK, hash d7f332355f4aad15, encode  0.02 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk  24.72  round trip OK, hash 6533a5b7900cf3ca, encode  0.01 s, decode  0.03 s
-  Block codec, Haskell                                  13.82  round trip OK, hash e44266f8a50fa4fc, encode  3.73 s, decode  0.13 s, level 4, 3316453 bytes
+  Block codec, Haskell                                  13.82  round trip OK, hash 0a8aff8453921146, encode  2.76 s, decode  0.13 s, level 4, 3316544 bytes
 build/wav/rec_orchestra.wav
  24-bit, 48000 Hz, 2 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       14.34  round trip OK, hash 50f199af65fb51c7, encode  0.01 s, decode  0.01 s
-  Fixed predictor, bit-length Huffman per block         14.37  round trip OK, hash bbb55f71383ed0bc, encode  0.01 s, decode  0.01 s
+  Fixed predictor, bit-length Huffman per block         14.37  round trip OK, hash bbb55f71383ed0bc, encode  0.02 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         14.34  round trip OK, hash b30ae17954f45afb, encode  0.02 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk  15.70  round trip OK, hash 8fc4b2626db8f6fc, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                  13.82  round trip OK, hash 8067a51db05544d9, encode  2.83 s, decode  0.13 s, level 4, 3316449 bytes
+  Block codec, Haskell                                  13.82  round trip OK, hash 4c198deccb59de7d, encode  2.68 s, decode  0.11 s, level 4, 3316540 bytes
 build/wav/rec_piano_96k.wav
  24-bit, 96000 Hz, 2 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       12.83  round trip OK, hash 36aee2549ab3c9ac, encode  0.02 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block         12.77  round trip OK, hash 2a16cbc9ef4775d6, encode  0.02 s, decode  0.02 s
   Fixed predictor, shorter of the two per block         12.77  round trip OK, hash e9722967bde03e36, encode  0.03 s, decode  0.02 s
   Tiers, pairs, offset from mean, bit-length per chunk  13.46  round trip OK, hash b52107b8c15f8f11, encode  0.02 s, decode  0.03 s
-  Block codec, Haskell                                   6.31  round trip OK, hash 108d9b128a3f6c2a, encode  6.53 s, decode  0.12 s, level 4, 3027507 bytes
+  Block codec, Haskell                                   6.31  round trip OK, hash e5afa29af9dc7088, encode  5.58 s, decode  0.14 s, level 4, 3027598 bytes
 build/wav/rec_piano.wav
  24-bit, 44100 Hz, 2 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       12.24  round trip OK, hash 8b59c1e9dec2310f, encode  0.02 s, decode  0.01 s
-  Fixed predictor, bit-length Huffman per block         11.53  round trip OK, hash 6d16ecc4a4779fa8, encode  0.02 s, decode  0.01 s
-  Fixed predictor, shorter of the two per block         11.53  round trip OK, hash 9f2992226cd17801, encode  0.03 s, decode  0.01 s
+  Fixed predictor, Rice per block                       12.24  round trip OK, hash 8b59c1e9dec2310f, encode  0.01 s, decode  0.01 s
+  Fixed predictor, bit-length Huffman per block         11.53  round trip OK, hash 6d16ecc4a4779fa8, encode  0.01 s, decode  0.01 s
+  Fixed predictor, shorter of the two per block         11.53  round trip OK, hash 9f2992226cd17801, encode  0.02 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk  12.76  round trip OK, hash 5691bf3b95e70e93, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                   3.67  round trip OK, hash dc6077a72ec9ffcb, encode  2.89 s, decode  0.05 s, level 4, 808793 bytes
+  Block codec, Haskell                                   3.67  round trip OK, hash d88741fe96dbdd3b, encode  2.93 s, decode  0.05 s, level 4, 808884 bytes
 build/wav/rec_room.wav
  24-bit, 48000 Hz, 2 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       13.96  round trip OK, hash 194a3a6d13468557, encode  0.01 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block         14.00  round trip OK, hash ee640080c35c2bda, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         13.96  round trip OK, hash c86d33db2afb49b4, encode  0.02 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk  14.09  round trip OK, hash 934a633423e2a796, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                  13.39  round trip OK, hash b9eb519aeb6c85b7, encode  2.56 s, decode  0.11 s, level 4, 3212653 bytes
+  Block codec, Haskell                                  13.39  round trip OK, hash 697b6999462c1bf2, encode  2.83 s, decode  0.12 s, level 4, 3212744 bytes
 build/wav/rec_speech_16k.wav
  16-bit, 16000 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       10.51  round trip OK, hash db59a05d314f9ba2, encode  0.00 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block         10.50  round trip OK, hash a84371795b5e63c7, encode  0.00 s, decode  0.00 s
   Fixed predictor, shorter of the two per block         10.47  round trip OK, hash 2fbe987cc23be1f3, encode  0.00 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk  10.78  round trip OK, hash c1b924484d07e447, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   9.10  round trip OK, hash 1a94a64bf2de4d2a, encode  0.22 s, decode  0.02 s, level 4, 364024 bytes
+  Block codec, Haskell                                   9.10  round trip OK, hash 5e005ae3051402cf, encode  0.23 s, decode  0.02 s, level 4, 364091 bytes
 build/wav/rec_speech_8k.wav
  8-bit, 8000 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        4.03  round trip OK, hash 404a077920903ce6, encode  0.00 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block          3.99  round trip OK, hash cf02876f177b67b3, encode  0.00 s, decode  0.00 s
   Fixed predictor, shorter of the two per block          3.95  round trip OK, hash 97d9f2fe540f36ea, encode  0.00 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk   4.03  round trip OK, hash a5fcbca865d5e9f2, encode  0.00 s, decode  0.00 s
-  Block codec, Haskell                                   3.25  round trip OK, hash 614fd76625721fc5, encode  0.10 s, decode  0.00 s, level 4, 64983 bytes
+  Block codec, Haskell                                   3.25  round trip OK, hash 86cda399815e1e17, encode  0.11 s, decode  0.00 s, level 4, 65050 bytes
 build/wav/rec_speech.wav
  24-bit, 48000 Hz, 2 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       16.33  round trip OK, hash d919ff85ab5d2e81, encode  0.01 s, decode  0.01 s
-  Fixed predictor, bit-length Huffman per block         16.36  round trip OK, hash afec92cd47562803, encode  0.01 s, decode  0.01 s
+  Fixed predictor, bit-length Huffman per block         16.36  round trip OK, hash afec92cd47562803, encode  0.01 s, decode  0.02 s
   Fixed predictor, shorter of the two per block         16.33  round trip OK, hash 6d03632d37e55cc0, encode  0.02 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk  16.83  round trip OK, hash 41271183026639f9, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                  15.55  round trip OK, hash 2b812cc2fccf5dd3, encode  2.79 s, decode  0.13 s, level 4, 3731162 bytes
+  Block codec, Haskell                                  15.55  round trip OK, hash e1deffaf3bc4e336, encode  3.23 s, decode  0.12 s, level 4, 3731253 bytes
 build/wav/rec_vinyl_192k.wav
  24-bit, 192000 Hz, 2 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                        9.06  round trip OK, hash b51dd172c8f11516, encode  0.03 s, decode  0.04 s
-  Fixed predictor, bit-length Huffman per block          9.09  round trip OK, hash a74d5bb18c4b5eb1, encode  0.04 s, decode  0.05 s
-  Fixed predictor, shorter of the two per block          9.06  round trip OK, hash 9dfd9ec22f8c6111, encode  0.06 s, decode  0.03 s
-  Tiers, pairs, offset from mean, bit-length per chunk  12.11  round trip OK, hash d1e84365f30e8dd7, encode  0.03 s, decode  0.06 s
-  Block codec, Haskell                                   5.75  round trip OK, hash dae52da1b83b5e20, encode 14.77 s, decode  0.28 s, level 4, 5520458 bytes
+  Fixed predictor, Rice per block                        9.06  round trip OK, hash b51dd172c8f11516, encode  0.04 s, decode  0.03 s
+  Fixed predictor, bit-length Huffman per block          9.09  round trip OK, hash a74d5bb18c4b5eb1, encode  0.05 s, decode  0.05 s
+  Fixed predictor, shorter of the two per block          9.06  round trip OK, hash 9dfd9ec22f8c6111, encode  0.06 s, decode  0.04 s
+  Tiers, pairs, offset from mean, bit-length per chunk  12.11  round trip OK, hash d1e84365f30e8dd7, encode  0.03 s, decode  0.07 s
+  Block codec, Haskell                                   5.75  round trip OK, hash ef6b1c12f26e0af9, encode 12.41 s, decode  0.24 s, level 4, 5520549 bytes
 build/wav/signal_brown.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       11.65  round trip OK, hash 8c2cffa9788c8b70, encode  0.01 s, decode  0.00 s
+  Fixed predictor, Rice per block                       11.65  round trip OK, hash 8c2cffa9788c8b70, encode  0.01 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block         11.50  round trip OK, hash 1e5fc7051d130946, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         11.50  round trip OK, hash 0910ffcadae591e0, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  11.52  round trip OK, hash 3a38cd68f9f8902b, encode  0.01 s, decode  0.01 s
-  Block codec, Haskell                                  11.42  round trip OK, hash 45983e2c38813b99, encode  0.73 s, decode  0.06 s, level 4, 1259374 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk  11.52  round trip OK, hash 3a38cd68f9f8902b, encode  0.01 s, decode  0.02 s
+  Block codec, Haskell                                  11.42  round trip OK, hash 54ef1006710f68b0, encode  0.59 s, decode  0.05 s, level 4, 1259441 bytes
 build/wav/signal_chord.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                        2.73  round trip OK, hash 222e3c993fdfaf6c, encode  0.01 s, decode  0.00 s
+  Fixed predictor, Rice per block                        2.73  round trip OK, hash 222e3c993fdfaf6c, encode  0.01 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block          2.87  round trip OK, hash 1e8ee192f0e08d99, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block          2.73  round trip OK, hash f6e6e2c1f6539940, encode  0.01 s, decode  0.00 s
-  Tiers, pairs, offset from mean, bit-length per chunk   6.68  round trip OK, hash 5f4fb9bff91f25cb, encode  0.00 s, decode  0.02 s
-  Block codec, Haskell                                   1.40  round trip OK, hash dced7bcb5dc3780f, encode  0.57 s, decode  0.02 s, level 4, 153986 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk   6.68  round trip OK, hash 5f4fb9bff91f25cb, encode  0.01 s, decode  0.02 s
+  Block codec, Haskell                                   1.40  round trip OK, hash 5f86f640756ab674, encode  0.59 s, decode  0.02 s, level 4, 154053 bytes
 build/wav/signal_dither.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        2.02  round trip OK, hash 7c9c5a4282a22ddc, encode  0.01 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block          2.02  round trip OK, hash c19f4f33f083dc76, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block          2.02  round trip OK, hash ec09a44fb5e8c483, encode  0.01 s, decode  0.00 s
-  Tiers, pairs, offset from mean, bit-length per chunk   2.17  round trip OK, hash e503a5e6fa39ee49, encode  0.00 s, decode  0.02 s
-  Block codec, Haskell                                   1.78  round trip OK, hash f10d70d1108121ac, encode  0.55 s, decode  0.01 s, level 4, 196345 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk   2.17  round trip OK, hash e503a5e6fa39ee49, encode  0.01 s, decode  0.02 s
+  Block codec, Haskell                                   1.78  round trip OK, hash 0b78b2545d4e8d45, encode  0.57 s, decode  0.01 s, level 4, 196412 bytes
 build/wav/signal_fm.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        3.59  round trip OK, hash f0dc1b0f1d9e3698, encode  0.01 s, decode  0.01 s
-  Fixed predictor, bit-length Huffman per block          3.52  round trip OK, hash df4cf19bdb5faa21, encode  0.00 s, decode  0.00 s
+  Fixed predictor, bit-length Huffman per block          3.52  round trip OK, hash df4cf19bdb5faa21, encode  0.00 s, decode  0.01 s
   Fixed predictor, shorter of the two per block          3.52  round trip OK, hash fc667b0d7467dd4e, encode  0.01 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk   8.85  round trip OK, hash ad69de64bfdc0376, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                   0.07  round trip OK, hash 155d05f14429ed55, encode  0.62 s, decode  0.01 s, level 4, 7617 bytes
+  Block codec, Haskell                                   0.07  round trip OK, hash 8d24478f86aadb23, encode  0.66 s, decode  0.01 s, level 4, 7684 bytes
 build/wav/signal_impulses.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                        4.73  round trip OK, hash fd72ef963b134838, encode  0.01 s, decode  0.00 s
-  Fixed predictor, bit-length Huffman per block          1.03  round trip OK, hash eba7fd231c25d3ec, encode  0.00 s, decode  0.00 s
-  Fixed predictor, shorter of the two per block          1.03  round trip OK, hash 91ef56d062ed8528, encode  0.01 s, decode  0.00 s
+  Fixed predictor, Rice per block                        4.73  round trip OK, hash fd72ef963b134838, encode  0.01 s, decode  0.01 s
+  Fixed predictor, bit-length Huffman per block          1.03  round trip OK, hash eba7fd231c25d3ec, encode  0.01 s, decode  0.01 s
+  Fixed predictor, shorter of the two per block          1.03  round trip OK, hash 91ef56d062ed8528, encode  0.01 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk   1.05  round trip OK, hash c46879d8d9252a52, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   0.06  round trip OK, hash e660eefe3d28d1e7, encode  0.04 s, decode  0.00 s, level 4, 7073 bytes
+  Block codec, Haskell                                   0.06  round trip OK, hash 4d6dccbc19259086, encode  0.05 s, decode  0.00 s, level 4, 7140 bytes
 build/wav/signal_pink.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       13.09  round trip OK, hash 3204b0a7f4d578ac, encode  0.01 s, decode  0.00 s
+  Fixed predictor, Rice per block                       13.09  round trip OK, hash 3204b0a7f4d578ac, encode  0.01 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block         13.06  round trip OK, hash 5a8d8407786b2823, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         13.06  round trip OK, hash bfc2d02d8870f9cd, encode  0.01 s, decode  0.01 s
   Tiers, pairs, offset from mean, bit-length per chunk  13.00  round trip OK, hash 2ab891c47e216121, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                  12.87  round trip OK, hash 975f767047c82d43, encode  0.58 s, decode  0.06 s, level 4, 1419088 bytes
+  Block codec, Haskell                                  12.87  round trip OK, hash 13c55f2b442b85bb, encode  0.60 s, decode  0.05 s, level 4, 1419155 bytes
 build/wav/signal_sawtooth.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       12.71  round trip OK, hash 1011cfe919ad6281, encode  0.01 s, decode  0.00 s
-  Fixed predictor, bit-length Huffman per block         11.14  round trip OK, hash bd22a291248f9816, encode  0.00 s, decode  0.00 s
+  Fixed predictor, Rice per block                       12.71  round trip OK, hash 1011cfe919ad6281, encode  0.01 s, decode  0.01 s
+  Fixed predictor, bit-length Huffman per block         11.14  round trip OK, hash bd22a291248f9816, encode  0.00 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         11.14  round trip OK, hash 541a3ffcd7bb5281, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk   3.32  round trip OK, hash 47f9202330e1308b, encode  0.01 s, decode  0.01 s
-  Block codec, Haskell                                   0.05  round trip OK, hash fa7eb773351b7b95, encode  0.54 s, decode  0.01 s, level 4, 5915 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk   3.32  round trip OK, hash 47f9202330e1308b, encode  0.00 s, decode  0.01 s
+  Block codec, Haskell                                   0.05  round trip OK, hash 4de0169d72141835, encode  0.59 s, decode  0.01 s, level 4, 5982 bytes
 build/wav/signal_silence.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                        1.01  round trip OK, hash ca96298d13db6ec0, encode  0.00 s, decode  0.00 s
+  Fixed predictor, Rice per block                        1.01  round trip OK, hash ca96298d13db6ec0, encode  0.01 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block          1.01  round trip OK, hash 8fa4a9e807b23d76, encode  0.00 s, decode  0.01 s
-  Fixed predictor, shorter of the two per block          1.01  round trip OK, hash 0b34a233f6416540, encode  0.00 s, decode  0.00 s
+  Fixed predictor, shorter of the two per block          1.01  round trip OK, hash 0b34a233f6416540, encode  0.01 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk   1.01  round trip OK, hash 6f1f2aa8730d6c50, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   0.04  round trip OK, hash a00f6cd6fed0fb40, encode  0.02 s, decode  0.00 s, level 4, 4609 bytes
+  Block codec, Haskell                                   0.04  round trip OK, hash 553ae2b9149f3dde, encode  0.02 s, decode  0.00 s, level 4, 4676 bytes
 build/wav/signal_sine.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        4.71  round trip OK, hash 43491614a474b487, encode  0.01 s, decode  0.01 s
   Fixed predictor, bit-length Huffman per block          4.60  round trip OK, hash 32ef00657741834c, encode  0.00 s, decode  0.01 s
-  Fixed predictor, shorter of the two per block          4.60  round trip OK, hash 68643f5065f42bd9, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  10.81  round trip OK, hash 73cec0a4c8278a45, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   0.05  round trip OK, hash a6b7a6d33d0a3b7a, encode  0.55 s, decode  0.01 s, level 4, 5590 bytes
+  Fixed predictor, shorter of the two per block          4.60  round trip OK, hash 68643f5065f42bd9, encode  0.01 s, decode  0.00 s
+  Tiers, pairs, offset from mean, bit-length per chunk  10.81  round trip OK, hash 73cec0a4c8278a45, encode  0.00 s, decode  0.02 s
+  Block codec, Haskell                                   0.05  round trip OK, hash 64a507d79bc24982, encode  0.59 s, decode  0.01 s, level 4, 5657 bytes
 build/wav/signal_square.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       13.44  round trip OK, hash 63d4b956e3e3d4b4, encode  0.01 s, decode  0.01 s
-  Fixed predictor, bit-length Huffman per block          1.76  round trip OK, hash 4f7050968c13cf2b, encode  0.00 s, decode  0.01 s
+  Fixed predictor, Rice per block                       13.44  round trip OK, hash 63d4b956e3e3d4b4, encode  0.01 s, decode  0.00 s
+  Fixed predictor, bit-length Huffman per block          1.76  round trip OK, hash 4f7050968c13cf2b, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block          1.76  round trip OK, hash 12918256125fa9b4, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk   4.67  round trip OK, hash 0a7ad723488c5580, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                   0.13  round trip OK, hash 953924f2d28568ba, encode  0.66 s, decode  0.02 s, level 4, 13986 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk   4.67  round trip OK, hash 0a7ad723488c5580, encode  0.01 s, decode  0.01 s
+  Block codec, Haskell                                   0.13  round trip OK, hash e3645d4e0e9d8a1d, encode  0.67 s, decode  0.02 s, level 4, 14053 bytes
 build/wav/signal_sweep.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                        6.80  round trip OK, hash f9078592202857ca, encode  0.01 s, decode  0.01 s
-  Fixed predictor, bit-length Huffman per block          6.64  round trip OK, hash 81e97844202f2ded, encode  0.01 s, decode  0.01 s
+  Fixed predictor, bit-length Huffman per block          6.64  round trip OK, hash 81e97844202f2ded, encode  0.00 s, decode  0.01 s
   Fixed predictor, shorter of the two per block          6.59  round trip OK, hash 160fd22aa6021dad, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk   9.29  round trip OK, hash d886907e42d229b3, encode  0.01 s, decode  0.02 s
-  Block codec, Haskell                                   1.52  round trip OK, hash 4186e3ef1d1b46b3, encode  0.57 s, decode  0.02 s, level 4, 167576 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk   9.29  round trip OK, hash d886907e42d229b3, encode  0.01 s, decode  0.01 s
+  Block codec, Haskell                                   1.52  round trip OK, hash 93466374bfae99d0, encode  0.61 s, decode  0.02 s, level 4, 167643 bytes
 build/wav/signal_triangle.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
-  Fixed predictor, Rice per block                       10.02  round trip OK, hash fb5aa4bbd6148e16, encode  0.01 s, decode  0.01 s
+  Fixed predictor, Rice per block                       10.02  round trip OK, hash fb5aa4bbd6148e16, encode  0.01 s, decode  0.00 s
   Fixed predictor, bit-length Huffman per block          2.58  round trip OK, hash 19a153a3f23d59c8, encode  0.00 s, decode  0.01 s
   Fixed predictor, shorter of the two per block          2.58  round trip OK, hash ee5e25feac669201, encode  0.01 s, decode  0.00 s
   Tiers, pairs, offset from mean, bit-length per chunk   4.68  round trip OK, hash ba8587aa5bcbd0c5, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                   0.05  round trip OK, hash 659aa5e6a9b4c2a6, encode  0.67 s, decode  0.01 s, level 4, 5665 bytes
+  Block codec, Haskell                                   0.05  round trip OK, hash b98a55de7184bb07, encode  0.73 s, decode  0.01 s, level 4, 5732 bytes
 build/wav/signal_white.wav
  16-bit, 44100 Hz, 1 channels, 20 s, 16 capabilities; bits per sample, side information included:
   Fixed predictor, Rice per block                       15.51  round trip OK, hash a92336e42f445d40, encode  0.01 s, decode  0.00 s
-  Fixed predictor, bit-length Huffman per block         15.03  round trip OK, hash f875d56d61901d32, encode  0.01 s, decode  0.00 s
+  Fixed predictor, bit-length Huffman per block         15.03  round trip OK, hash f875d56d61901d32, encode  0.01 s, decode  0.01 s
   Fixed predictor, shorter of the two per block         15.03  round trip OK, hash 38e159e878fa493b, encode  0.01 s, decode  0.01 s
-  Tiers, pairs, offset from mean, bit-length per chunk  15.72  round trip OK, hash 70ba63401082ff68, encode  0.00 s, decode  0.01 s
-  Block codec, Haskell                                  15.06  round trip OK, hash af37b8bc802eab8b, encode  0.59 s, decode  0.01 s, level 4, 1660502 bytes
+  Tiers, pairs, offset from mean, bit-length per chunk  15.72  round trip OK, hash 70ba63401082ff68, encode  0.01 s, decode  0.02 s
+  Block codec, Haskell                                  15.06  round trip OK, hash 3ad130a672632c79, encode  0.78 s, decode  0.01 s, level 4, 1660569 bytes
