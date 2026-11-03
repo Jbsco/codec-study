@@ -62,4 +62,23 @@ package Codec_Api is
                                 Report : access Damage_Report) return int
      with Export, Convention => C, External_Name => "blkc_decode_range_float";
 
+   --  blkc_decoder: a stream opened once, then read in order from any frame a seek names.
+   function Open (Stream : System.Address; Length : Integer_64; Audio : access Info) return System.Address
+     with Export, Convention => C, External_Name => "blkc_open";
+
+   function Seek (Handle : System.Address; Frame : Integer_64) return int
+     with Export, Convention => C, External_Name => "blkc_seek";
+
+   function Read (Handle, Samples : System.Address; Frames : Integer_64) return Integer_64
+     with Export, Convention => C, External_Name => "blkc_read";
+
+   function Read_Float (Handle, Samples : System.Address; Frames : Integer_64) return Integer_64
+     with Export, Convention => C, External_Name => "blkc_read_float";
+
+   function Report_Of (Handle : System.Address; Report : access Damage_Report) return int
+     with Export, Convention => C, External_Name => "blkc_report";
+
+   procedure Close (Handle : System.Address)
+     with Export, Convention => C, External_Name => "blkc_close";
+
 end Codec_Api;

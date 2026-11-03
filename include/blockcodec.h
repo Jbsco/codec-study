@@ -80,6 +80,21 @@ int blkc_decode_range(const uint8_t *stream, int64_t length, int64_t first, int6
 int blkc_decode_range_float(const uint8_t *stream, int64_t length, int64_t first, int64_t count, float *samples,
                             blkc_damage *damage);
 
+/* A decoder for players. blkc_open copies the stream and reads its header into info, or returns NULL for a refused
+   header or a wrong argument. blkc_read then hands out frames in order, from frame 0 or from the frame the last
+   blkc_seek named; a seek decodes only the groups that frame needs. */
+typedef struct blkc_decoder blkc_decoder;
+blkc_decoder *blkc_open(const uint8_t *stream, int64_t length, blkc_info *info);
+/* Move to frame, 0 to info.frames. Returns BLKC_OK or BLKC_BAD_ARGUMENT. */
+int blkc_seek(blkc_decoder *decoder, int64_t frame);
+/* Read up to frames frames into frames * channels interleaved samples. Returns the frames read, 0 at the stream's
+   end, or BLKC_BAD_ARGUMENT for a stream of the other sample kind or a wrong argument. */
+int64_t blkc_read(blkc_decoder *decoder, int32_t *samples, int64_t frames);
+int64_t blkc_read_float(blkc_decoder *decoder, float *samples, int64_t frames);
+/* What the reads since blkc_open or the last blkc_seek met; its audio_md5 is 0. Returns BLKC_OK or BLKC_DAMAGED. */
+int blkc_report(blkc_decoder *decoder, blkc_damage *damage);
+void blkc_close(blkc_decoder *decoder);
+
 /* Block level: one block of one signal, as the Haskell hybrid calls it. Samples are 64-bit, history the decoded samples
    before the block. block_encode returns the bytes written or -1; block_decode returns 0 decoded, 1 truncated input,
    2 bad data, or -1. */

@@ -1,4 +1,5 @@
 with Ada.Unchecked_Deallocation;
+with System.Address_To_Access_Conversions;
 with System.Multiprocessors;
 with Audio_Digest;
 with Bit_Streams; use Bit_Streams;
@@ -364,5 +365,159 @@ package body Codec_Api is
       when others =>
          return Failed;
    end Decode_Range_Float;
+
+   type Decoder is limited record
+      Stream : Byte_Array_Access;
+      H : Header;
+      W : Walker;
+      Next : Natural := 0;
+   end record;
+
+   package Handles is new System.Address_To_Access_Conversions (Decoder);
+   procedure Free is new Ada.Unchecked_Deallocation (Decoder, Handles.Object_Pointer);
+
+   function Open (Stream : System.Address; Length : Integer_64; Audio : access Info) return System.Address is
+   begin
+      if Stream = System.Null_Address or else Audio = null or else Length not in 0 .. Integer_64 (Natural'Last) then
+         return System.Null_Address;
+      end if;
+      declare
+         D : Handles.Object_Pointer := new Decoder;
+      begin
+         D.Stream := Copy (Stream, Length);
+         Read_Header (D.Stream.all, D.H);
+         if not D.H.Ok then
+            Release (D.H);
+            Free (D.Stream);
+            Free (D);
+            return System.Null_Address;
+         end if;
+         Start (D.W, D.Stream, D.H);
+         Audio.all := Info_Of (D.H);
+         return Handles.To_Address (D);
+      end;
+   exception
+      when others =>
+         return System.Null_Address;
+   end Open;
+
+   function Seek (Handle : System.Address; Frame : Integer_64) return int is
+   begin
+      if Handle = System.Null_Address then
+         return Bad_Argument;
+      end if;
+      declare
+         D : constant Handles.Object_Pointer := Handles.To_Pointer (Handle);
+      begin
+         if Frame not in 0 .. Integer_64 (D.H.Frames) then
+            return Bad_Argument;
+         end if;
+         if Frame < Integer_64 (D.H.Frames) then
+            Stream_Reading.Seek (D.W, Natural (Frame));
+         end if;
+         D.Next := Natural (Frame);
+         return Ok;
+      end;
+   exception
+      when others =>
+         return Failed;
+   end Seek;
+
+   --  Read up to Frames frames from the handle's position, handing interleaved sample I to Store as Decode_With does.
+   function Read_With (Handle : System.Address; Samples : System.Address; Frames : Integer_64; Is_Float : Boolean;
+                       Store : not null access procedure (I : Integer_64; V : Long_Long_Integer)) return Integer_64 is
+      D : constant Handles.Object_Pointer := Handles.To_Pointer (Handle);
+      Count : constant Natural := Natural (Integer_64'Min (Frames, Integer_64 (D.H.Frames - D.Next)));
+      Channels : constant Integer_64 := Integer_64 (D.H.Channels);
+      V : Long_Long_Integer;
+   begin
+      if D.H.Is_Float /= Is_Float or else Samples = System.Null_Address then
+         return Bad_Argument;
+      end if;
+      for F in D.Next .. D.Next + Count - 1 loop
+         Advance (D.W, F);
+         for C in 1 .. D.H.Channels loop
+            V := Value (D.W, C, F);
+            if D.H.Is_Float and then D.H.Modes (C) = 1 then
+               V := From_Integer (V, D.H.Scales (C));
+            end if;
+            Store (Integer_64 (F - D.Next) * Channels + Integer_64 (C - 1), V);
+         end loop;
+      end loop;
+      D.Next := D.Next + Count;
+      return Integer_64 (Count);
+   end Read_With;
+
+   function Read (Handle, Samples : System.Address; Frames : Integer_64) return Integer_64 is
+   begin
+      if Handle = System.Null_Address or else Frames not in 0 .. Integer_64 (Natural'Last) / Max_Channels then
+         return Bad_Argument;
+      end if;
+      declare
+         X : Int32_Array (0 .. Frames * Integer_64 (Max_Channels) - 1) with Import, Address => Samples;
+         procedure Store (I : Integer_64; V : Long_Long_Integer) is
+         begin
+            X (I) := Integer_32 (V);
+         end Store;
+      begin
+         return Read_With (Handle, Samples, Frames, False, Store'Access);
+      end;
+   exception
+      when others =>
+         return Failed;
+   end Read;
+
+   function Read_Float (Handle, Samples : System.Address; Frames : Integer_64) return Integer_64 is
+   begin
+      if Handle = System.Null_Address or else Frames not in 0 .. Integer_64 (Natural'Last) / Max_Channels then
+         return Bad_Argument;
+      end if;
+      declare
+         X : Pattern_Array (0 .. Frames * Integer_64 (Max_Channels) - 1) with Import, Address => Samples;
+         procedure Store (I : Integer_64; V : Long_Long_Integer) is
+         begin
+            X (I) := Unsigned_32 (Bits_Of (V));
+         end Store;
+      begin
+         return Read_With (Handle, Samples, Frames, True, Store'Access);
+      end;
+   exception
+      when others =>
+         return Failed;
+   end Read_Float;
+
+   function Report_Of (Handle : System.Address; Report : access Damage_Report) return int is
+   begin
+      if Handle = System.Null_Address or else Report = null then
+         return Bad_Argument;
+      end if;
+      declare
+         D : constant Damage := Stream_Reading.Report (Handles.To_Pointer (Handle).W);
+      begin
+         Report.all := (Lost_Frames => Integer_64 (D.Lost_Frames), Bad_Groups => Integer_32 (D.Bad_Groups),
+                        Bad_Block_Crcs => Integer_32 (D.Bad_Crcs), Blocks_Ok => (if D.Blocks_Ok then 1 else 0),
+                        Audio_Md5 => 0);
+         return (if D.Bad_Groups = 0 and then D.Lost_Frames = 0 and then D.Bad_Crcs = 0 and then D.Blocks_Ok then Ok
+                 else Damaged);
+      end;
+   exception
+      when others =>
+         return Failed;
+   end Report_Of;
+
+   procedure Close (Handle : System.Address) is
+      D : Handles.Object_Pointer;
+   begin
+      if Handle /= System.Null_Address then
+         D := Handles.To_Pointer (Handle);
+         Stop (D.W);
+         Release (D.H);
+         Free (D.Stream);
+         Free (D);
+      end if;
+   exception
+      when others =>
+         null;
+   end Close;
 
 end Codec_Api;
