@@ -45,7 +45,17 @@ package body Block_Codec with SPARK_Mode is
    subtype Weight is Long_Long_Integer range -Lms_Weight_Limit .. Lms_Weight_Limit;
    type Weight_Array is array (1 .. Max_Taps) of Weight;
    subtype Lms_Residual is Long_Long_Integer range -(2**37) .. 2**37;
-   type Lms_History is array (1 .. Max_Taps) of Lms_Residual;
+   subtype Unit_Sign is Long_Long_Integer range -1 .. 1;
+
+   --  The last Taps residuals, newest first, and their signs, each held twice in a ring of 2 * Taps entries so the
+   --  history is always one slice: entry J is Values (Head + J - 1).
+   type Ring_Values is array (0 .. 2 * Max_Taps - 1) of Lms_Residual;
+   type Ring_Signs is array (0 .. 2 * Max_Taps - 1) of Unit_Sign;
+   type Lms_History is record
+      Values : Ring_Values := [others => 0];
+      Signs : Ring_Signs := [others => 0];
+      Head : Natural range 0 .. Max_Taps - 1 := 0;
+   end record;
 
    function Sign (V : Long_Long_Integer) return Long_Long_Integer is (if V > 0 then 1 elsif V < 0 then -1 else 0);
 
@@ -53,7 +63,7 @@ package body Block_Codec with SPARK_Mode is
    --  the actual residual E: each weight moves by the step toward the sign of E times the sign of its history
    --  entry, and the history shifts by one.
    function Lms_Prediction (W : Weight_Array; H : Lms_History; Taps : Positive) return Long_Long_Integer
-     with Pre => Taps <= Max_Taps,
+     with Pre => Taps <= Max_Taps and then H.Head < Taps,
        Post => Lms_Prediction'Result in -(2**60) .. 2**60;
 
    function Lms_Prediction (W : Weight_Array; H : Lms_History; Taps : Positive) return Long_Long_Integer is
@@ -61,25 +71,28 @@ package body Block_Codec with SPARK_Mode is
    begin
       for J in 1 .. Taps loop
          pragma Loop_Invariant (Sum in -(Long_Long_Integer (J - 1) * 2**52) .. Long_Long_Integer (J - 1) * 2**52);
-         Sum := Sum + W (J) * H (J);
+         Sum := Sum + W (J) * H.Values (H.Head + J - 1);
       end loop;
       return Sum;
    end Lms_Prediction;
 
    procedure Lms_Update (W : in out Weight_Array; H : in out Lms_History; Taps : Positive; E, Input : Lms_Residual)
-     with Pre => Taps <= Max_Taps
+     with Pre => Taps <= Max_Taps and then H.Head < Taps,
+       Post => H.Head < Taps
    is
-      S : constant Long_Long_Integer := Sign (E);
+      Step : constant Long_Long_Integer := Lms_Step * Sign (E);
    begin
-      if S /= 0 then
+      if Step /= 0 then
          for J in 1 .. Taps loop
-            W (J) := Long_Long_Integer'Max (-Lms_Weight_Limit, Long_Long_Integer'Min (Lms_Weight_Limit, W (J) + Lms_Step * S * Sign (H (J))));
+            W (J) := Long_Long_Integer'Max (-Lms_Weight_Limit,
+                                            Long_Long_Integer'Min (Lms_Weight_Limit, W (J) + Step * H.Signs (H.Head + J - 1)));
          end loop;
       end if;
-      for J in reverse 2 .. Taps loop
-         H (J) := H (J - 1);
-      end loop;
-      H (1) := Input;
+      H.Head := (if H.Head = 0 then Taps - 1 else H.Head - 1);
+      H.Values (H.Head) := Input;
+      H.Values (H.Head + Taps) := Input;
+      H.Signs (H.Head) := Sign (Input);
+      H.Signs (H.Head + Taps) := Sign (Input);
    end Lms_Update;
 
    function Zigzag (V : Long_Long_Integer) return Unsigned_64 is
@@ -694,7 +707,7 @@ package body Block_Codec with SPARK_Mode is
      with SPARK_Mode => Off
    is
       W : Weight_Array := [others => 0];
-      H : Lms_History := [others => 0];
+      H : Lms_History;
       Limit : constant Long_Long_Integer := Half (Width + 4);
    begin
       Fits := True;
@@ -1410,7 +1423,7 @@ package body Block_Codec with SPARK_Mode is
          Count : constant Natural := N - First_Coded;
          R : Residual_Buffer (0 .. Count - 1) := [others => 0];
          W : Weight_Array := [others => 0];
-         H : Lms_History := [others => 0];
+         H : Lms_History;
       begin
          if Field = 0 then
             Get_Rice (Input, Pos, Width, R, Status);
@@ -1431,7 +1444,7 @@ package body Block_Codec with SPARK_Mode is
          if Lms then
             --  Train the stage on the LPC residuals of the Warm_Up samples before the block.
             for I in Before'Length - Warm_Up .. Before'Last loop
-               pragma Loop_Invariant (I >= Order);
+               pragma Loop_Invariant (I >= Order and then H.Head < Taps);
                declare
                   Sum : Long_Long_Integer := 0;
                begin
@@ -1450,6 +1463,7 @@ package body Block_Codec with SPARK_Mode is
             end loop;
          end if;
          for I in First_Coded .. N - 1 loop
+            pragma Loop_Invariant (H.Head < Taps);
             declare
                Sum : Long_Long_Integer := 0;
             begin
