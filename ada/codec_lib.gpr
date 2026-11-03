@@ -1,13 +1,17 @@
---  The block codec as a shared library with C entry points, its Ada runtime included and elaborated at load.
+--  The block codec as a shared library with C entry points for blocks and streams, its Ada runtime included and
+--  elaborated at load. include/blockcodec.h declares the entry points.
 library project Codec_Lib is
    for Source_Dirs use (".");
    for Source_Files use ("bit_streams.ads", "bit_streams.adb", "canonical_decoding.ads", "canonical_decoding.adb", "checksums.ads", "checksums.adb", "range_coding.ads", "range_coding.adb",
-                         "block_codec.ads", "block_codec.adb", "block_codec_ffi.ads", "block_codec_ffi.adb");
+                         "block_codec.ads", "block_codec.adb", "block_codec_ffi.ads", "block_codec_ffi.adb",
+                         "huffman_codes.ads", "huffman_codes.adb", "float_bits.ads", "float_bits.adb", "byte_files.ads", "byte_files.adb",
+                         "audio_digest.ads", "audio_digest.adb", "wav_files.ads", "wav_files.adb", "stream_format.ads", "stream_format.adb",
+                         "stream_reading.ads", "stream_reading.adb", "stream_writing.ads", "stream_writing.adb", "codec_api.ads", "codec_api.adb");
    for Object_Dir use "obj-lib";
    for Library_Dir use "lib";
    for Library_Name use "blockcodec";
    for Library_Kind use "relocatable";
-   for Library_Interface use ("Block_Codec_FFI");
+   for Library_Interface use ("Block_Codec_FFI", "Codec_Api");
    for Library_Standalone use "encapsulated";
    for Library_Auto_Init use "true";
 
