@@ -358,7 +358,7 @@ Exit status 0 means the stream was intact. Status 1 means damage: frames of unre
     (cd ada && gprbuild -P codec_lib.gpr)      # ada/lib/libblockcodec.so, Ada runtime included
     cc -Iinclude app.c -Lada/lib -lblockcodec
 
-Float streams decode with status `BLKC_UNSUPPORTED` in API version 1. `capi/check.sh` builds `capi/api_test.c` against the header and checks the library's exported functions against `capi/symbols.txt`, so a changed interface fails the tests before it reaches a release.
+`blkc_encode_float` and `blkc_decode_float` do the same for 32-bit float samples, every bit pattern included, and each decoder refuses the other kind of stream with `BLKC_UNSUPPORTED`. `capi/check.sh` builds `capi/api_test.c` against the header and checks the library's exported functions against `capi/symbols.txt`, so a changed interface fails the tests before it reaches a release.
 
 ### Release
 
