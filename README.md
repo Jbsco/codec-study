@@ -275,7 +275,7 @@ Input is WAV, RF64, Wave64 or AIFF, 8 to 32-bit integer, 32-bit float, or 64-bit
 | `--no-pairs` | code every channel alone |
 | `--features <out.tsv>` | write each group's features and whether the search split its root |
 
-`stream_encode [--level <0 to 5>] [--tag <key=value>] [--seek-every <seconds>] [--independent] <in.wav> <out.bin>` codes a file into a stream, byte for byte the stream `codec_main --stream` writes. Either program takes `-` for standard input or output.
+`stream_encode [--level <0 to 5>] [--tag <key=value>] [--seek-every <seconds>] [--independent] [--no-pairs] [--verify] <in.wav> <out.bin>` codes a file into a stream, byte for byte the stream `codec_main --stream` writes. Either program takes `-` for standard input or output. With `--verify` it decodes the stream before writing it and checks every frame against the audio MD5. On a mismatch it writes nothing and exits with status 1.
 
 `stream_decode <stream.bin> <out.wav>` reads a stream from its own bytes and writes the input file back, container, chunks and samples byte for byte (`docs/container.md`). It decodes group by group and keeps only the history later blocks may read, so its memory does not grow with the audio's length.
 

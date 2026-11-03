@@ -1,13 +1,17 @@
 --  Code an audio file into a stream with the block codec. "-" names standard input or standard output.
 --  Usage: stream_encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent]
---         [--no-pairs] <in.wav> <out.bin>
---  Exit status: 0 written, 2 an unreadable input or wrong arguments.
+--         [--no-pairs] [--verify] <in.wav> <out.bin>
+--  --verify decodes the stream before writing it and checks every frame against the audio's MD5.
+--  Exit status: 0 written, 1 verification failed and nothing written, 2 an unreadable input or wrong arguments.
 with Ada.Command_Line;
 with Ada.Exceptions;
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
+with Audio_Digest;
+with Bit_Streams; use Bit_Streams;
 with Byte_Files;
+with Stream_Reading;
 with Stream_Format; use Stream_Format;
 with Stream_Writing; use Stream_Writing;
 with Wav_Files;
@@ -20,7 +24,7 @@ procedure Stream_Encode is
    Names : array (1 .. 2) of Ada.Strings.Unbounded.Unbounded_String;
    Name_Count : Natural := 0;
    I : Positive := 1;
-   Bad : Boolean := False;
+   Bad, Verify : Boolean := False;
 
    procedure Fail (Message : String) is
    begin
@@ -67,6 +71,8 @@ begin
             Opt.Independent := True;
          elsif A = "--no-pairs" then
             Opt.Pairs := False;
+         elsif A = "--verify" then
+            Verify := True;
          elsif A'Length > 2 and then A (A'First .. A'First + 1) = "--" then
             Bad := True;
          elsif Name_Count < 2 then
@@ -80,7 +86,7 @@ begin
    end loop;
    if Bad or else Name_Count /= 2 then
       Fail ("usage: stream_encode [--level <0 to 5>] [--tag <key=value>]... [--seek-every <seconds>] [--independent] "
-            & "[--no-pairs] <in.wav> <out.bin>");
+            & "[--no-pairs] [--verify] <in.wav> <out.bin>");
       return;
    end if;
    declare
@@ -100,6 +106,48 @@ begin
             return;
       end;
       Encode (Input, Opt, Stream, Length, Stats);
+      if Verify then
+         declare
+            Copy : constant Byte_Array_Access := new Byte_Array'(Stream (0 .. Length - 1));
+            H : Stream_Reading.Header;
+            W : Stream_Reading.Walker;
+            Check : Audio_Digest.Hasher;
+            Got : Audio_Digest.Digest;
+            Ok : Boolean;
+         begin
+            Stream_Reading.Read_Header (Copy.all, H);
+            Ok := H.Ok;
+            if Ok then
+               Stream_Reading.Start (W, Copy, H);
+               Audio_Digest.Start (Check, H.Depth, H.Valid_Bits, H.Is_Float);
+               for F in 0 .. H.Frames - 1 loop
+                  Stream_Reading.Advance (W, F);
+                  for C in 1 .. H.Channels loop
+                     declare
+                        V : Long_Long_Integer := Stream_Reading.Value (W, C, F);
+                     begin
+                        if H.Is_Float and then H.Modes (C) = 1 then
+                           V := From_Integer (V, H.Scales (C));
+                        end if;
+                        Audio_Digest.Add (Check, V);
+                     end;
+                  end loop;
+               end loop;
+               Audio_Digest.Finish (Check, Got);
+               declare
+                  D : constant Stream_Reading.Damage := Stream_Reading.Report (W);
+               begin
+                  Ok := Got = Stats.Audio_Md5 and then D.Complete and then D.Blocks_Ok and then D.Bad_Crcs = 0;
+               end;
+            end if;
+            if not Ok then
+               Put_Line (Standard_Error, "stream_encode: " & In_Name & ": verification failed, the stream does not decode to "
+                         & "the input; nothing written");
+               Ada.Command_Line.Set_Exit_Status (1);
+               return;
+            end if;
+         end;
+      end if;
       declare
          Out_Bytes : Stream_Element_Array (1 .. Stream_Element_Offset (Length));
          for Out_Bytes'Address use Stream.all'Address;
@@ -109,6 +157,7 @@ begin
          Stream_IO.Close (File);
       end;
       Put_Line (Standard_Error, In_Name & ":" & Input.Frames'Image & " frames," & Input.Channels'Image & " channels,"
-                & Input.Rate'Image & " Hz, level" & Opt.Level'Image & "," & Length'Image & " bytes");
+                & Input.Rate'Image & " Hz, level" & Opt.Level'Image & "," & Length'Image & " bytes"
+                & (if Verify then ", verified" else ""));
    end;
 end Stream_Encode;
