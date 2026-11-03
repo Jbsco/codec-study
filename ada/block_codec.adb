@@ -1685,4 +1685,50 @@ package body Block_Codec with SPARK_Mode is
       Status := Success;
    end Decode;
 
+   function History_Reach (Input : Byte_Array) return Natural is
+      Total : constant Natural := Input'Length * 8;
+      Pos : Natural := 0;
+      Field, Order, Precision : Unsigned_64;
+   begin
+      if Total < 9 then
+         return (if Total >= 1 and then Bit_At (Input, 0) = 0 then 0 else Max_History);
+      end if;
+      Get (Input, Pos, Field, 1);
+      if Field = 0 then
+         return 0;
+      end if;
+      Pos := Pos + 5;
+      Get (Input, Pos, Field, 3);
+      if Field = Delay_Predictor then
+         if Total - Pos < 16 then
+            return Max_History;
+         end if;
+         Get (Input, Pos, Field, 1);
+         if Field = 0 then
+            return 0;
+         end if;
+         Get (Input, Pos, Field, 15);
+         return Natural (Unsigned_64'Min (Field, Max_History));
+      elsif Field = Lpc_Predictor then
+         if Total - Pos < 9 then
+            return Max_History;
+         end if;
+         Get (Input, Pos, Order, 5);
+         Get (Input, Pos, Precision, 4);
+         if Total - Pos < 10 + (Natural (Order) + 1) * (Natural (Precision) + 1) then
+            return Max_History;
+         end if;
+         Pos := Pos + 5 + (Natural (Order) + 1) * (Natural (Precision) + 1);
+         Get (Input, Pos, Field, 1);
+         if Field = 0 then
+            return 0;
+         end if;
+         Pos := Pos + 2;
+         Get (Input, Pos, Field, 2);
+         return Warm_Up_Choices (Natural (Field)) + Natural (Order) + 1;
+      else
+         return 0;
+      end if;
+   end History_Reach;
+
 end Block_Codec;

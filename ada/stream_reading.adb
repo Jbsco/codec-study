@@ -1,3 +1,4 @@
+with Ada.Containers.Vectors;
 with Ada.Unchecked_Deallocation;
 with Interfaces; use Interfaces;
 with Checksums;
@@ -251,12 +252,12 @@ package body Stream_Reading is
             declare
                First : constant Natural := L (I).First;
                Size_Of : constant Natural := L (I).Count;
-               From : constant Natural := Natural'Max (Floor, First - Max_History);
             begin
                for C in 1 .. H.Channels loop
                   declare
                      S : constant Positive := Coded_Signal (C, L (I).Modes, H.Channels);
                      Size : Natural;
+                     From : Natural := Natural'Max (Floor, First - Max_History);
                   begin
                      Get (Stream, P, Field, 16);
                      Size := Natural (Field);
@@ -264,6 +265,8 @@ package body Stream_Reading is
                         Ok := False;
                         return;
                      end if;
+                     --  A block reads only the samples its reach names, so it gets only those.
+                     From := Natural'Max (From, First - History_Reach (Stream (Block_At .. Block_At + Size - 1)));
                      if not Checksums.Matches (Stream, P / 8, Checksums.Of_Bytes (Stream (Block_At .. Block_At + Size - 1))) then
                         D.Bad_Crcs := D.Bad_Crcs + 1;
                      end if;
@@ -452,6 +455,7 @@ package body Stream_Reading is
       W.Base := 0;
       W.Filled := 0;
       W.Offset := H.First_Group;
+      W.Decoded_From := 0;
       W.D := (others => <>);
       for C in 1 .. H.Channels loop
          W.Buf (C) := new Sample_Array'(0 .. Window - 1 => 0);
@@ -497,6 +501,115 @@ package body Stream_Reading is
       end loop;
    end Lose;
 
+   --  The group at Offset: its first frame, and the earliest frame its blocks read, which is its first frame when
+   --  none reads frames before it.
+   procedure Group_Reach (Stream : Byte_Array; H : Header; Offset : Natural; First, Reach : out Natural; Ok : out Boolean) is
+      Group_Length, Group_Count, Leaf_Count, Table_At : Natural;
+      L : Leaf_List;
+   begin
+      Parse_Group (Stream, H, Offset, Group_Length, First, Group_Count, L, Leaf_Count, Table_At, Ok);
+      Reach := First;
+      if not Ok then
+         return;
+      end if;
+      declare
+         Entry_At : Natural := Table_At;
+         Block_At : Natural := Table_At + 4 * Leaf_Count * H.Channels + 2;
+         Size : Natural;
+      begin
+         for I in 0 .. Leaf_Count - 1 loop
+            for Unused in 1 .. H.Channels loop
+               Size := Natural (Stream (Entry_At)) * 256 + Natural (Stream (Entry_At + 1));
+               if Size > Offset + Group_Length - Block_At then
+                  return;
+               end if;
+               Reach := Natural'Min (Reach, Natural'Max (0, L (I).First - History_Reach (Stream (Block_At .. Block_At + Size - 1))));
+               Entry_At := Entry_At + 4;
+               Block_At := Block_At + Size;
+            end loop;
+         end loop;
+      end;
+   end Group_Reach;
+
+   --  Where a decode of frames from Target on starts: the group that holds Target, or the earliest group before it
+   --  whose samples its blocks read, back to the seek point at most.
+   procedure Start_Of (W : Walker; Target : Natural; Offset, Frame : out Natural) is
+      type Place is record
+         Offset, First : Natural;
+      end record;
+      package Places is new Ada.Containers.Vectors (Positive, Place);
+      Path : Places.Vector;
+      Found : Boolean := False;
+   begin
+      Frame := 0;
+      Offset := W.H.First_Group;
+      for E of W.H.Seeks.all loop
+         if E.Frame <= Target and then E.Frame >= Frame and then E.Offset in W.H.First_Group .. W.Stream'Length - 1 then
+            Frame := E.Frame;
+            Offset := E.Offset;
+         end if;
+      end loop;
+      --  The groups from the seek point to the one that holds Target.
+      declare
+         Group_Length, Group_First, Group_Count, Leaf_Count, Table_At : Natural;
+         L : Leaf_List;
+         Ok : Boolean;
+         At_Offset : Natural := Offset;
+         At_Frame : Natural := Frame;
+      begin
+         loop
+            Parse_Group (W.Stream.all, W.H, At_Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
+            exit when not Ok or else Group_First /= At_Frame;
+            Path.Append (Place'(At_Offset, At_Frame));
+            Found := Group_First + Group_Count > Target;
+            exit when Found;
+            At_Offset := At_Offset + Group_Length;
+            At_Frame := Group_First + Group_Count;
+         end loop;
+      end;
+      --  Back from that group while a block of the groups kept reads frames before them.
+      if Found then
+         declare
+            K : Positive := Path.Last_Index;
+            Need : Natural := Path (K).First;
+            First, Reach : Natural;
+            Ok : Boolean;
+         begin
+            loop
+               Group_Reach (W.Stream.all, W.H, Path (K).Offset, First, Reach, Ok);
+               Need := Natural'Min (Need, Reach);
+               exit when K = Path.First_Index or else Need >= Path (K).First;
+               K := K - 1;
+            end loop;
+            Offset := Path (K).Offset;
+            Frame := Path (K).First;
+         end;
+      end if;
+   end Start_Of;
+
+   --  Before the group that starts at First is decoded: when its blocks read frames before the first one decoded
+   --  since the last seek, start again from an earlier group that gives them, and say so.
+   function Rewound (W : in out Walker; First : Natural) return Boolean is
+      Group_First, Reach, Offset, Frame : Natural;
+      Ok : Boolean;
+   begin
+      if W.Decoded_From = 0 or else First >= W.Decoded_From + Max_History then
+         return False;
+      end if;
+      Group_Reach (W.Stream.all, W.H, W.Offset, Group_First, Reach, Ok);
+      if not Ok or else Reach >= W.Decoded_From then
+         return False;
+      end if;
+      Start_Of (W, First, Offset, Frame);
+      if Frame >= W.Decoded_From then
+         return False;
+      end if;
+      W.Offset := Offset;
+      W.Filled := Frame;
+      W.Decoded_From := Frame;
+      return True;
+   end Rewound;
+
    procedure Fill (W : in out Walker; Upto : Natural);
 
    procedure Advance (W : in out Walker; Upto : Natural) is
@@ -518,32 +631,35 @@ package body Stream_Reading is
             W.Filled := W.H.Frames;
          else
             Parse_Group (W.Stream.all, W.H, W.Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
-            if Ok and then Group_First = W.Filled then
-               Cover (W, Natural'Max (0, Group_First - Max_History), Group_First + Group_Count - 1);
-               Decode_Group (W.Stream.all, W.H, W.Offset, W.Buf, 0, W.Work, W.D, Group_Length, Group_First, Group_Count, Ok);
-            else
-               Ok := False;
-            end if;
-            if Ok then
-               W.Offset := W.Offset + Group_Length;
-               W.Filled := Group_First + Group_Count;
-            else
-               W.D.Bad_Groups := W.D.Bad_Groups + 1;
-               --  The next group with a right header that starts at or after the frames already given out.
-               loop
-                  W.Offset := Next_Sync (W.Stream.all, W.H, W.Offset + 1);
-                  exit when W.Offset >= W.Stream'Length;
-                  Parse_Group (W.Stream.all, W.H, W.Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
-                  exit when Group_First >= W.Filled;
-               end loop;
-               if W.Offset >= W.Stream'Length then
-                  Lose (W, W.Filled, W.H.Frames - 1);
-                  W.Filled := W.H.Frames;
+            --  A group that reads frames before the first decoded since a seek sends the walker back for them.
+            if not (Ok and then Group_First = W.Filled and then Rewound (W, Group_First)) then
+               if Ok and then Group_First = W.Filled then
+                  Cover (W, Natural'Max (0, Group_First - Max_History), Group_First + Group_Count - 1);
+                  Decode_Group (W.Stream.all, W.H, W.Offset, W.Buf, 0, W.Work, W.D, Group_Length, Group_First, Group_Count, Ok);
                else
-                  if Group_First > W.Filled then
-                     Lose (W, W.Filled, Group_First - 1);
+                  Ok := False;
+               end if;
+               if Ok then
+                  W.Offset := W.Offset + Group_Length;
+                  W.Filled := Group_First + Group_Count;
+               else
+                  W.D.Bad_Groups := W.D.Bad_Groups + 1;
+                  --  The next group with a right header that starts at or after the frames already given out.
+                  loop
+                     W.Offset := Next_Sync (W.Stream.all, W.H, W.Offset + 1);
+                     exit when W.Offset >= W.Stream'Length;
+                     Parse_Group (W.Stream.all, W.H, W.Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
+                     exit when Group_First >= W.Filled;
+                  end loop;
+                  if W.Offset >= W.Stream'Length then
+                     Lose (W, W.Filled, W.H.Frames - 1);
+                     W.Filled := W.H.Frames;
+                  else
+                     if Group_First > W.Filled then
+                        Lose (W, W.Filled, Group_First - 1);
+                     end if;
+                     W.Filled := Group_First;
                   end if;
-                  W.Filled := Group_First;
                end if;
             end if;
          end if;
@@ -564,32 +680,14 @@ package body Stream_Reading is
       Free (H.Source);
    end Release;
 
+
    procedure Seek (W : in out Walker; Target : Natural) is
-      Frame : Natural := 0;
-      Offset : Natural := W.H.First_Group;
+      Offset, Frame : Natural;
    begin
-      for E of W.H.Seeks.all loop
-         if E.Frame <= Target and then E.Frame >= Frame and then E.Offset in W.H.First_Group .. W.Stream'Length - 1 then
-            Frame := E.Frame;
-            Offset := E.Offset;
-         end if;
-      end loop;
-      if W.H.Independent then
-         declare
-            Group_Length, Group_First, Group_Count, Leaf_Count, Table_At : Natural;
-            L : Leaf_List;
-            Ok : Boolean;
-         begin
-            loop
-               Parse_Group (W.Stream.all, W.H, Offset, Group_Length, Group_First, Group_Count, L, Leaf_Count, Table_At, Ok);
-               exit when not Ok or else Group_First /= Frame or else Group_First + Group_Count > Target;
-               Offset := Offset + Group_Length;
-               Frame := Group_First + Group_Count;
-            end loop;
-         end;
-      end if;
+      Start_Of (W, Target, Offset, Frame);
       W.Offset := Offset;
       W.Filled := Frame;
+      W.Decoded_From := Frame;
       W.Base := Natural'Max (0, Frame - Max_History);
       for C in 1 .. W.H.Channels loop
          Free (W.Buf (C));
